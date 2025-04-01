@@ -1,61 +1,98 @@
-import cors from 'cors';
-import dotenv from 'dotenv';
-import express, { Application, Request, Response } from 'express';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import { connectDB } from './config/db';
-import { globalErrorHandler } from './utils/errorHandler';
-
-// Load environment variables
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import mongoose from "mongoose";
+import path from "path";
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
+// @ts-ignore
 dotenv.config();
 
-// Create Express application
-const app: Application = express();
+// Routes
+import {
+  adminRoutes,
+  authRoutes,
+  customerRoutes,
+  userRoutes,
+} from "./routes";
 
-// Middleware
+const app = express();
+
+// Load swagger document
+const swaggerPath = path.resolve(__dirname, "swagger.yaml");
+const swaggerDocument = YAML.load(swaggerPath);
+
+// Update swagger server URL from env
+swaggerDocument.servers[0].url = process.env.API_URL || "http://localhost:5000";
+
+const allowedOrigins = [
+  process.env.STAGING_URL,
+  process.env.API_URL,
+  process.env.CLIENT_URL,
+  process.env.PRODUCTION_URL,
+  process.env.BACKEND_URL,
+].filter(Boolean); // Remove undefined values
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        var msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-app.use(morgan('dev'));
-app.use(helmet());
 
-// Try to import routes (comment out if they don't exist yet)
-try {
-  const authRoutes = require('./api/routes/auth.routes').default;
-  const userRoutes = require('./api/routes/user.routes').default;
-
-  // Routes
-  app.use('/api/auth', authRoutes);
-  app.use('/api/users', userRoutes);
-} catch (err) {
-  console.warn('Some routes could not be loaded. You may need to create them first.');
-}
-
-// Health check route
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'OK', message: 'Server is running' });
+app.get("/", (_req, res) => {
+  console.log("Log message on backend");
+  res.send("Welcome to the GreenWeave API");
 });
 
-// Global error handler
-app.use(globalErrorHandler);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "GreenWeave API Documentation"
+}));
 
-// Start server
-const PORT = process.env.PORT || 5000;
-const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
-    
-    // Start Express server
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+app.use("/api/auth", authRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admins", adminRoutes);  
+
+// Export the app for testing purposes
+export { app };
+
+// Only start the server if this file is run directly (not imported as a module)
+if (require.main === module) {
+  const port = process.env.PORT || 5000;
+
+  console.log('Connecting to MongoDB...');
+  console.log('MongoDB URI:', process.env.MONGO_URI?.split('@')[1]); // Log URI an toàn (không hiện credentials)
+
+  mongoose
+    .connect(process.env.MONGO_URI as string)
+    .then(() => {
+      console.log("Connected to MongoDB successfully");
+      app.listen(port, () => {
+        console.log(`Server started at ${new Date().toISOString()}`);
+        console.log(`Server is running on port ${port}`);
+        console.log(`API Documentation available at ${process.env.API_URL}/api-docs`);
+      });
+    })
+    .catch((error) => {
+      console.error("MongoDB connection error details:");
+      console.error("Name:", error.name);
+      console.error("Message:", error.message);
+      console.error("Code:", error.code);
+      if (error.name === 'MongoServerError') {
+        console.error("Please check your MongoDB credentials and database name");
+      }
+      process.exit(1); // Thoát process nếu không kết nối được database
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
-
-export default app; 
+}

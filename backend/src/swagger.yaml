@@ -1,0 +1,221 @@
+openapi: 3.0.0
+info:
+  title: GreenWeave API
+  description: API documentation for GreenWeave application
+  version: 1.0.0
+
+servers:
+  - url: ${API_URL}
+    description: Current environment
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+          description: 8-30 ký tự, chỉ chứa chữ, số và dấu gạch dưới
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: Phải có chữ hoa, chữ thường, số, ký tự đặc biệt, 6-30 ký tự
+        role:
+          type: string
+          enum: [admin, user, guest]
+        fullName:
+          type: string
+        phoneNumber:
+          type: string
+        gender:
+          type: string
+          enum: [nam, nữ]
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Customers
+    description: Customer management endpoints
+  - name: Admin
+    description: Admin management endpoints
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register new user
+      description: |
+        Register a new user with the following rules:
+        - Username: 8-30 ký tự, chỉ chứa chữ, số và dấu gạch dưới
+        - Email: Phải đúng định dạng email
+        - Password: Phải có chữ hoa, chữ thường, số, ký tự đặc biệt, 6-30 ký tự
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  example: "user123"
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "Test@123"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đăng ký thành công!"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      customerId:
+                        type: string
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      isVerified:
+                        type: boolean
+                      token:
+                        type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  password:
+                    type: string
+  
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "Test@123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đăng nhập thành công!"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      customerId:
+                        type: string
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      isVerified:
+                        type: boolean
+                      token:
+                        type: string
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Thông tin đăng nhập không chính xác"
+
+  /api/users:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of users retrieved successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/customers:
+    get:
+      tags:
+        - Customers
+      summary: Get all customers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of customers retrieved successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden 
