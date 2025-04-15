@@ -2,6 +2,7 @@ import React from 'react';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import HomeSection from '../sections/HomeSection/Home'; 
+import ProductSection from '../sections/ProductSection/Product';
 import '../assets/css/LandingPage.css';
 
 const LandingPage = () => {
@@ -10,7 +11,7 @@ const LandingPage = () => {
             <Header />
             <main className="main-content">
                 <HomeSection />
-                {/* Main content will be added here */}
+                <ProductSection />
             </main>
             <Footer />
         </div>
