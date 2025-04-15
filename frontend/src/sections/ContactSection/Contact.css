@@ -1,0 +1,118 @@
+.contact-section {
+    width: 100%;
+    padding: 3rem 0;
+    background: linear-gradient(to bottom, #ffffff, #e6f7f2);
+}
+
+.contact-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.contact-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.contact-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #1a4731;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+.contact-subtitle {
+    font-size: 1.2rem;
+    color: #2a8e62;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.contact-form {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+}
+
+.contact-form-group {
+    display: flex;
+    width: 100%;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.contact-input {
+    flex: 1;
+    height: 50px;
+    padding: 0 1rem;
+    font-size: 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    outline: none;
+    width: 100%;
+}
+
+.contact-textarea {
+    flex: 1;
+    min-height: 120px;
+    padding: 1rem;
+    font-size: 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    outline: none;
+    resize: vertical;
+    width: 100%;
+    font-family: inherit;
+}
+
+.contact-input:focus, .contact-textarea:focus{
+    border-color: #1a4731;
+    box-shadow: 0 0 0 2px rgba(26, 71, 49, 0.1);
+}
+
+.contact-submit-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.contact-submit-btn {
+    height: 45px;
+    padding: 0 2.5rem;
+    background-color: #1a4731;
+    color: white;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.contact-submit-btn:hover {
+    background-color: #14372a;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .contact-title {
+        font-size: 1.5rem;
+    }
+  
+    .contact-subtitle {
+        font-size: 0.8rem;
+    }
+  
+    .contact-input {
+        height: 45px;
+    }
+  
+    .contact-submit-btn {
+        padding: 0 1.5rem;
+    }
+}

@@ -4,6 +4,7 @@ import Footer from '../components/layout/footer/Footer';
 import HomeSection from '../sections/HomeSection/Home'; 
 import ProductSection from '../sections/ProductSection/Product';
 import AboutUs from '../sections/AboutUsSection/AboutUs';
+import Contact from '../sections/ContactSection/Contact';
 import '../assets/css/LandingPage.css';
 
 const LandingPage = () => {
@@ -14,6 +15,7 @@ const LandingPage = () => {
                 <HomeSection />
                 <ProductSection />
                 <AboutUs />
+                <Contact />
             </main>
             <Footer />
         </div>
