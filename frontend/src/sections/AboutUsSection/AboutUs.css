@@ -1,0 +1,141 @@
+.about-us-section {
+    padding: 4rem 0;
+    background-color: #e7e6e6;
+    width: 100%;
+}
+
+.about-us-images-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 20px;
+}
+
+.about-us-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 10px;
+    max-height: 640px;
+}
+  
+.about-us-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.about-us-image-wrapper {
+    overflow: hidden;
+    border-radius: 8px;
+    height: 350px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    background-color: white;
+    padding: 20px;
+}
+
+.about-us-left .about-us-image-wrapper {
+    height: calc(100%);
+    padding: 40px;
+}
+
+.about-us-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    border-radius: 6px;
+}
+
+.about-us-image-wrapper.caps-image {
+    height: 300px;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08); 
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.about-us-image-wrapper.caps-image .about-us-image {
+    object-fit: contain;
+    object-position: center;
+    max-height: 90%;
+    border-radius: 15px;
+}
+
+.about-us-image:hover {
+    transform: scale(1.05);
+}
+
+.about-us-content-block {
+    background-color: #1a4731;
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    text-align: center;
+    position: relative;
+    margin-bottom: 20px;
+    max-height: 300px;
+}
+
+.about-us-title {
+    font-size: 2.5rem;
+    margin-bottom: 0.2srem;
+    font-weight: 600;
+}
+
+.about-us-subtitle-container {
+    margin-bottom: 0.8rem;
+}
+
+.about-us-subtitle-line {
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.about-us-logo {
+    width: 80px;
+    margin: 0.4rem auto;
+    display: block;
+}
+
+.about-us-link {
+    color: white;
+    text-decoration: underline;
+    display: inline-block;
+    margin-top: 0.8rem;
+    font-size: 1rem;
+    transition: opacity 0.3s ease;
+}
+
+.about-us-link:hover {
+    opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .about-us-images-container {
+        flex-direction: column;
+    }
+  
+    .about-us-title {
+        font-size: 2rem;
+    }
+  
+    .about-us-subtitle {
+        font-size: 1.2rem;
+    }
+  
+    .about-us-content-block {
+        padding: 2rem;
+    }
+}
