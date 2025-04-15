@@ -7,7 +7,7 @@ import logoImage from '../../assets/images/logo.jpg';
 
 const AboutUs = () => {
     return (
-        <section className="about-us-section">
+        <section id="about" className="about-us-section">
             <div className="about-us-images-container">
                 <div className="about-us-left">
                     <div className="about-us-image-wrapper">

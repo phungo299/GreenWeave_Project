@@ -13,7 +13,7 @@ const Home = () => {
         };
     }, []);
     return (
-        <section className={`home-section ${isLoaded ? 'loaded' : 'loading'}`}>
+        <section id="home" className={`home-section ${isLoaded ? 'loaded' : 'loading'}`}>
             <div className="home-background" style={{ backgroundImage: `url(${Background})` }}>
                 <div className="home-container">
                     <div className="color-palette-container">

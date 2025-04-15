@@ -16,7 +16,7 @@ const Contact = () => {
     };
 
     return (
-        <section className="contact-section">
+        <section id="contact" className="contact-section">
             <div className="contact-container">
                 <div className="contact-header">
                     <h2 className="contact-title">Gửi thông tin, yêu cầu</h2>

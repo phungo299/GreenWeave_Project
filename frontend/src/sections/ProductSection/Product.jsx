@@ -40,7 +40,7 @@ const Product = () => {
     };
 
     return (
-        <section className="featured-product-section">
+        <section id="products" className="featured-product-section">
             <div className="featured-product-container">
                 <div className="featured-product-header">
                     <div className="featured-product-title-wrapper">
