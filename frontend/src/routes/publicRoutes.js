@@ -1,5 +1,6 @@
 import LandingPage from '../pages/LandingPage';
 import Login from '../pages/Login';
+import Register from '../pages/Register';
 
 const publicRoutes = [
     {
@@ -9,6 +10,10 @@ const publicRoutes = [
     {
         path: '/login',
         component: Login
+    },
+    {
+        path: '/register',
+        component: Register
     }
     // Add more public routes here
 ];
