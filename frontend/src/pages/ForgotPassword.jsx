@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/ForgotPassword.css';
 import loginBackground from '../assets/images/login.jpg';
 import InputField from '../components/ui/inputfield/InputField';
@@ -10,6 +10,7 @@ const ForgotPassword = () => {
     const [error, setError] = useState('');
     const [otpSent, setOtpSent] = useState(false);
     const [message, setMessage] = useState('');
+    const navigate = useNavigate();
 
     const handleEmailChange = (e) => {
         setEmail(e.target.value);
@@ -68,9 +69,15 @@ const ForgotPassword = () => {
         e.preventDefault();
         if (validateOtp()) {
             // Simulating OTP verification
-            console.log('Verifying OTP:', otp);
-            // Here you would redirect to reset password page
+            console.log('Verifying OTP:', otp);          
+            // In practice, you will send a request to verify the OTP        
+            // Display success message
             setMessage('Xác thực thành công! Đang chuyển hướng...');
+            
+            // Redirect to reset password page after 1.5 seconds
+            setTimeout(() => {
+                navigate(`/reset-password?email=${encodeURIComponent(email)}&otp=${encodeURIComponent(otp)}`);
+            }, 1500);
         }
     };
 

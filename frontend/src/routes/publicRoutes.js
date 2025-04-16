@@ -2,6 +2,7 @@ import LandingPage from '../pages/LandingPage';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 
 const publicRoutes = [
     {
@@ -19,6 +20,10 @@ const publicRoutes = [
     {
         path: '/forgot-password',
         component: ForgotPassword
+    },
+    {
+        path: '/reset-password',
+        component: ResetPassword
     }
     // Add more public routes here
 ];
