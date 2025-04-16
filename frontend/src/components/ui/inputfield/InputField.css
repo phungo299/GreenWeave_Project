@@ -70,4 +70,22 @@
 
 .password-toggle-btn:hover {
     color: #333;
-} 
+}
+
+/* Disable browser autocomplete background color */
+.input-field:-webkit-autofill,
+.input-field:-webkit-autofill:hover, 
+.input-field:-webkit-autofill:focus,
+.input-field:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+    -webkit-text-fill-color: #333 !important;
+    transition: background-color 5000s ease-in-out 0s;
+    background-color: transparent !important;
+}
+
+/* For Firefox */
+.input-field:-moz-autofill,
+.input-field:-moz-autofill:focus {
+    box-shadow: 0 0 0 1000px transparent inset !important;
+    -moz-text-fill-color: #333 !important;
+}

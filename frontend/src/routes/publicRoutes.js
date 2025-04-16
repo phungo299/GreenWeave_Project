@@ -1,6 +1,7 @@
 import LandingPage from '../pages/LandingPage';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
 
 const publicRoutes = [
     {
@@ -14,6 +15,10 @@ const publicRoutes = [
     {
         path: '/register',
         component: Register
+    },
+    {
+        path: '/forgot-password',
+        component: ForgotPassword
     }
     // Add more public routes here
 ];
