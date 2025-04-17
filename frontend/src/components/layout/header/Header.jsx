@@ -1,11 +1,18 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useActiveSection } from '../../hooks/useActiveSection';
+import { useScrollToSection } from '../../hooks/useScrollToSection';
 import './Header.css';
 import Logo from '../../../assets/images/logo.jpg';
 
 const Header = () => {
     const activeSection = useActiveSection();
+    const { scrollToSection } = useScrollToSection();
+    const location = useLocation();
+    
+    // Check if the current URL is a products page
+    const isProductsPage = location.pathname === '/products';
+    
     return (
         <header className="header">
             <div className="header-container">
@@ -16,17 +23,33 @@ const Header = () => {
                 </div>
                 <nav className="nav-menu">
                     <ul>
-                        <li className={activeSection === 'home' ? 'active' : ''}>
-                            <Link to="/#home">Home</Link>
+                    <li className={(!isProductsPage && activeSection === 'home') ? 'active' : ''}>
+                            {isProductsPage ? (
+                                <Link to="/#home">Home</Link>
+                            ) : (
+                                <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>Home</a>
+                            )}
                         </li>
-                        <li className={activeSection === 'products' ? 'active' : ''}>
-                            <Link to="/#products">Product</Link>
+                        <li className={isProductsPage || (!isProductsPage && activeSection === 'products') ? 'active' : ''}>
+                            {isProductsPage ? (
+                                <Link to="/#products">Product</Link>
+                            ) : (
+                                <a href="#products" onClick={(e) => scrollToSection(e, 'products')}>Product</a>
+                            )}
                         </li>
-                        <li className={activeSection === 'about' ? 'active' : ''}>
-                            <Link to="/#about">About Us</Link>
+                        <li className={(!isProductsPage && activeSection === 'about') ? 'active' : ''}>
+                            {isProductsPage ? (
+                                <Link to="/#about">About Us</Link>
+                            ) : (
+                                <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>About Us</a>
+                            )}
                         </li>
-                        <li className={activeSection === 'contact' ? 'active' : ''}>
-                            <Link to="/#contact">Contact</Link>
+                        <li className={(!isProductsPage && activeSection === 'contact') ? 'active' : ''}>
+                            {isProductsPage ? (
+                                <Link to="/#contact">Contact</Link>
+                            ) : (
+                                <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
+                            )}
                         </li>
                     </ul>
                 </nav>

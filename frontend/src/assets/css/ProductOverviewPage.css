@@ -1,0 +1,388 @@
+.product-overview-page {
+    width: 100%;
+    background-color: #fafafa;
+    min-height: 100vh;
+}
+
+.product-page-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.product-page-hero {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.product-page-title {
+    font-size: 2.5rem;
+    color: #0A4B3E;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.product-page-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* Category tabs */
+.product-categories {
+    margin-bottom: 40px;
+}
+
+.category-tabs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.category-tab {
+    padding: 12px 25px;
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    font-weight: 500;
+}
+
+.category-tab:hover {
+    color: #0A4B3E;
+}
+
+.category-tab.active {
+    color: #0A4B3E;
+    font-weight: 600;
+}
+
+.category-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #0A4B3E;
+}
+
+/* Product grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+/* Coming Soon Section */
+.coming-soon-section {
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.coming-soon-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.coming-soon-title-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    max-width: 400px;
+}
+
+.coming-soon-title-main {
+    font-size: 3.5rem;
+    color: #0A4B3E;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+    text-align: right;
+}
+
+.coming-soon-title-sub {
+    font-size: 3.5rem;
+    color: #0A4B3E;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+    text-align: right;
+    margin-right: 92px;
+}
+
+.coming-soon-title {
+    display: none;
+}
+
+.coming-soon-products {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.coming-soon-product {
+    flex: 1;
+    min-width: 300px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.coming-soon-product:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.coming-soon-image-container {
+    height: 280px;
+    overflow: hidden;
+    position: relative;
+    background-color: #f0f0f0;
+}
+
+.coming-soon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.coming-soon-product:hover .coming-soon-image {
+    transform: scale(1.05);
+}
+
+/* Ensure better lazy loading for coming soon section */
+.coming-soon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.5s ease;
+}
+
+.coming-soon-image.loaded {
+    opacity: 1;
+}
+
+.coming-soon-image:not(.loaded) {
+    opacity: 0;
+}
+
+.product-image-placeholder {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    z-index: 1;
+}
+
+.coming-soon-info {
+    padding: 20px;
+}
+
+.coming-soon-name {
+    font-size: 1.5rem;
+    color: #0A4B3E;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.coming-soon-description {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.coming-soon-price {
+    font-size: 1.2rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.coming-soon-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #0A4B3E;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.coming-soon-button:hover {
+    background-color: #0d5c4c;
+}
+
+.coming-soon-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px 0;
+}
+
+.coming-soon-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    background-color: #ddd;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    padding: 0;
+}
+
+.coming-soon-dot.active {
+    background-color: #0A4B3E;
+    width: 30px;
+    border-radius: 10px;
+}
+
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
+}
+
+.load-more-button {
+    padding: 12px 25px;
+    background-color: #0A4B3E;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.load-more-button:hover {
+    background-color: #0d5c4c;
+}
+
+.load-more-button:disabled {
+    background-color: #89a7a2;
+    cursor: not-allowed;
+}
+
+/* Animation for loading state */
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+    .product-page-title, 
+    .coming-soon-title-main,
+    .coming-soon-title-sub {
+        font-size: 2.2rem;
+    }
+    
+    .coming-soon-title-sub {
+        margin-right: 20px;
+    }
+    
+    .category-tab {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+    
+    .coming-soon-products {
+        flex-direction: column;
+    }
+    
+    .coming-soon-product {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .product-page-title,
+    .product-page-title,
+    .coming-soon-title-main,
+    .coming-soon-title-sub {
+        font-size: 1.8rem;
+    }
+    
+    .coming-soon-title-sub {
+        margin-right: 15px;
+    }
+    
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .coming-soon-section {
+        margin-top: 60px;
+        padding-top: 30px;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-page-content {
+        padding: 30px 15px;
+    }
+    
+    .category-tabs {
+        gap: 5px;
+    }
+    
+    .category-tab {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .coming-soon-section {
+        margin-top: 40px;
+        padding-top: 20px;
+    }
+    
+    .coming-soon-image-container {
+        height: 220px;
+    }
+    
+    .coming-soon-name {
+        font-size: 1.3rem;
+    }
+    
+    .coming-soon-price {
+        font-size: 1.1rem;
+    }
+}

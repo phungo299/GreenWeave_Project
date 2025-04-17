@@ -3,6 +3,7 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
+import ProductOverviewPage from '../pages/ProductOverviewPage';
 
 const publicRoutes = [
     {
@@ -24,6 +25,10 @@ const publicRoutes = [
     {
         path: '/reset-password',
         component: ResetPassword
+    },
+    {
+        path: '/products',
+        component: ProductOverviewPage
     }
     // Add more public routes here
 ];

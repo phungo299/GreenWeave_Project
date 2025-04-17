@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Product.css';
 import ProductCard from '../../components/ui/productcard/ProductCard';
 
@@ -8,6 +9,7 @@ import tshirt from '../../assets/images/T-shirt products.jpg';
 
 const Product = () => {
     const [activeSlide, setActiveSlide] = useState(0);
+    const navigate = useNavigate();
   
     const products = [
         {
@@ -45,6 +47,10 @@ const Product = () => {
         console.log('Navigate to product detail page for ID:', productId);
         // You can implement navigation here, for example:
         // navigate(`/products/${productId}`);
+    };
+
+    const handleViewAllClick = () => {
+        navigate('/products');
     };
 
     return (
@@ -89,7 +95,12 @@ const Product = () => {
                     ))}
                 </div>
                 <div className="featured-product-view-all-container">
-                    <button className="featured-product-view-all-button">Xem tất cả</button>
+                    <button 
+                        className="featured-product-view-all-button"
+                        onClick={handleViewAllClick}
+                    >
+                        Xem tất cả
+                    </button>
                 </div>
             </div>
         </section>

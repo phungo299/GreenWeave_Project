@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, memo } from 'react';
 import './ProductCard.css';
 
 /**
@@ -21,19 +21,39 @@ const ProductCard = ({
     imageClass = '', 
     onClick 
 }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [isError, setIsError] = useState(false);
+
     const handleButtonClick = (e) => {
         e.stopPropagation();
         if (onClick) onClick(id);
     };
 
+    const handleImageLoad = () => {
+        setImageLoaded(true);
+    };
+
+    const handleImageError = () => {
+        setIsError(true);
+        setImageLoaded(true);
+    };
+
     return (
         <div className="product-card">
             <div className="product-image-container">
-                <img 
-                    src={image} 
-                    alt={name} 
-                    className={`product-image ${imageClass}`} 
-                />
+                {!imageLoaded && <div className="product-image-placeholder"></div>}
+                {isError ? (
+                    <div className="product-image-error">Không thể tải hình ảnh</div>
+                ) : (
+                    <img 
+                        src={image} 
+                        alt={name} 
+                        className={`product-image ${imageClass} ${imageLoaded ? 'loaded' : 'loading'}`}
+                        loading="lazy"
+                        onLoad={handleImageLoad}
+                        onError={handleImageError}
+                    />
+                )}
             </div>
             <div className="product-info">
                 <h3 className="product-name">{name}</h3>
@@ -58,4 +78,4 @@ const ProductCard = ({
         </div>
     );
 };
-export default ProductCard; 
+export default memo(ProductCard);
