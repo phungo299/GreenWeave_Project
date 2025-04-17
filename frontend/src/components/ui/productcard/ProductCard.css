@@ -1,0 +1,119 @@
+.product-card {
+    flex: 0 0 calc(33.333% - 20px);
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.product-image-container {
+    height: 250px;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-name {
+    font-size: 1.5rem;
+    color: #0A4B3E;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.product-description {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.product-price {
+    font-size: 1.2rem;
+    color: #333;
+    font-weight: 600;
+    margin-top: auto;
+}
+
+.product-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #0A4B3E;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    z-index: 1;
+}
+
+.product-button:hover {
+    background-color: #0d5c4c;
+}
+
+/* Special handling for different image types */
+.product-image.hat-image {
+    object-fit: cover;
+    object-position: center 30%;
+}
+
+.product-card:hover .product-image.hat-image {
+    transform: scale(1.1);
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+    .product-card {
+        flex: 0 0 calc(50% - 15px);
+    }
+}
+
+@media (max-width: 576px) {
+    .product-card {
+        flex: 0 0 100%;
+    }
+    
+    .product-image-container {
+        height: 200px;
+    }
+    
+    .product-name {
+        font-size: 1.3rem;
+    }
+    
+    .product-price {
+        font-size: 1.1rem;
+    }
+} 

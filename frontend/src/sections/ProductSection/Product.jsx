@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Product.css';
+import ProductCard from '../../components/ui/productcard/ProductCard';
 
 import toteBag from '../../assets/images/footer-background.jpg';
 import hat from '../../assets/images/baseball-cap-products.jpg';
@@ -15,7 +16,7 @@ const Product = () => {
             description: 'Moist but well-drained',
             price: '280.000 đ',
             image: toteBag,
-            imageClass: 'featured-product-image'
+            imageClass: ''
         },
         {
             id: 2,
@@ -23,7 +24,7 @@ const Product = () => {
             description: 'Moist but well-drained',
             price: '220.000 đ',
             image: hat,
-            imageClass: 'featured-product-image featured-hat-image'
+            imageClass: 'hat-image'
         },
         {
             id: 3,
@@ -31,12 +32,19 @@ const Product = () => {
             description: 'Moist but well-drained',
             price: '300.000 đ',
             image: tshirt,
-            imageClass: 'featured-product-image'
+            imageClass: ''
         }
     ];
 
     const goToSlide = (index) => {
         setActiveSlide(index);
+    };
+
+    const handleProductClick = (productId) => {
+        // Handle product detail navigation
+        console.log('Navigate to product detail page for ID:', productId);
+        // You can implement navigation here, for example:
+        // navigate(`/products/${productId}`);
     };
 
     return (
@@ -56,22 +64,17 @@ const Product = () => {
                 </div>
                 <div className="featured-product-slider">
                     <div className="featured-product-cards">
-                        {products.map((product, index) => (
-                            <div key={product.id} className="featured-product-card">
-                                <div className="featured-product-image-container">
-                                    <img src={product.image} alt={product.name} className={product.imageClass} />
-                                </div>
-                                <div className="featured-product-info">
-                                    <h3 className="featured-product-name">{product.name}</h3>
-                                    <p className="featured-product-description">{product.description}</p>
-                                    <p className="featured-product-price">{product.price}</p>
-                                </div>
-                                <button className="featured-product-button">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M9 18l6-6-6-6"/>
-                                    </svg>
-                                </button>
-                            </div>
+                        {products.map((product) => (
+                            <ProductCard 
+                                key={product.id}
+                                id={product.id}
+                                name={product.name}
+                                description={product.description}
+                                price={product.price}
+                                image={product.image}
+                                imageClass={product.imageClass}
+                                onClick={handleProductClick}
+                            />
                         ))}
                     </div>
                 </div>
