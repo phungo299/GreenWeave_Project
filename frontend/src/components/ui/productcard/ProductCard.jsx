@@ -1,4 +1,5 @@
 import React, { useState, memo } from 'react';
+import { Link } from 'react-router-dom';
 import './ProductCard.css';
 
 /**
@@ -25,6 +26,7 @@ const ProductCard = ({
     const [isError, setIsError] = useState(false);
 
     const handleButtonClick = (e) => {
+        e.preventDefault();
         e.stopPropagation();
         if (onClick) onClick(id);
     };
@@ -39,43 +41,45 @@ const ProductCard = ({
     };
 
     return (
-        <div className="product-card">
-            <div className="product-image-container">
-                {!imageLoaded && <div className="product-image-placeholder"></div>}
-                {isError ? (
-                    <div className="product-image-error">Không thể tải hình ảnh</div>
-                ) : (
-                    <img 
-                        src={image} 
-                        alt={name} 
-                        className={`product-image ${imageClass} ${imageLoaded ? 'loaded' : 'loading'}`}
-                        loading="lazy"
-                        onLoad={handleImageLoad}
-                        onError={handleImageError}
-                    />
-                )}
+        <Link to={`/products/${id}`} className="product-card-link">
+            <div className="product-card">
+                <div className="product-image-container">
+                    {!imageLoaded && <div className="product-image-placeholder"></div>}
+                    {isError ? (
+                        <div className="product-image-error">Không thể tải hình ảnh</div>
+                    ) : (
+                        <img 
+                            src={image} 
+                            alt={name} 
+                            className={`product-image ${imageClass} ${imageLoaded ? 'loaded' : 'loading'}`}
+                            loading="lazy"
+                            onLoad={handleImageLoad}
+                            onError={handleImageError}
+                        />
+                    )}
+                </div>
+                <div className="product-info">
+                    <h3 className="product-name">{name}</h3>
+                    <p className="product-description">{description}</p>
+                    <p className="product-price">{price}</p>
+                </div>
+                <button className="product-button" onClick={handleButtonClick}>
+                    <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                    >
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
             </div>
-            <div className="product-info">
-                <h3 className="product-name">{name}</h3>
-                <p className="product-description">{description}</p>
-                <p className="product-price">{price}</p>
-            </div>
-            <button className="product-button" onClick={handleButtonClick}>
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                >
-                    <path d="M9 18l6-6-6-6"/>
-                </svg>
-            </button>
-        </div>
+        </Link>
     );
 };
 export default memo(ProductCard);

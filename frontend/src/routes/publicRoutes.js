@@ -4,6 +4,7 @@ import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import ProductOverviewPage from '../pages/ProductOverviewPage';
+import ProductDetails from '../pages/ProductDetails';
 
 const publicRoutes = [
     {
@@ -29,6 +30,10 @@ const publicRoutes = [
     {
         path: '/products',
         component: ProductOverviewPage
+    },
+    {
+        path: '/products/:id',
+        component: ProductDetails
     }
     // Add more public routes here
 ];

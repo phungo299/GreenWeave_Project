@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-//import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import ProductCard from '../components/ui/productcard/ProductCard';
@@ -22,6 +22,7 @@ import tShirtNew from '../assets/images/IMG_8391.JPG';
 const PRODUCTS_PER_PAGE = 6;
 
 const ProductOverviewPage = () => {
+    const navigate = useNavigate();
     // State to keep track of the currently selected category
     const [activeCategory, setActiveCategory] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -198,9 +199,8 @@ const ProductOverviewPage = () => {
     // Process when clicking on product
     const handleProductClick = useCallback((productId) => {
         console.log('Navigating to product detail:', productId);
-        // Implement navigation to product detail page
-        // navigate(`/products/${productId}`);
-    }, []);
+        navigate(`/products/${productId}`);
+    }, [navigate]);
     
     // Handle when switching to upcoming product slide
     const goToComingSoonSlide = useCallback((index) => {
