@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../assets/css/Register.css';
 import loginBackground from '../assets/images/login.jpg';
 import logoImage from '../assets/images/logo.jpg';
@@ -7,6 +8,11 @@ import googleIcon from '../assets/icons/google.png';
 import InputField from '../components/ui/inputfield/InputField';
 
 const Register = () => {
+    const navigate = useNavigate();
+    const { register } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [registerError, setRegisterError] = useState('');
+    
     const [userData, setUserData] = useState({
         username: '',
         email: '',
@@ -32,6 +38,10 @@ const Register = () => {
                 ...errors,
                 [name]: ''
             });
+        }
+        // Clear registration error message when user changes input
+        if (registerError) {
+            setRegisterError('');
         }
     };
 
@@ -72,17 +82,31 @@ const Register = () => {
         return isValid;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); 
         if (validate()) {
-            console.log('Register attempt with:', userData);
-            // Add actual register logic here
+            setLoading(true);
+            try {
+                // TODO: Replace with actual API once API is available
+                const result = await register(userData);
+                if (result.success) {
+                    // Redirect user to login page after successful registration
+                    navigate('/login', { state: { registrationSuccess: true } });
+                } else {
+                    setRegisterError(result.message || 'Đăng ký không thành công');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                setRegisterError('Đã xảy ra lỗi khi đăng ký, vui lòng thử lại sau');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
     const handleGoogleLogin = () => {
         console.log('Google login clicked');
-        // Implement Google login logic
+        // TODO: Implement Google login logic khi có API
     };
 
     return (
@@ -90,7 +114,8 @@ const Register = () => {
             <div className="register-container">
                 <div className="register-form-box">
                     <h1 className="register-title">Tạo tài khoản</h1>
-                    <p className="register-subtitle">Bắt đầu với Greenweave!</p>                                      
+                    <p className="register-subtitle">Bắt đầu với Greenweave!</p>                    
+                    {registerError && <div className="register-error">{registerError}</div>}                    
                     <form className="register-form" onSubmit={handleSubmit}>
                         <InputField
                             type="text"
@@ -101,6 +126,7 @@ const Register = () => {
                             required
                             error={errors.username}
                             autoComplete="username"
+                            disabled={loading}
                         />                       
                         <InputField
                             type="email"
@@ -111,6 +137,7 @@ const Register = () => {
                             required
                             error={errors.email}
                             autoComplete="email"
+                            disabled={loading}
                         />                       
                         <InputField
                             type="password"
@@ -122,6 +149,7 @@ const Register = () => {
                             error={errors.password}
                             showTogglePassword={true}
                             autoComplete="new-password"
+                            disabled={loading}
                         />
                         <InputField
                             type="password"
@@ -133,10 +161,21 @@ const Register = () => {
                             error={errors.confirmPassword}
                             showTogglePassword={true}
                             autoComplete="new-password"
+                            disabled={loading}
                         />                      
-                        <button type="submit" className="register-submit-button">Tạo tài khoản</button>
+                        <button 
+                            type="submit" 
+                            className="register-submit-button"
+                            disabled={loading}
+                        >
+                            {loading ? 'Đang xử lý...' : 'Tạo tài khoản'}
+                        </button>
                     </form>                  
-                    <button className="register-google-button" onClick={handleGoogleLogin}>
+                    <button 
+                        className="register-google-button" 
+                        onClick={handleGoogleLogin}
+                        disabled={loading}
+                    >
                         <img src={googleIcon} alt="Google" className="register-google-icon" />
                         Đăng nhập với Google
                     </button>

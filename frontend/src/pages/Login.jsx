@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../assets/css/Login.css';
 import loginBackground from '../assets/images/login.jpg';
 import logoImage from '../assets/images/logo.jpg';
 import InputField from '../components/ui/inputfield/InputField';
 
 const Login = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { login } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [loginError, setLoginError] = useState('');
+    
+    // Get the redirect path after successful login
+    const from = location.state?.from?.pathname || '/';
+    
     const [credentials, setCredentials] = useState({
         username: '',
         password: '',
@@ -29,6 +39,10 @@ const Login = () => {
                 [name]: ''
             });
         }
+        // Remove login error message when user changes input
+        if (loginError) {
+            setLoginError('');
+        }
     };
 
     const validate = () => {
@@ -49,11 +63,25 @@ const Login = () => {
         return isValid;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); 
         if (validate()) {
-            console.log('Login attempt with:', credentials);
-            // Add actual login logic here
+            setLoading(true);
+            try {
+                // TODO: Replace with actual API once API is available
+                const result = await login(credentials);
+                if (result.success) {
+                    // Redirect user after successful login
+                    navigate(from, { replace: true });
+                } else {
+                    setLoginError(result.message || 'Đăng nhập không thành công');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                setLoginError('Đã xảy ra lỗi khi đăng nhập, vui lòng thử lại sau');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -62,7 +90,8 @@ const Login = () => {
             <div className="login-container">
                 <div className="login-form-box">
                     <h1 className="login-title">Xin chào!</h1>
-                    <p className="login-subtitle">Đăng nhập vào tài khoản của bạn</p>                                      
+                    <p className="login-subtitle">Đăng nhập vào tài khoản của bạn</p>                    
+                    {loginError && <div className="login-error">{loginError}</div>}                    
                     <form className="login-form" onSubmit={handleSubmit}>
                         <InputField
                             type="text"
@@ -73,6 +102,7 @@ const Login = () => {
                             required
                             error={errors.username}
                             autoComplete="username"
+                            disabled={loading}
                         />                        
                         <InputField
                             type="password"
@@ -84,6 +114,7 @@ const Login = () => {
                             error={errors.password}
                             showTogglePassword={true}
                             autoComplete="current-password"
+                            disabled={loading}
                         />                        
                         <div className="form-options">
                             <label className="remember-me">
@@ -92,12 +123,19 @@ const Login = () => {
                                     name="rememberMe"
                                     checked={credentials.rememberMe}
                                     onChange={handleChange}
+                                    disabled={loading}
                                 />
                                 <span className="checkbox-label">Lưu mật khẩu</span>
                             </label>
                             <Link to="/forgot-password" className="forgot-password">Quên mật khẩu</Link>
                         </div>                       
-                        <button type="submit" className="login-button">Đăng Nhập</button>
+                        <button 
+                            type="submit" 
+                            className="login-button"
+                            disabled={loading}
+                        >
+                            {loading ? 'Đang xử lý...' : 'Đăng Nhập'}
+                        </button>
                     </form>                    
                     <div className="register-prompt">
                         <span>Bạn chưa có tài khoản? </span>

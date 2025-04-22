@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
+import { useCart } from '../context/CartContext';
 import '../assets/css/ProductDetails.css';
 
 import starIcon from '../assets/icons/star.png';
@@ -14,9 +15,11 @@ import toteBagImage from '../assets/images/recycled-tote-bag-1.jpg';
 import tshirtImage from '../assets/images/T-shirt products.jpg';
 
 const ProductDetails = () => {
+    const navigate = useNavigate();
+    const { addToCart } = useCart();
     const [selectedSize, setSelectedSize] = useState('M');
     const [selectedColor, setSelectedColor] = useState('Blue');
-    const [quantity, setQuantity] = useState(0);
+    const [quantity, setQuantity] = useState(1); // Default to 1 instead of 0
     const [activeRecommendationDot, setActiveRecommendationDot] = useState(0);
 
     // Size options
@@ -69,7 +72,7 @@ const ProductDetails = () => {
     const handleQuantityChange = (action) => {
         if (action === 'increment') {
             setQuantity(quantity + 1);
-        } else if (action === 'decrement' && quantity > 0) {
+        } else if (action === 'decrement' && quantity > 1) {
             setQuantity(quantity - 1);
         }
     };
@@ -77,14 +80,27 @@ const ProductDetails = () => {
     // Handler for adding to cart
     const handleAddToCart = () => {
         if (quantity > 0) {
-            console.log('Added to cart:', {
-                product: 'Mũ lưỡi trai',
-                size: selectedSize,
+            const productToAdd = {
+                id: 1, // In a real app, this would be a real product ID
+                name: 'Mũ lưỡi trai',
                 color: selectedColor,
-                quantity
-            });
-        // Implement cart functionality here
+                size: selectedSize,
+                price: 220000, // In a real app, this would come from the product data
+                quantity: quantity,
+                image: capImage
+            };
+            
+            addToCart(productToAdd);
+            
+            // Optional: Show a toast or confirmation message
+            alert('Sản phẩm đã được thêm vào giỏ hàng!');
         }
+    };
+    
+    // Handler for direct buying
+    const handleBuyNow = () => {
+        handleAddToCart();
+        navigate('/cart');
     };
 
     // Handler for recommendation dots
@@ -174,7 +190,7 @@ const ProductDetails = () => {
                                 <img src={cartIcon} alt="cart" style={{ width: '20px', marginRight: '10px', filter: 'brightness(0) saturate(100%) invert(22%) sepia(27%) saturate(606%) hue-rotate(111deg) brightness(93%) contrast(87%)' }} />
                                 Thêm vào giỏ hàng
                             </button>
-                            <button className="product-details-buy-btn" onClick={handleAddToCart}>
+                            <button className="product-details-buy-btn" onClick={handleBuyNow}>
                                 Mua hàng
                             </button>
                             <button className="product-details-share-btn">

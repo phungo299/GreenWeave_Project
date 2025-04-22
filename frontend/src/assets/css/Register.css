@@ -180,6 +180,22 @@ input::-webkit-credentials-auto-fill-button {
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
+.register-error {
+    padding: 10px;
+    background-color: #ffebee;
+    color: #d32f2f;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    border-left: 4px solid #f44336;
+}
+
+.register-submit-button:disabled,
+.register-google-button:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 992px) {
     .register-container {
