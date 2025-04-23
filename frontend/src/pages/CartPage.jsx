@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import { useCart } from '../context/CartContext';
 import '../assets/css/CartPage.css';
 
 const CartPage = () => {
+    const navigate = useNavigate();
     // Get cart data and functions from context
     const { cartItems, removeFromCart, updateQuantity } = useCart();
     
@@ -117,6 +118,11 @@ const CartPage = () => {
             );
         }
         return buttons;
+    };
+
+    // Handle checkout
+    const handleCheckout = () => {
+        navigate('/payment');
     };
 
     return (
@@ -234,7 +240,7 @@ const CartPage = () => {
                             </div>
                         </div>
                         
-                        <button className="cart-checkout-btn">
+                        <button className="cart-checkout-btn" onClick={handleCheckout}>
                             Mua hàng
                         </button>
                     </>

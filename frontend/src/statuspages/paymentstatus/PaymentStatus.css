@@ -1,0 +1,116 @@
+.payment-status-container {
+    margin-top: 32px;
+    min-height: 70vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px 0px 20px;
+    background-color: #f9f9f9;
+}
+
+.payment-status-box {
+    max-width: 1200px;
+    width: 100%;
+    background-color: white;
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.payment-status-title {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.payment-status-title.success {
+    color: #1e4d2b;
+}
+
+.payment-status-title.fail {
+    color: #d32f2f;
+}
+
+.payment-status-icon {
+    margin: 20px 0;
+}
+
+.payment-status-icon img {
+    width: 240px;
+    height: 240px;
+    object-fit: contain;
+}
+
+.payment-status-message {
+    margin: 16px 0 30px;
+}
+
+.payment-status-message h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.payment-status-message p {
+    font-size: 20px;
+    color: #666;
+    line-height: 1.5;
+    max-width: 80%;
+    margin: 0 auto;
+}
+
+.payment-status-button {
+    margin-top: 30px;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.success-btn {
+    background-color: #1e4d2b;
+    color: white;
+}
+
+.success-btn:hover {
+    background-color: #143620;
+}
+
+.fail-btn {
+    background-color: #d32f2f;
+    color: white;
+}
+
+.fail-btn:hover {
+    background-color: #b71c1c;
+}
+
+.arrow {
+    margin-left: 8px;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .payment-status-box {
+        padding: 30px 20px;
+    }
+    
+    .payment-status-title {
+        font-size: 28px;
+    }
+    
+    .payment-status-message p {
+        max-width: 95%;
+    }
+}
