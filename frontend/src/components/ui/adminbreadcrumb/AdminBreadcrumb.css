@@ -1,0 +1,41 @@
+.gw-admin-breadcrumb {
+    background-color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+}
+
+.gw-admin-breadcrumb-item {
+    color: #A3AED0;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+
+.gw-admin-breadcrumb-item:hover {
+    color: #2B3674;
+}
+
+.gw-admin-breadcrumb-item.active {
+    color: #2B3674;
+    font-weight: 600;
+}
+
+.gw-admin-breadcrumb-separator {
+    color: #A3AED0;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .gw-admin-breadcrumb {
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+}

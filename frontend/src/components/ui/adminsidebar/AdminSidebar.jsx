@@ -29,12 +29,12 @@ const AdminSidebar = () => {
                 <span className="gw-admin-sidebar-title">ADMIN</span>
             </div>     
             <div className="gw-admin-sidebar-menu">
-                <Link to="/admin" className={`gw-admin-menu-item ${isActive('/admin') ? 'active' : ''}`}>
+                <Link to="/admin/statistics" className={`gw-admin-menu-item ${isActive('/admin/statistics') ? 'active' : ''}`}>
                     <div className="gw-admin-menu-icon-wrapper">
                         <img src={StatisticsIcon} alt="Statistics" className="gw-admin-menu-icon" />
                     </div>
                     <span className="gw-admin-menu-text">Thống kê</span>
-                </Link>     
+                </Link>    
                 <Link to="/admin/products" className={`gw-admin-menu-item ${isActive('/admin/products') ? 'active' : ''}`}>
                     <div className="gw-admin-menu-icon-wrapper">
                         <img src={ProductsIcon} alt="Products" className="gw-admin-menu-icon" />

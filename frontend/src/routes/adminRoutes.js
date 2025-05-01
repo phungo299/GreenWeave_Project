@@ -1,5 +1,6 @@
 import AdminLayout from '../components/layout/adminlayout/AdminLayout';
 import AdminDashboard from '../adminpages/AdminDashboard';
+import AdminStatisticPage from '../adminpages/statisticpage/AdminStatisticPage';
 
 // import AdminProductsPage from '../adminpages/AdminProductsPage';
 // import AdminOrdersPage from '../adminpages/AdminOrdersPage';
@@ -25,6 +26,10 @@ const adminRoutes = [
             {
                 path: '',
                 component: AdminDashboard
+            },
+            {
+                path: 'statistics',
+                component: AdminStatisticPage
             },
             {
                 path: 'products',

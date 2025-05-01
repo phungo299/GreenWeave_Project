@@ -1,0 +1,260 @@
+.gw-admin-statistic-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gw-admin-statistic-top-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.gw-admin-statistic-bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.gw-admin-statistic-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.gw-admin-statistic-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.gw-admin-statistic-card-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2B3674;
+    margin: 0;
+}
+
+.gw-admin-statistic-period {
+    font-size: 12px;
+    color: #A3AED0;
+    text-transform: uppercase;
+}
+
+.gw-admin-statistic-value {
+    font-size: 34px;
+    font-weight: 700;
+    color: #2B3674;
+    margin: 10px 0;
+}
+
+.gw-admin-statistic-chart {
+    margin-top: 20px;
+}
+
+.gw-admin-statistic-chart .recharts-responsive-container {
+    min-height: 100px;
+}
+
+/* Progress Bar Styles */
+.gw-admin-progress-container {
+    margin-top: 20px;
+}
+
+.gw-admin-progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #E9EDF7;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.gw-admin-progress-fill {
+    height: 100%;
+    background-color: #4318FF;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.gw-admin-progress-text {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #A3AED0;
+}
+
+/* Best Sellers Styles */
+.gw-admin-bestsellers {
+    height: 100%;
+}
+
+.gw-admin-bestsellers-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 40px);
+}
+
+.gw-admin-bestsellers-value-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 20px;
+}
+
+.gw-admin-bestsellers-value {
+    font-size: 34px;
+    font-weight: 700;
+    color: #2B3674;
+    margin: 0;
+}
+
+.gw-admin-bestsellers-subtitle {
+    color: #A3AED0;
+    font-size: 14px;
+}
+
+.gw-admin-bestsellers-list {
+    margin-bottom: 20px;
+}
+
+.gw-admin-bestsellers-item {
+    padding: 8px 12px;
+    color: #2B3674;
+    font-size: 14px;
+    background-color: #d8e2f8;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.gw-admin-bestsellers-item:last-child {
+    margin-bottom: 0;
+}
+
+.gw-admin-bestsellers-chart {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gw-admin-bestsellers-chart .recharts-responsive-container {
+    min-height: 150px;
+}
+
+/* Recent Orders Table Styles */
+.gw-admin-orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.gw-admin-orders-table th {
+    text-align: left;
+    padding: 12px;
+    color: #A3AED0;
+    font-weight: 500;
+    font-size: 14px;
+    border-bottom: 1px solid #E9EDF7;
+}
+
+.gw-admin-orders-table td {
+    padding: 12px;
+    color: #2B3674;
+    font-size: 14px;
+    border-bottom: 1px solid #E9EDF7;
+}
+
+.gw-admin-order-status {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    min-width: 100px;
+    text-align: center;
+}
+
+.gw-admin-order-status.processing {
+    background-color: #faf8c3;
+    color: #fac355;
+}
+
+.gw-admin-order-status.cancelled {
+    background-color: #ffd9d9;
+    color: #FF6B72;
+}
+
+.gw-admin-order-status.delivered {
+    background-color: #E8FDF5;
+    color: #00B074;
+}
+
+@media (max-width: 1200px) {
+    .gw-admin-statistic-top-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gw-admin-statistic-bottom-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .gw-admin-statistic-container {
+        padding: 10px;
+    }
+
+    .gw-admin-statistic-top-row {
+        grid-template-columns: 1fr;
+    }
+
+    .gw-admin-statistic-card {
+        padding: 15px;
+    }
+
+    .gw-admin-statistic-value {
+        font-size: 28px;
+    }
+
+    .gw-admin-bestsellers-value {
+        font-size: 28px;
+    }
+
+    .gw-admin-orders-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .gw-admin-orders-table th,
+    .gw-admin-orders-table td {
+        padding: 8px;
+        font-size: 13px;
+    }
+
+    .gw-admin-order-status {
+        padding: 4px 8px;
+        min-width: 80px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .gw-admin-statistic-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .gw-admin-bestsellers-value-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .gw-admin-bestsellers-chart {
+        height: 150px;
+    }
+}

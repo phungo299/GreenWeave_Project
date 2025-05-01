@@ -1,72 +1,72 @@
 import React from 'react';
+import { FaUserShield, FaFileAlt, FaBell, FaCalendarCheck } from 'react-icons/fa';
+import Breadcrumb from '../components/ui/adminbreadcrumb/AdminBreadcrumb.jsx';
 import '../assets/css/AdminDashboard.css';
 
 const AdminDashboard = () => {
+    const notifications = [
+        { id: 1, type: 'security', message: 'Cảnh báo bảo mật: Đăng nhập không thành công', time: '5 phút trước' },
+        { id: 2, type: 'system', message: 'Hệ thống vừa được cập nhật lên phiên bản mới', time: '1 giờ trước' },
+        { id: 3, type: 'activity', message: 'Báo cáo hoạt động tháng đã sẵn sàng', time: '2 giờ trước' },
+    ];
+
+    const quickActions = [
+        { id: 1, icon: <FaUserShield />, title: 'Quản lý quyền', description: 'Phân quyền người dùng' },
+        { id: 2, icon: <FaFileAlt />, title: 'Báo cáo', description: 'Tạo báo cáo nhanh' },
+        { id: 3, icon: <FaCalendarCheck />, title: 'Lịch hẹn', description: 'Xem lịch công việc' },
+    ];
+
     return (
-        <div className="admin-dashboard">
-            <h1 className="dashboard-title">Bảng điều khiển</h1>
-            <div className="dashboard-stats">
-                <div className="stat-card">
-                    <h3>Tổng đơn hàng</h3>
-                    <p className="stat-value">254</p>
+        <div className="gw-admin-dashboard">
+            <Breadcrumb />           
+            <div className="gw-dashboard-welcome">
+                <div className="gw-welcome-text">
+                    <h1>Xin chào, Admin!</h1>
+                    <p>Đây là tổng quan về hệ thống của bạn</p>
                 </div>
-                <div className="stat-card">
-                    <h3>Doanh thu tháng</h3>
-                    <p className="stat-value">14.560.000 đ</p>
+                <div className="gw-current-time">
+                    {new Date().toLocaleDateString('vi-VN', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })}
                 </div>
-                <div className="stat-card">
-                    <h3>Khách hàng mới</h3>
-                    <p className="stat-value">48</p>
+            </div>
+            <div className="gw-dashboard-grid">
+                <div className="gw-dashboard-notifications">
+                    <div className="gw-section-header">
+                        <h2>Thông báo mới</h2>
+                        <FaBell />
+                    </div>
+                    <div className="gw-notifications-list">
+                        {notifications.map(notification => (
+                            <div key={notification.id} className={`gw-notification-item ${notification.type}`}>
+                                <div className="gw-notification-content">
+                                    <p>{notification.message}</p>
+                                    <span>{notification.time}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <div className="stat-card">
-                    <h3>Sản phẩm</h3>
-                    <p className="stat-value">126</p>
-                </div>
-            </div>     
-            <div className="recent-section">
-                <h2>Đơn hàng gần đây</h2>
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Khách hàng</th>
-                                <th>Ngày</th>
-                                <th>Trạng thái</th>
-                                <th>Tổng tiền</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#12345</td>
-                                <td>Nguyễn Văn A</td>
-                                <td>15/07/2023</td>
-                                <td><span className="status completed">Hoàn thành</span></td>
-                                <td>540.000 đ</td>
-                            </tr>
-                            <tr>
-                                <td>#12346</td>
-                                <td>Trần Thị B</td>
-                                <td>15/07/2023</td>
-                                <td><span className="status pending">Đang xử lý</span></td>
-                                <td>290.000 đ</td>
-                            </tr>
-                            <tr>
-                                <td>#12347</td>
-                                <td>Lê Văn C</td>
-                                <td>14/07/2023</td>
-                                <td><span className="status shipped">Đang giao</span></td>
-                                <td>1.240.000 đ</td>
-                            </tr>
-                            <tr>
-                                <td>#12348</td>
-                                <td>Phạm Thị D</td>
-                                <td>14/07/2023</td>
-                                <td><span className="status completed">Hoàn thành</span></td>
-                                <td>360.000 đ</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div className="gw-dashboard-quick-actions">
+                    <div className="gw-section-header">
+                        <h2>Thao tác nhanh</h2>
+                    </div>
+                    <div className="gw-quick-actions-grid">
+                        {quickActions.map(action => (
+                            <div key={action.id} className="gw-quick-action-card">
+                                <div className="gw-quick-action-icon">
+                                    {action.icon}
+                                </div>
+                                <div className="gw-quick-action-text">
+                                    <h3>{action.title}</h3>
+                                    <p>{action.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
