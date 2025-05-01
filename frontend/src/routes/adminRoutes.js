@@ -1,8 +1,8 @@
 import AdminLayout from '../components/layout/adminlayout/AdminLayout';
 import AdminDashboard from '../adminpages/AdminDashboard';
 import AdminStatisticPage from '../adminpages/statisticpage/AdminStatisticPage';
-
-// import AdminProductsPage from '../adminpages/AdminProductsPage';
+import AdminProductList from '../adminpages/productlistpage/AdminProductList';
+import AdminProductDetails from '../adminpages/productdetailspage/AdminProductDetails';
 // import AdminOrdersPage from '../adminpages/AdminOrdersPage';
 // import AdminCustomersPage from '../adminpages/AdminCustomersPage';
 // import AdminReviewsPage from '../adminpages/AdminReviewsPage';
@@ -33,7 +33,15 @@ const adminRoutes = [
             },
             {
                 path: 'products',
-                component: placeholderPage
+                component: AdminProductList
+            },
+            {
+                path: 'products/add',
+                component: AdminProductDetails
+            },
+            {
+                path: 'products/edit/:id',
+                component: AdminProductDetails
             },
             {
                 path: 'orders',

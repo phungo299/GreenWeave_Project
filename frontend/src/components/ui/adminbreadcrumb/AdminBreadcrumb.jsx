@@ -14,7 +14,9 @@ const AdminBreadcrumb = () => {
         'orders': 'Đơn hàng',
         'customers': 'Khách hàng',
         'reviews': 'Đánh giá',
-        'settings': 'Cài đặt'
+        'settings': 'Cài đặt',
+        'add': 'Add',
+        'edit': 'Edit'
     };
 
     return (

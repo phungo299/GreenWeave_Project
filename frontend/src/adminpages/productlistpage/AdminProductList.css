@@ -1,0 +1,229 @@
+.admin-product-list-container {
+    padding: 20px;
+}
+
+.admin-product-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.admin-product-list-header h1 {
+    font-size: 32px;
+    color: #12513D;
+    margin: 0;
+}
+
+.admin-product-list-add-button {
+    background-color: #12513D;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.admin-product-list-add-button:hover {
+    background-color: #0d3c2d;
+}
+
+.admin-product-list-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.admin-product-list-filters {
+    display: flex;
+    gap: 12px;
+}
+
+.admin-product-list-filter {
+    padding: 8px 12px;
+    border: 1px solid #E9EDF7;
+    border-radius: 8px;
+    background-color: white;
+    color: #12513D;
+    min-width: 120px;
+}
+
+.admin-product-list-search {
+    position: relative;
+    flex: 0 0 300px;
+}
+
+.admin-product-list-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #A3AED0;
+}
+
+.admin-product-list-search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid #E9EDF7;
+    border-radius: 8px;
+    color: #2B3674;
+}
+
+.admin-product-list-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.admin-product-list-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-product-list-table th {
+    background-color: #F8F9FA;
+    color: #12513D;
+    font-weight: 500;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E9EDF7;
+}
+
+.admin-product-list-table td {
+    padding: 12px 16px;
+    color: #2B3674;
+    border-bottom: 1px solid #E9EDF7;
+}
+
+.admin-product-list-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-product-list-product-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.admin-product-list-sort-icon {
+    margin-left: 4px;
+    cursor: pointer;
+    color: #12513D;
+}
+
+.admin-product-list-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-product-list-action-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.admin-product-list-action-button.update {
+    background-color: #E8FDF5;
+    color: #00B074;
+}
+
+.admin-product-list-action-button.delete {
+    background-color: #FFE7D9;
+    color: #FF6B72;
+}
+
+.admin-product-list-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.admin-product-list-page-button {
+    padding: 6px 12px;
+    border: 1px solid #E9EDF7;
+    background: white;
+    color: #2B3674;
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 32px;
+}
+
+.admin-product-list-page-button.active {
+    background-color: #12513D;
+    color: white;
+    border-color: #12513D;
+}
+
+.admin-product-list-page-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-product-list-ellipsis {
+    color: #A3AED0;
+    padding: 0 6px;
+    user-select: none;
+    cursor: default;
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+    .admin-product-list-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-product-list-search {
+        flex: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-product-list-table-container {
+        overflow-x: auto;
+    }
+
+    .admin-product-list-filters {
+        flex-wrap: wrap;
+    }
+
+    .admin-product-list-filter {
+        flex: 1 1 calc(50% - 6px);
+    }
+
+    .admin-product-list-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-product-list-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .admin-product-list-add-button {
+        width: 100%;
+    }
+
+    .admin-product-list-filter {
+        flex: 1 1 100%;
+    }
+}
