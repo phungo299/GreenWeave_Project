@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminProductList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
-import { FaSearch, FaSort, FaEllipsisH } from 'react-icons/fa';
+import Pagination from '../../components/ui/pagination/Pagination';
+import { FaSearch, FaSort } from 'react-icons/fa';
 
 const AdminProductList = () => {
     const navigate = useNavigate();
@@ -24,31 +25,6 @@ const AdminProductList = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 24;
-
-    const renderPagination = () => {
-        const pages = [];
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === currentPage || i === totalPages || 
-                i === currentPage - 1 || i === currentPage + 1) {
-                pages.push(
-                    <button 
-                        key={i}
-                        className={`admin-product-list-page-button ${currentPage === i ? 'active' : ''}`}
-                        onClick={() => setCurrentPage(i)}
-                    >
-                        {i}
-                    </button>
-                );
-            } else if (i === currentPage - 2 || i === currentPage + 2) {
-                pages.push(
-                    <span key={i} className="admin-product-list-ellipsis">
-                        <FaEllipsisH />
-                    </span>
-                );
-            }
-        }
-        return pages;
-    };
 
     return (
         <div className="admin-product-list-container">
@@ -140,23 +116,11 @@ const AdminProductList = () => {
                     </tbody>
                 </table>
             </div>
-            <div className="admin-product-list-pagination">
-                <button 
-                    className="admin-product-list-page-button"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                >
-                    &lt;
-                </button>
-                {renderPagination()}
-                <button 
-                    className="admin-product-list-page-button"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                >
-                    &gt;
-                </button>
-            </div>
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
         </div>
     );
 };

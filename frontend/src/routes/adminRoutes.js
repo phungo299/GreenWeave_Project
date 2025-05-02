@@ -3,7 +3,7 @@ import AdminDashboard from '../adminpages/AdminDashboard';
 import AdminStatisticPage from '../adminpages/statisticpage/AdminStatisticPage';
 import AdminProductList from '../adminpages/productlistpage/AdminProductList';
 import AdminProductDetails from '../adminpages/productdetailspage/AdminProductDetails';
-// import AdminOrdersPage from '../adminpages/AdminOrdersPage';
+import AdminOrderList from '../adminpages/orderlistpage/AdminOrderList';
 // import AdminCustomersPage from '../adminpages/AdminCustomersPage';
 // import AdminReviewsPage from '../adminpages/AdminReviewsPage';
 // import AdminSettingsPage from '../adminpages/AdminSettingsPage';
@@ -45,7 +45,7 @@ const adminRoutes = [
             },
             {
                 path: 'orders',
-                component: placeholderPage
+                component: AdminOrderList
             },
             {
                 path: 'customers',
