@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminProductList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
+import SearchBar from '../../components/ui/searchbar/SearchBar';
 import Pagination from '../../components/ui/pagination/Pagination';
-import { FaSearch, FaSort } from 'react-icons/fa';
+import { FaSort } from 'react-icons/fa';
 
 const AdminProductList = () => {
     const navigate = useNavigate();
+    const [search, setSearch] = useState('');
 
     const [products] = useState([
         { id: 1, image: '/path/to/image1.jpg', name: 'Mũ lưỡi trai', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ',  note: '...'},
@@ -14,6 +16,11 @@ const AdminProductList = () => {
         { id: 3, image: '/path/to/image3.jpg', name: 'Balo', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ', note: '...'},
         { id: 4, image: '/path/to/image4.jpg', name: 'Áo phông', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ', note: '...'},
     ]);
+
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        // If you want to filter products by search, filter in render or create variable filteredProducts
+    };
 
     const handleAddProduct = () => {
         navigate('/admin/products/add');
@@ -52,14 +59,13 @@ const AdminProductList = () => {
                         <option value="clothing">Quần áo</option>
                     </select>
                 </div>
-                <div className="admin-product-list-search">
-                    <FaSearch className="admin-product-list-search-icon" />
-                    <input 
-                        type="text" 
-                        placeholder="Tìm sản phẩm"
-                        className="admin-product-list-search-input"
-                    />
-                </div>
+                <SearchBar
+                    value={search}
+                    onChange={handleSearchChange}
+                    placeholder="Tìm sản phẩm"
+                    className="admin-product-list-search"
+                    inputClassName="admin-product-list-search-input"
+                />
             </div>
             <div className="admin-product-list-table-container">
                 <table className="admin-product-list-table">

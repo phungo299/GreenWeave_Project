@@ -12,7 +12,7 @@ const AdminBreadcrumb = () => {
         'statistics': 'Thống kê',
         'products': 'Sản phẩm',
         'orders': 'Đơn hàng',
-        'customers': 'Khách hàng',
+        'users': 'Người dùng',
         'reviews': 'Đánh giá',
         'settings': 'Cài đặt',
         'add': 'Add',

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import './AdminOrderList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
+import SearchBar from '../../components/ui/searchbar/SearchBar';
 import AdminCustomerDesignForm from './AdminCustomerDesignForm';
 import Pagination from '../../components/ui/pagination/Pagination';
-import { FaSearch } from 'react-icons/fa';
 
 const ordersData = [
     {
@@ -60,6 +60,11 @@ const AdminOrderList = () => {
         order.name.toLowerCase().includes(search.toLowerCase())
     );
 
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        setPage(1);
+    };
+
     const handleShowDesign = (order) => {
         // Simulate design data, real data taken from order or API
         setSelectedDesign({
@@ -85,15 +90,13 @@ const AdminOrderList = () => {
             <div className="admin-order-list-content">
                 <div className="admin-order-list-header-row">
                     <h2 className="admin-order-list-title">Đơn Hàng</h2>
-                    <div className="admin-order-list-search">
-                        <FaSearch className="admin-order-list-search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Tìm đơn hàng"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
+                    <SearchBar
+                        value={search}
+                        onChange={handleSearchChange}
+                        placeholder="Tìm đơn hàng"
+                        className="admin-order-list-search-box"
+                        inputClassName="admin-order-list-search-input"
+                    />
                 </div>
                 <div className="admin-order-list-table-wrapper">
                     <table className="admin-order-list-table">

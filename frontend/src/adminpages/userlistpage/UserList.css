@@ -1,0 +1,131 @@
+.admin-user-list-container {
+    min-height: 100vh;
+    padding: 20px;
+    width: 100%;
+}
+
+.admin-user-list-content {
+    background: #fff;
+    border-radius: 16px;
+    margin: 40px auto 0 auto;
+    max-width: 1200px;
+    padding: 32px 32px 24px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-user-list-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.admin-user-list-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #234b2c;
+    margin: 0;
+}
+
+.admin-user-list-table-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #d6e7db;
+    background: #f6f6f6;
+}
+
+.admin-user-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #f6f6f6;
+}
+
+.admin-user-list-table thead {
+    background: #d6e7db;
+}
+
+.admin-user-list-table th, .admin-user-list-table td {
+    padding: 16px 12px;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.admin-user-list-table th {
+    color: #234b2c;
+    font-weight: 700;
+    border-bottom: 1px solid #c9d8cd;
+}
+
+.admin-user-list-row {
+    background: #f6f6f6;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background 0.2s;
+}
+
+.admin-user-list-row:last-child {
+    border-bottom: none;
+}
+
+.admin-user-list-row:hover {
+    background: #eaf3ee;
+}
+
+.admin-user-list-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.admin-user-list-status {
+    display: block;   
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    width: 130px;
+    text-align: center;
+}
+
+.admin-user-list-status-unverified {
+    background: #fff8e1;
+    color: #fbc02d;
+    border: 1px solid #ffe082;
+}
+  
+.admin-user-list-status-active {
+    background: #e8fdf5;
+    color: #00b074;
+    border: 1px solid #b2f2dd;
+}
+  
+.admin-user-list-status-disabled {
+    background: #ffd9d9;
+    color: #ff6b72;
+    border: 1px solid #ffb3b3;
+}
+
+.admin-user-list-action-btn {
+    background: #87afff;
+    color: #0e11d4;
+    border: 1px solid #2234fe;
+    border-radius: 6px;
+    padding: 4px 14px;
+    font-size: 0.93rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.admin-user-list-action-btn:hover {
+    background: #071ecd;
+    color: #fff;
+}
+
+.admin-user-list-pagination {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}

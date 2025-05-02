@@ -4,7 +4,7 @@ import AdminStatisticPage from '../adminpages/statisticpage/AdminStatisticPage';
 import AdminProductList from '../adminpages/productlistpage/AdminProductList';
 import AdminProductDetails from '../adminpages/productdetailspage/AdminProductDetails';
 import AdminOrderList from '../adminpages/orderlistpage/AdminOrderList';
-// import AdminCustomersPage from '../adminpages/AdminCustomersPage';
+import UserList from '../adminpages/userlistpage/UserList';
 // import AdminReviewsPage from '../adminpages/AdminReviewsPage';
 // import AdminSettingsPage from '../adminpages/AdminSettingsPage';
 
@@ -48,8 +48,8 @@ const adminRoutes = [
                 component: AdminOrderList
             },
             {
-                path: 'customers',
-                component: placeholderPage
+                path: 'users',
+                component: UserList
             },
             {
                 path: 'reviews',

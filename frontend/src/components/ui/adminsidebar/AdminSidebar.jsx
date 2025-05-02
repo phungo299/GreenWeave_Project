@@ -47,11 +47,11 @@ const AdminSidebar = () => {
                     </div>
                     <span className="gw-admin-menu-text">Đơn hàng</span>
                 </Link>    
-                <Link to="/admin/customers" className={`gw-admin-menu-item ${isActive('/admin/customers') ? 'active' : ''}`}>
+                <Link to="/admin/users" className={`gw-admin-menu-item ${isActive('/admin/users') ? 'active' : ''}`}>
                     <div className="gw-admin-menu-icon-wrapper">
-                        <img src={CustomersIcon} alt="Customers" className="gw-admin-menu-icon" />
+                        <img src={CustomersIcon} alt="Users" className="gw-admin-menu-icon" />
                     </div>
-                    <span className="gw-admin-menu-text">Khách hàng</span>
+                    <span className="gw-admin-menu-text">Người dùng</span>
                 </Link>       
                 <Link to="/admin/reviews" className={`gw-admin-menu-item ${isActive('/admin/reviews') ? 'active' : ''}`}>
                     <div className="gw-admin-menu-icon-wrapper">

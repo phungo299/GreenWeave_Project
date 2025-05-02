@@ -52,27 +52,6 @@
     min-width: 120px;
 }
 
-.admin-product-list-search {
-    position: relative;
-    flex: 0 0 300px;
-}
-
-.admin-product-list-search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #A3AED0;
-}
-
-.admin-product-list-search-input {
-    width: 100%;
-    padding: 8px 12px 8px 36px;
-    border: 1px solid #E9EDF7;
-    border-radius: 8px;
-    color: #2B3674;
-}
-
 .admin-product-list-table-container {
     background: white;
     border-radius: 12px;
