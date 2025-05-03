@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './AdminProductList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
+import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
 
@@ -19,10 +20,54 @@ const AdminProductList = () => {
         { id: 4, image: '/path/to/image4.jpg', name: 'Áo phông', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ', note: '...'},
     ]);
 
+    const [filterValues, setFilterValues] = useState({
+        status: '',
+        category: '',
+    });
+
+    const filterConfig = [
+        {
+            label: 'Trạng thái',
+            field: 'status',
+            options: [
+                { label: 'Còn hàng', value: 'in-stock' },
+                { label: 'Hết hàng', value: 'out-of-stock' },
+            ],
+        },
+        {
+            label: 'Thể loại',
+            field: 'category',
+            options: [
+                { label: 'Mũ', value: 'hat' },
+                { label: 'Túi', value: 'bag' },
+                { label: 'Quần áo', value: 'clothing' },
+            ],
+        },
+    ];
+
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
         // If you want to filter products by search, filter in render or create variable filteredProducts
     };
+
+    const handleFilterChange = (field, value) => {
+        setFilterValues(prev => ({
+            ...prev,
+            [field]: value,
+        }));
+        // Can filter data here or in render
+    };
+
+    const filteredProducts = products.filter(product => {
+        if (filterValues.status && (filterValues.status === 'in-stock' ? product.stock !== 'Còn hàng' : product.stock !== 'Hết hàng')) {
+            return false;
+        }
+        if (filterValues.category && product.category !== filterValues.category) {
+            return false;
+        }
+        // ... other filters if any
+        return true;
+    });
 
     const sortFunctions = {
         name: (a, b, order) => order === 'asc'
@@ -42,7 +87,7 @@ const AdminProductList = () => {
         setSortOrder(nextOrder);
     };
       
-    let sortedProducts = [...products];
+    let sortedProducts = [...filteredProducts];
     if (sortField && sortOrder !== 'none') {
         sortedProducts.sort((a, b) => sortFunctions[sortField](a, b, sortOrder));
     }
@@ -71,19 +116,11 @@ const AdminProductList = () => {
                 </button>
             </div>
             <div className="admin-product-list-controls">
-                <div className="admin-product-list-filters">
-                    <select className="admin-product-list-filter">
-                        <option value="">Trạng thái</option>
-                        <option value="in-stock">Còn hàng</option>
-                        <option value="out-of-stock">Hết hàng</option>
-                    </select>
-                    <select className="admin-product-list-filter">
-                        <option value="">Thể loại</option>
-                        <option value="hat">Mũ</option>
-                        <option value="bag">Túi</option>
-                        <option value="clothing">Quần áo</option>
-                    </select>
-                </div>
+                <FilterBar
+                    filters={filterConfig}
+                    values={filterValues}
+                    onChange={handleFilterChange}
+                />
                 <SearchBar
                     value={search}
                     onChange={handleSearchChange}

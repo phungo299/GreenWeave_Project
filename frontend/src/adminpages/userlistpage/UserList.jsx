@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminBreadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
+import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
 import './UserList.css';
@@ -50,9 +51,33 @@ const PAGE_SIZE = 10;
 
 const UserList = () => {
     const [search, setSearch] = useState('');
+    const [filterValues, setFilterValues] = useState({
+        status: '',
+    });
     const [page, setPage] = useState(1);
     const [sortField, setSortField] = useState('');
     const [sortOrder, setSortOrder] = useState('none');
+
+    const filterConfig = [
+        {
+            label: 'Trạng thái',
+            field: 'status',
+            options: [
+                { label: 'Tất cả', value: '' },
+                { label: 'Chưa xác thực', value: 'unverified' },
+                { label: 'Đang hoạt động', value: 'active' },
+                { label: 'Vô hiệu hóa', value: 'disabled' },
+            ],
+        },
+    ];
+
+    const handleFilterChange = (field, value) => {
+        setFilterValues(prev => ({
+            ...prev,
+            [field]: value,
+        }));
+        setPage(1);
+    };
 
     const sortFunctions = {
         id: (a, b, order) => order === 'asc' ? a.id - b.id : b.id - a.id,
@@ -68,9 +93,11 @@ const UserList = () => {
         setSortOrder(nextOrder);
     };
 
-    const filteredUsers = MOCK_USERS.filter(user =>
-        user.name.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredUsers = MOCK_USERS.filter(user => {
+        const matchSearch = user.name.toLowerCase().includes(search.toLowerCase());
+        const matchStatus = !filterValues.status || user.status === filterValues.status;
+        return matchSearch && matchStatus;
+    });
 
     let sortedUsers = [...filteredUsers];
     if (sortField && sortOrder !== 'none') {
@@ -91,6 +118,13 @@ const UserList = () => {
             <div className="admin-user-list-content">
                 <div className="admin-user-list-header-row">
                     <h1 className="admin-user-list-title">Người dùng</h1>
+                </div>
+                <div className="admin-user-list-controls">
+                    <FilterBar
+                        filters={filterConfig}
+                        values={filterValues}
+                        onChange={handleFilterChange}
+                    />
                     <SearchBar
                         value={search}
                         onChange={handleSearchChange}

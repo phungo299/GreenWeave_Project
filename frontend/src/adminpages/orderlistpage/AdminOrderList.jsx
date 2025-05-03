@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './AdminOrderList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
+import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import AdminCustomerDesignForm from './AdminCustomerDesignForm';
 import Pagination from '../../components/ui/pagination/Pagination';
@@ -53,20 +54,47 @@ const PAGE_SIZE = 10;
 
 const AdminOrderList = () => {
     const [search, setSearch] = useState('');
+    const [filterValues, setFilterValues] = useState({
+        status: '',
+    });
     const [sortField, setSortField] = useState('');
     const [sortOrder, setSortOrder] = useState('none');
     const [openDesignForm, setOpenDesignForm] = useState(false);
     const [selectedDesign, setSelectedDesign] = useState(null);
     const [page, setPage] = useState(1);
 
-    const filteredOrders = ordersData.filter(order =>
-        order.name.toLowerCase().includes(search.toLowerCase())
-    );
-
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
         setPage(1);
     };
+
+    const filterConfig = [
+        {
+            label: 'Trạng thái',
+            field: 'status',
+            options: [
+                { label: 'Tất cả', value: '' },
+                { label: 'Đang xử lý', value: 'processing' },
+                { label: 'Đã Giao', value: 'delivered' },
+            ],
+        },
+    ];
+
+    const handleFilterChange = (field, value) => {
+        setFilterValues(prev => ({
+            ...prev,
+            [field]: value,
+        }));
+        setPage(1);
+    };
+
+    const filteredOrders = ordersData.filter(order => {
+        // Filter by search
+        const matchSearch = order.name.toLowerCase().includes(search.toLowerCase());
+        // Filter by status
+        const matchStatus = !filterValues.status || order.statusType === filterValues.status;
+        return matchSearch && matchStatus;
+    });
 
     const sortFunctions = {
         id: (a, b, order) => order === 'asc' ? a.id - b.id : b.id - a.id,
@@ -112,6 +140,13 @@ const AdminOrderList = () => {
             <div className="admin-order-list-content">
                 <div className="admin-order-list-header-row">
                     <h2 className="admin-order-list-title">Đơn Hàng</h2>
+                </div>
+                <div className="admin-order-list-controls">
+                    <FilterBar
+                        filters={filterConfig}
+                        values={filterValues}
+                        onChange={handleFilterChange}
+                    />
                     <SearchBar
                         value={search}
                         onChange={handleSearchChange}

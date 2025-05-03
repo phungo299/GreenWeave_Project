@@ -38,20 +38,6 @@
     gap: 20px;
 }
 
-.admin-product-list-filters {
-    display: flex;
-    gap: 12px;
-}
-
-.admin-product-list-filter {
-    padding: 8px 12px;
-    border: 1px solid #E9EDF7;
-    border-radius: 8px;
-    background-color: white;
-    color: #12513D;
-    min-width: 120px;
-}
-
 .admin-product-list-table-container {
     background: white;
     border-radius: 12px;
@@ -140,14 +126,6 @@
         overflow-x: auto;
     }
 
-    .admin-product-list-filters {
-        flex-wrap: wrap;
-    }
-
-    .admin-product-list-filter {
-        flex: 1 1 calc(50% - 6px);
-    }
-
     .admin-product-list-actions {
         flex-direction: column;
     }
@@ -162,9 +140,5 @@
 
     .admin-product-list-add-button {
         width: 100%;
-    }
-
-    .admin-product-list-filter {
-        flex: 1 1 100%;
     }
 }

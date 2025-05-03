@@ -19,7 +19,33 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 32px;
+    margin-bottom: 16px;
+}
+
+
+.admin-user-list-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+}
+
+.filter-bar {
+    flex-shrink: 0;
+}
+
+.admin-user-list-search-box {
+    width: 320px;
+    min-width: 220px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.filter-bar-select {
+    height: 40px;
+    font-size: 1rem;
 }
 
 .admin-user-list-title {
@@ -128,4 +154,93 @@
     margin-top: 24px;
     display: flex;
     justify-content: flex-end;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    .admin-user-list-content {
+        padding: 16px 4px 12px 4px;
+        max-width: 100%;
+        margin: 24px 0 0 0;
+    }
+    .admin-user-list-title {
+        font-size: 1.3rem;
+    }
+    .admin-user-list-table th, .admin-user-list-table td {
+        padding: 10px 6px;
+        font-size: 0.93rem;
+    }
+    .admin-user-list-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+    .admin-user-list-status {
+        width: 100px;
+        font-size: 0.8rem;
+        padding: 2px 6px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .admin-user-list-content {
+        margin: 8px 0 0 0;
+        padding: 6px 0 4px 0;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+    .admin-user-list-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .admin-user-list-title {
+        font-size: 1.05rem;
+    }
+    .admin-user-list-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .admin-user-list-search-box {
+        width: 100%;
+        min-width: 0;
+    }
+    .filter-bar {
+        width: 100%;
+    }
+    .admin-user-list-table-wrapper {
+        border-radius: 0;
+        border: none;
+        background: transparent;
+        overflow-x: auto;
+    }
+    .admin-user-list-table {
+        min-width: 600px;
+        font-size: 0.9rem;
+    }
+    .admin-user-list-table th, .admin-user-list-table td {
+        padding: 7px 3px;
+        font-size: 0.9rem;
+    }
+    .admin-user-list-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+    .admin-user-list-status {
+        width: 80px;
+        font-size: 0.75rem;
+        padding: 1px 4px;
+    }
+    .admin-user-list-action-btn {
+        padding: 3px 8px;
+        font-size: 0.85rem;
+    }
+    .admin-user-list-pagination {
+        margin-top: 12px;
+        justify-content: center;
+    }
 }
