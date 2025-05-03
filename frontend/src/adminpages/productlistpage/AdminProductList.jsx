@@ -107,7 +107,7 @@ const AdminProductList = () => {
         <div className="admin-product-list-container">
             <Breadcrumb />           
             <div className="admin-product-list-header">
-                <h1>Sản phẩm</h1>
+                <h1>Sản Phẩm</h1>
                 <button 
                     className="admin-product-list-add-button"
                     onClick={handleAddProduct}

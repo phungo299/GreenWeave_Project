@@ -6,7 +6,8 @@ import AdminProductDetails from '../adminpages/productdetailspage/AdminProductDe
 import AdminOrderList from '../adminpages/orderlistpage/AdminOrderList';
 import UserList from '../adminpages/userlistpage/UserList';
 import AdminReviewList from '../adminpages/reviewlistpage/AdminReviewList';
-// import AdminSettingsPage from '../adminpages/AdminSettingsPage';
+import SystemSettingsPage from '../adminpages/systemsettinglistpage/SystemSettingList';
+import SystemSettingsDetails from '../adminpages/systemsettingdetails/SystemSettingDetails';
 
 // Create a sample route structure for pages to be developed later
 const placeholderPage = () => (
@@ -57,7 +58,15 @@ const adminRoutes = [
             },
             {
                 path: 'settings',
-                component: placeholderPage
+                component: SystemSettingsPage
+            },
+            {
+                path: 'settings/add',
+                component: SystemSettingsDetails
+            },
+            {
+                path: 'settings/edit/:id',
+                component: SystemSettingsDetails
             },
             {
                 path: 'add',

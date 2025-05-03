@@ -1,0 +1,238 @@
+.admin-system-setting-container {
+    min-height: 100vh;
+    padding: 20px;
+    width: 100%;
+}
+
+.admin-system-setting-content {
+    background: #fff;
+    border-radius: 16px;
+    margin: 40px auto 0 auto;
+    max-width: 1200px;
+    padding: 32px 32px 24px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-system-setting-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-system-setting-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #234b2c;
+    margin: 0;
+}
+
+.admin-system-setting-add-btn {
+    background: #12513D;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-left: 16px;
+}
+
+.admin-system-setting-add-btn:hover {
+    background: #0d3c2d;
+}
+
+.admin-system-setting-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+}
+
+.filter-bar {
+    flex-shrink: 0;
+}
+
+.admin-system-setting-search-box {
+    width: 320px;
+    min-width: 220px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.filter-bar-select {
+    height: 40px;
+    font-size: 1rem;
+}
+
+.admin-system-setting-table-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #d6e7db;
+    background: #f6f6f6;
+}
+
+.admin-system-setting-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #f6f6f6;
+}
+
+.admin-system-setting-table th, .admin-system-setting-table td {
+    padding: 16px 12px;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.admin-system-setting-table th {
+    color: #234b2c;
+    font-weight: 700;
+    border-bottom: 1px solid #c9d8cd;
+}
+
+.admin-system-setting-row {
+    background: #f6f6f6;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background 0.2s;
+}
+
+.admin-system-setting-row:last-child {
+    border-bottom: none;
+}
+
+.admin-system-setting-row:hover {
+    background: #eaf3ee;
+}
+
+.admin-system-setting-status {
+    display: block;   
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    width: 136px;
+    text-align: center;
+}
+
+.admin-system-setting-status-active {
+    background: #e8fdf5;
+    color: #00b074;
+    border: 1px solid #b2f2dd;
+}
+  
+.admin-system-setting-status-inactive {
+    background: #ffd9d9;
+    color: #ff6b72;
+    border: 1px solid #ffb3b3;
+}
+
+.admin-system-setting-action-btn {
+    background: #87afff;
+    color: #0e11d4;
+    border: 1px solid #2234fe;
+    border-radius: 6px;
+    padding: 4px 14px;
+    font-size: 0.93rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.admin-system-setting-action-btn:hover {
+    background: #071ecd;
+    color: #fff;
+}
+
+.admin-system-setting-pagination {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .admin-system-setting-content {
+        padding: 16px 4px 12px 4px;
+        max-width: 100%;
+        margin: 24px 0 0 0;
+    }
+    .admin-system-setting-title {
+        font-size: 1.3rem;
+    }
+    .admin-system-setting-table th, .admin-system-setting-table td {
+        padding: 10px 6px;
+        font-size: 0.93rem;
+    }
+    .admin-system-setting-status {
+        width: 100px;
+        font-size: 0.8rem;
+        padding: 2px 6px;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-system-setting-content {
+        margin: 8px 0 0 0;
+        padding: 6px 0 4px 0;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+    .admin-system-setting-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .admin-system-setting-title {
+        font-size: 1.05rem;
+    }
+    .admin-system-setting-add-btn {
+        width: 100%;
+        margin-left: 0;
+    }
+    .admin-system-setting-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .admin-system-setting-search-box {
+        width: 100%;
+        min-width: 0;
+    }
+    .filter-bar {
+        width: 100%;
+    }
+    .admin-system-setting-table-wrapper {
+        border-radius: 0;
+        border: none;
+        background: transparent;
+        overflow-x: auto;
+    }
+    .admin-system-setting-table {
+        min-width: 600px;
+        font-size: 0.9rem;
+    }
+    .admin-system-setting-table th, .admin-system-setting-table td {
+        padding: 7px 3px;
+        font-size: 0.9rem;
+    }
+    .admin-system-setting-status {
+        width: 80px;
+        font-size: 0.75rem;
+        padding: 1px 4px;
+    }
+    .admin-system-setting-action-btn {
+        padding: 3px 8px;
+        font-size: 0.85rem;
+    }
+    .admin-system-setting-pagination {
+        margin-top: 12px;
+        justify-content: center;
+    }
+}

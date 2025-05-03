@@ -7,6 +7,42 @@ const AdminBreadcrumb = () => {
     const location = useLocation();
     const pathnames = location.pathname.split('/').filter(x => x);
 
+    const breadcrumbItems = [];
+    let skipNext = false;
+
+    pathnames.forEach((name, index) => {
+        if (skipNext) {
+            skipNext = false;
+            return;
+        }
+        
+        // Check if current path is "edit" and there is next path (ID)
+        if (name === "edit" && index < pathnames.length - 1) {
+            const id = pathnames[index + 1];
+            breadcrumbItems.push({
+                name: `Edit (ID: ${id})`,
+                path: `/${pathnames.slice(0, index + 2).join('/')}`,
+                isLast: index + 1 === pathnames.length - 1
+            });
+            skipNext = true;
+        } 
+        // Case where "add" has no ID after it
+        else if (name === "add") {
+            breadcrumbItems.push({
+                name: "Thêm mới",
+                path: `/${pathnames.slice(0, index + 1).join('/')}`,
+                isLast: index === pathnames.length - 1
+            });
+        }
+        else {
+            breadcrumbItems.push({
+                name: name,
+                path: `/${pathnames.slice(0, index + 1).join('/')}`,
+                isLast: index === pathnames.length - 1
+            });
+        }
+    });
+
     const breadcrumbMap = {
         'admin': 'Dashboard',
         'statistics': 'Thống kê',
@@ -21,17 +57,24 @@ const AdminBreadcrumb = () => {
 
     return (
         <div className="gw-admin-breadcrumb">
-            {pathnames.map((name, index) => {
-                const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
-                const isLast = index === pathnames.length - 1;
+            {breadcrumbItems.map((item, index) => {
+                const isLast = index === breadcrumbItems.length - 1;               
+                // Define the display label
+                let displayName = item.name;
+                if (breadcrumbMap[item.name]) {
+                    displayName = breadcrumbMap[item.name];
+                } else if (item.name.startsWith('Edit')) {
+                    // Keep the "Edit (ID)" format
+                    displayName = item.name;
+                }
 
                 return (
-                    <React.Fragment key={name}>
+                    <React.Fragment key={index}>
                         <Link 
-                            to={routeTo}
+                            to={item.path}
                             className={`gw-admin-breadcrumb-item ${isLast ? 'active' : ''}`}
                         >
-                            {breadcrumbMap[name] || name}
+                            {displayName}
                         </Link>
                         {!isLast && <FaChevronRight className="gw-admin-breadcrumb-separator" />}
                     </React.Fragment>

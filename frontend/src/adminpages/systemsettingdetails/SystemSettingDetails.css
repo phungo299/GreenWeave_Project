@@ -1,0 +1,256 @@
+.admin-system-setting-details-container {
+    min-height: 100vh;
+    padding: 20px;
+    width: 100%;
+}
+
+.admin-system-setting-details-content {
+    background: #fff;
+    border-radius: 16px;
+    margin: 40px auto 0 auto;
+    max-width: 1200px;
+    padding: 24px 32px 24px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-system-setting-details-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #234b2c;
+    margin-bottom: 24px;
+}
+
+.admin-system-setting-details-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.admin-system-setting-details-row {
+    display: flex;
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.admin-system-setting-details-col {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.admin-system-setting-details-col .input-label,
+.admin-system-setting-details-label-inline {
+    font-weight: 600;
+    color: #234b2c;
+    margin-bottom: 6px !important;
+    padding-bottom: 0 !important;
+    white-space: nowrap;
+    display: block;
+    line-height: 1.5;
+    height: 22px !important;
+}
+
+.admin-system-setting-details-col .input-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.admin-system-setting-details-col .input-field,
+.admin-system-setting-details-select,
+.admin-system-setting-details-textarea {
+    padding: 8px 12px;
+    border: 1px solid #d6e7db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f6f6f6;
+    color: #234b2c;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.admin-system-setting-details-col .input-field,
+.admin-system-setting-details-select {
+    height: 40px !important;
+    width: 100%;
+}
+
+.admin-system-setting-details-input {
+    height: 40px;
+}
+
+.admin-system-setting-details-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-system-setting-details-col-type {
+    flex: 0 0 220px;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-system-setting-details-col-status {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-system-setting-details-radio-container {
+    display: flex;
+    gap: 16px;
+    height: 40px !important;
+    min-height: 40px;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.admin-system-setting-details-radio-item {
+    border: 1px solid #d6e7db;
+    border-radius: 8px;
+    background: #f6f6f6;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+    width: 188px;
+}
+
+.admin-system-setting-details-radio-item:hover {
+    background: #eaf3ee;
+}
+
+.admin-system-setting-details-radio-item input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+}
+
+.admin-system-setting-details-radio-item label {
+    font-weight: 500;
+    color: #234b2c;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.admin-system-setting-details-radio-item input[type="radio"]:checked + label {
+    font-weight: 600;
+}
+
+.admin-system-setting-details-radio-item:has(input[type="radio"]:checked) {
+    background: #eaf3ee;
+    border-color: #9ac4a3;
+}
+
+.admin-system-setting-details-textarea {
+    border: 1px solid #d6e7db;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 1rem;
+    background: #f6f6f6;
+    color: #234b2c;
+    resize: vertical;
+    width: 100%;
+    min-height: 120px;
+    box-sizing: border-box;
+}
+
+.admin-system-setting-details-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.admin-system-setting-details-save-btn {
+    background: #12513D;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 32px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.admin-system-setting-details-save-btn:hover {
+    background: #0d3c2d;
+}
+
+.admin-system-setting-details-cancel-btn {
+    background: #ffe7d9;
+    color: #ff6b72;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 32px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.admin-system-setting-details-cancel-btn:hover {
+    background: #ff6b72;
+    color: #fff;
+}
+
+.admin-system-setting-details-col .input-field-container {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Responsive */
+@media (max-width: 1299px) and (min-width: 901px) {
+    .admin-system-setting-details-radio-item {
+        width: 160px;
+        padding: 8px 6px;
+    }
+    
+    .admin-system-setting-details-col-status {
+        min-width: 300px;
+    }
+    
+    .admin-system-setting-details-radio-container {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-system-setting-details-content {
+        padding: 16px 12px 12px 12px;
+        max-width: 100%;
+        margin: 24px 0 0 0;
+    }
+    .admin-system-setting-details-title {
+        font-size: 1.3rem;
+    }
+    .admin-system-setting-details-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .admin-system-setting-details-col-status {
+        max-width: 100%;
+        min-width: 0;
+    }
+    .admin-system-setting-details-radio-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .admin-system-setting-details-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .admin-system-setting-details-save-btn,
+    .admin-system-setting-details-cancel-btn {
+        width: 100%;
+        padding: 10px 0;
+    }
+}

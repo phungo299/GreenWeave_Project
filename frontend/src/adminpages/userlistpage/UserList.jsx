@@ -117,7 +117,7 @@ const UserList = () => {
             <AdminBreadcrumb />
             <div className="admin-user-list-content">
                 <div className="admin-user-list-header-row">
-                    <h1 className="admin-user-list-title">Người dùng</h1>
+                    <h1 className="admin-user-list-title">Người Dùng</h1>
                 </div>
                 <div className="admin-user-list-controls">
                     <FilterBar

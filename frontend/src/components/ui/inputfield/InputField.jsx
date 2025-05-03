@@ -10,6 +10,7 @@ const InputField = ({
     placeholder,
     required = false,
     className = '',
+    labelClassName = '',
     autoComplete = 'on',
     error = '',
     showTogglePassword = false,
@@ -25,7 +26,7 @@ const InputField = ({
 
     return (
         <div className="input-field-container">
-            {label && <label className="input-label">{label}</label>}
+            {label && <label className={`input-label ${labelClassName}`}>{label}</label>}
             <div className="input-wrapper">
                 {icon && <span className="input-icon">{icon}</span>}
                 <input
