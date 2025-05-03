@@ -1,0 +1,14 @@
+.gw-sortable-header {
+    color: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+    transition: color 0.2s;
+}
+.gw-sortable-header:hover {
+    color: #00B074;
+}
+.gw-sortable-header-icon {
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+}

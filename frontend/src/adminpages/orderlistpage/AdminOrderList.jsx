@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './AdminOrderList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
+import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import AdminCustomerDesignForm from './AdminCustomerDesignForm';
 import Pagination from '../../components/ui/pagination/Pagination';
 
@@ -52,6 +53,8 @@ const PAGE_SIZE = 10;
 
 const AdminOrderList = () => {
     const [search, setSearch] = useState('');
+    const [sortField, setSortField] = useState('');
+    const [sortOrder, setSortOrder] = useState('none');
     const [openDesignForm, setOpenDesignForm] = useState(false);
     const [selectedDesign, setSelectedDesign] = useState(null);
     const [page, setPage] = useState(1);
@@ -64,6 +67,26 @@ const AdminOrderList = () => {
         setSearch(e.target.value);
         setPage(1);
     };
+
+    const sortFunctions = {
+        id: (a, b, order) => order === 'asc' ? a.id - b.id : b.id - a.id,
+        code: (a, b, order) => order === 'asc' ? a.code.localeCompare(b.code) : b.code.localeCompare(a.code),
+        total: (a, b, order) => order === 'asc' ? a.total - b.total : b.total - a.total,
+    };
+
+    const handleSort = (field) => {
+        let nextOrder = 'asc';
+        if (sortField === field && sortOrder === 'asc') nextOrder = 'desc';
+        else if (sortField === field && sortOrder === 'desc') nextOrder = 'none';
+        setSortField(nextOrder === 'none' ? '' : field);
+        setSortOrder(nextOrder);
+    };
+
+    let sortedOrders = [...filteredOrders];
+    if (sortField && sortOrder !== 'none') {
+        sortedOrders.sort((a, b) => sortFunctions[sortField](a, b, sortOrder));
+    }
+    const paginatedOrders = sortedOrders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     const handleShowDesign = (order) => {
         // Simulate design data, real data taken from order or API
@@ -82,7 +105,6 @@ const AdminOrderList = () => {
     };
 
     const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE);
-    const paginatedOrders = filteredOrders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     return (
         <div className="admin-order-list-container">
@@ -102,11 +124,29 @@ const AdminOrderList = () => {
                     <table className="admin-order-list-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>
+                                    <SortableHeader
+                                        label="ID"
+                                        sortState={sortField === 'id' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('id')}
+                                    />
+                                </th>
                                 <th style={{ width: 40 }}></th>
                                 <th>Đơn hàng</th>
-                                <th>Mã đơn hàng</th>
-                                <th>Tổng</th>
+                                <th>
+                                    <SortableHeader
+                                        label="Mã đơn hàng"
+                                        sortState={sortField === 'code' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('code')}
+                                    />
+                                </th>
+                                <th>
+                                    <SortableHeader
+                                        label="Tổng"
+                                        sortState={sortField === 'total' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('total')}
+                                    />
+                                </th>
                                 <th>Trạng thái</th>
                                 <th>Thiết kế khách hàng</th>
                             </tr>

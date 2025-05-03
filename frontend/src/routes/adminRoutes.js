@@ -5,7 +5,7 @@ import AdminProductList from '../adminpages/productlistpage/AdminProductList';
 import AdminProductDetails from '../adminpages/productdetailspage/AdminProductDetails';
 import AdminOrderList from '../adminpages/orderlistpage/AdminOrderList';
 import UserList from '../adminpages/userlistpage/UserList';
-// import AdminReviewsPage from '../adminpages/AdminReviewsPage';
+import AdminReviewList from '../adminpages/reviewlistpage/AdminReviewList';
 // import AdminSettingsPage from '../adminpages/AdminSettingsPage';
 
 // Create a sample route structure for pages to be developed later
@@ -53,7 +53,7 @@ const adminRoutes = [
             },
             {
                 path: 'reviews',
-                component: placeholderPage
+                component: AdminReviewList
             },
             {
                 path: 'settings',

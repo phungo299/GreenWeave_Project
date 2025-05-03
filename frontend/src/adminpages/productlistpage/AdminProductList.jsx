@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import './AdminProductList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
+import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
-import { FaSort } from 'react-icons/fa';
 
 const AdminProductList = () => {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
+    const [sortField, setSortField] = useState('');
+    const [sortOrder, setSortOrder] = useState('none'); // 'asc', 'desc', 'none'
 
     const [products] = useState([
         { id: 1, image: '/path/to/image1.jpg', name: 'Mũ lưỡi trai', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ',  note: '...'},
@@ -21,6 +23,29 @@ const AdminProductList = () => {
         setSearch(e.target.value);
         // If you want to filter products by search, filter in render or create variable filteredProducts
     };
+
+    const sortFunctions = {
+        name: (a, b, order) => order === 'asc'
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name),
+        price: (a, b, order) => order === 'asc'
+            ? parseInt(a.price.replace(/\D/g, '')) - parseInt(b.price.replace(/\D/g, ''))
+            : parseInt(b.price.replace(/\D/g, '')) - parseInt(a.price.replace(/\D/g, '')),
+        // ... other fields
+    };
+      
+    const handleSort = (field) => {
+        let nextOrder = 'asc';
+        if (sortField === field && sortOrder === 'asc') nextOrder = 'desc';
+        else if (sortField === field && sortOrder === 'desc') nextOrder = 'none';
+        setSortField(nextOrder === 'none' ? '' : field);
+        setSortOrder(nextOrder);
+    };
+      
+    let sortedProducts = [...products];
+    if (sortField && sortOrder !== 'none') {
+        sortedProducts.sort((a, b) => sortFunctions[sortField](a, b, sortOrder));
+    }
 
     const handleAddProduct = () => {
         navigate('/admin/products/add');
@@ -73,12 +98,18 @@ const AdminProductList = () => {
                         <tr>
                             <th>TT</th>
                             <th>
-                                Tên sản phẩm
-                                <FaSort className="admin-product-list-sort-icon" />
+                                <SortableHeader
+                                    label="Tên sản phẩm"
+                                    sortState={sortField === 'name' ? sortOrder : 'none'}
+                                    onSort={() => handleSort('name')}
+                                />
                             </th>
                             <th>
-                                Mã đơn hàng
-                                <FaSort className="admin-product-list-sort-icon" />
+                                <SortableHeader
+                                    label="Giá"
+                                    sortState={sortField === 'price' ? sortOrder : 'none'}
+                                    onSort={() => handleSort('price')}
+                                />
                             </th>
                             <th>Giá</th>
                             <th>Kho hàng</th>
