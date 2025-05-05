@@ -7,6 +7,7 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import Personal from './pages/Personal';
 import './App.css';
 
 function App() {
@@ -24,20 +25,31 @@ function App() {
                             
                             {/* Private Routes - login required */}
                             {privateRoutes.map((route, index) => {
-                                const Page = route.component;
-                                return (
-                                    <Route 
-                                        key={`private-${index}`} 
-                                        path={route.path} 
-                                        element={
-                                            <PrivateRoute>
-                                                <Page />
-                                            </PrivateRoute>
-                                        } 
-                                    />
-                                );
-                            })}
-
+                                if (route.path !== '/personal/*') {
+                                    const Page = route.component;
+                                    return (
+                                        <Route 
+                                            key={`private-${index}`} 
+                                            path={route.path} 
+                                            element={
+                                                <PrivateRoute>
+                                                    <Page />
+                                                </PrivateRoute>
+                                            } 
+                                        />
+                                    );
+                                }
+                                return null;
+                            })}                           
+                            {/* Personal Routes */}
+                            <Route 
+                                path="/personal/*" 
+                                element={
+                                    <PrivateRoute>
+                                        <Personal />
+                                    </PrivateRoute>
+                                } 
+                            />
                             {/* Admin Routes - admin access required */}
                             <Route path="/admin" element={<AdminRoute />}>
                                 <Route element={React.createElement(adminRoutes[0].component)}>

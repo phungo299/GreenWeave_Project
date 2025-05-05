@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { useScrollToSection } from '../../hooks/useScrollToSection';
@@ -7,8 +7,8 @@ import { useAuth } from '../../../context/AuthContext';
 import './Header.css';
 import Logo from '../../../assets/images/logo.jpg';
 import cartIcon from '../../../assets/icons/cart.png';
-// TODO: Add profile icon after API
-// import profileIcon from '../../../assets/icons/profile.png';
+import userIcon from '../../../assets/icons/user.png';
+import exitIcon from '../../../assets/icons/exit.png';
 
 const Header = () => {
     const activeSection = useActiveSection();
@@ -16,6 +16,8 @@ const Header = () => {
     const location = useLocation();
     const { getCartCount } = useCart();
     const { isAuthenticated, user, logout } = useAuth();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
     
     // Check if the current URL is a products page
     const isProductsPage = location.pathname === '/products';
@@ -23,8 +25,25 @@ const Header = () => {
     // Logout handling
     const handleLogout = () => {
         logout();
-        // Redirect to home page after logout if needed
-        // navigate('/');
+        // Close dropdown after logout
+        setIsDropdownOpen(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
     };
     
     return (
@@ -76,10 +95,25 @@ const Header = () => {
                                     <span className="cart-count">{getCartCount()}</span>
                                 )}
                             </Link>
-                            {/* TODO: Add Profile page after API */}
-                            {/* <Link to="/profile" className="profile-btn">Profile</Link> */}
-                            <span className="user-name">{user?.username}</span>
-                            <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+                            <div className="user-dropdown" ref={dropdownRef}>
+                                <button className="user-icon-button" onClick={toggleDropdown}>
+                                    <img src={userIcon} alt="User" className="user-icon" />
+                                </button>
+                                {isDropdownOpen && (
+                                    <div className="dropdown-menu">
+                                        <div className="dropdown-user-info">
+                                            <span className="dropdown-username">{user?.username}</span>
+                                        </div>
+                                        <Link to="/personal" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                                            <span>Personal</span>
+                                        </Link>
+                                        <button onClick={handleLogout} className="dropdown-item logout-item">
+                                            <img src={exitIcon} alt="Logout" className="dropdown-icon" />
+                                            <span>Đăng xuất</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </>
                     ) : (
                         <>

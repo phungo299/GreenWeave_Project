@@ -1,0 +1,117 @@
+.personal-page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.personal-page-wrapper {
+    flex: 1;
+    padding: 30px 0;
+    background-color: #fcfcfc;
+}
+
+/* Custom styles for personal order items */
+.personal-order-item {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+}
+
+.personal-order-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 15px;
+}
+
+.personal-order-details {
+    flex: 1;
+}
+
+.personal-order-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.personal-order-color,
+.personal-order-quantity {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.personal-order-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #05502d;
+}
+
+.personal-order-status {
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.personal-order-status.pending {
+    background-color: #fff8e1;
+    color: #f57c00;
+}
+
+.personal-order-status.delivered {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.personal-order-buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: 20px;
+}
+
+.personal-order-button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.personal-order-button:hover {
+    background-color: #f0f0f0;
+}
+
+.personal-order-button.detail {
+    color: #05502d;
+    border-color: #05502d;
+}
+
+.personal-order-button.detail:hover {
+    background-color: #e0f0e7;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .personal-page-wrapper {
+        padding: 20px 0;
+    }
+  
+    .personal-order-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+  
+    .personal-order-image {
+        margin-bottom: 10px;
+    }
+  
+    .personal-order-buttons {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
