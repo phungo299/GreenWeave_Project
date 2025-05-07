@@ -1,0 +1,179 @@
+.personal-information-container {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.personal-information-title {
+    font-size: 24px;
+    color: #134d35;
+    margin-bottom: 24px;
+    font-weight: 600;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 15px;
+}
+
+.personal-information-avatar-section {
+    margin-bottom: 30px;
+    max-width: 500px;
+    margin: 0 auto 30px;
+}
+
+.personal-information-avatar-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #134d35;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.personal-information-avatar-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.personal-information-avatar {
+    width: 90px;
+    height: 90px;
+    background-color: #e8f5f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    overflow: hidden;
+}
+
+.personal-information-avatar:hover {
+    background-color: #d3eae0;
+}
+
+.personal-information-avatar-icon {
+    font-size: 30px;
+    color: #134d35;
+}
+
+.personal-information-avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.personal-information-avatar-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.personal-information-upload-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #f5f5f5;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #134d35;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.personal-information-upload-btn:hover {
+    background-color: #e8f5f0;
+    border-color: #134d35;
+}
+
+.personal-information-upload-icon {
+    font-size: 16px;
+}
+
+.personal-information-file-input {
+    display: none;
+}
+
+.personal-information-upload-hint {
+    font-size: 12px;
+    color: #777;
+}
+
+.personal-information-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.personal-information-field {
+    width: 100%;
+}
+
+.personal-information-input {
+    width: 100%;
+    height: 45px;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 16px;
+}
+
+.personal-information-save-btn {
+    background-color: #134d35;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    align-self: flex-end;
+    transition: background-color 0.3s ease;
+}
+
+.personal-information-save-btn:hover {
+    background-color: #0d3a27;
+}
+
+/* Override some of the default InputField styles to match the design */
+.personal-information-container .input-field-container {
+    width: 100%;
+}
+
+.personal-information-container .input-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #134d35;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .personal-information-container {
+        padding: 20px;
+    }
+    
+    .personal-information-title {
+        font-size: 22px;
+    }
+
+    .personal-information-avatar-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .personal-information-avatar-upload {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .personal-information-save-btn {
+        width: 100%;
+        align-self: center;
+    }
+}

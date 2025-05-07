@@ -7,8 +7,7 @@ import OrderDetails from '../personalpage/order/OrderDetails';
 import FavoriteList from '../personalpage/favoritelist/FavoriteList';
 import PersonalAddress from '../personalpage/address/PersonalAddress';
 import ChangePassword from '../personalpage/changepassword/ChangePassword';
-// TODO: Create other personal page components
-// import Profile from '../pages/personal/Profile';
+import PersonalInformation from '../personalpage/personalinformation/PersonalInformation';
 
 // Create a sample route structure for pages to be developed later
 const placeholderPage = () => (
@@ -45,26 +44,13 @@ const personalChildren = [
         component: ChangePassword
     },
     {
+        path: 'profile',
+        component: PersonalInformation
+    },
+    {
         path: 'settings',
         component: placeholderPage
     }
-    // TODO: Add other personal routes when components are created
-    // {
-    //     path: 'favorites',
-    //     component: Favorites
-    // },
-    // {
-    //     path: 'address',
-    //     component: Address
-    // },
-    // {
-    //     path: 'password',
-    //     component: PasswordChange
-    // },
-    // {
-    //     path: 'profile',
-    //     component: Profile
-    // }
 ];
 
 const privateRoutes = [
