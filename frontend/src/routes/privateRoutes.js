@@ -5,9 +5,8 @@ import Personal from '../pages/Personal';
 import OrderList from '../personalpage/order/OrderList';
 import OrderDetails from '../personalpage/order/OrderDetails';
 import FavoriteList from '../personalpage/favoritelist/FavoriteList';
+import PersonalAddress from '../personalpage/address/PersonalAddress';
 // TODO: Create other personal page components
-// import Favorites from '../pages/personal/Favorites';
-// import Address from '../pages/personal/Address';
 // import PasswordChange from '../pages/personal/PasswordChange';
 // import Profile from '../pages/personal/Profile';
 
@@ -36,6 +35,10 @@ const personalChildren = [
     {
         path: 'favorites',
         component: FavoriteList
+    },
+    {
+        path: 'address',
+        component: PersonalAddress
     },
     {
         path: 'settings',

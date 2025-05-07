@@ -7,6 +7,7 @@ import PersonalLayout from '../components/layout/personallayout/PersonalLayout';
 import OrderList from '../personalpage/order/OrderList';
 import OrderDetails from '../personalpage/order/OrderDetails';
 import FavoriteList from '../personalpage/favoritelist/FavoriteList';
+import PersonalAddress from '../personalpage/address/PersonalAddress';
 import '../assets/css/Personal.css';
 
 const Personal = () => {
@@ -34,6 +35,7 @@ const Personal = () => {
                         <Route path="orders" element={<OrderList />} />
                         <Route path="orders/:id" element={<OrderDetails />} />
                         <Route path="favorites" element={<FavoriteList />} />
+                        <Route path="address" element={<PersonalAddress />} />
                         {/* Add more routes here as components are developed */}
                     </Routes>
                 </PersonalLayout>
