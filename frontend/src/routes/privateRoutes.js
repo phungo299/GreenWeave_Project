@@ -6,8 +6,8 @@ import OrderList from '../personalpage/order/OrderList';
 import OrderDetails from '../personalpage/order/OrderDetails';
 import FavoriteList from '../personalpage/favoritelist/FavoriteList';
 import PersonalAddress from '../personalpage/address/PersonalAddress';
+import ChangePassword from '../personalpage/changepassword/ChangePassword';
 // TODO: Create other personal page components
-// import PasswordChange from '../pages/personal/PasswordChange';
 // import Profile from '../pages/personal/Profile';
 
 // Create a sample route structure for pages to be developed later
@@ -39,6 +39,10 @@ const personalChildren = [
     {
         path: 'address',
         component: PersonalAddress
+    },
+    {
+        path: 'change-password',
+        component: ChangePassword
     },
     {
         path: 'settings',

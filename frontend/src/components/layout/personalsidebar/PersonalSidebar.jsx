@@ -28,8 +28,8 @@ const PersonalSidebar = () => {
                         Địa chỉ
                     </Link>
                 </li>
-                <li className={`personal-sidebar-item ${currentPath === '/personal/password' ? 'active' : ''}`}>
-                    <Link to="/personal/password" className="personal-sidebar-link">
+                <li className={`personal-sidebar-item ${currentPath === '/personal/change-password' ? 'active' : ''}`}>
+                    <Link to="/personal/change-password" className="personal-sidebar-link">
                         <FaLock className="personal-sidebar-icon" />
                         Mật khẩu
                     </Link>
