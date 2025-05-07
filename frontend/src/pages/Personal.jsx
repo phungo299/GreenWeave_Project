@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import PersonalLayout from '../components/layout/personallayout/PersonalLayout';
-import OrderList from '../personalpage/OrderList';
+import OrderList from '../personalpage/order/OrderList';
+import OrderDetails from '../personalpage/order/OrderDetails';
 import '../assets/css/Personal.css';
 
 const Personal = () => {
@@ -30,6 +31,7 @@ const Personal = () => {
                     <Routes>
                         <Route index element={<OrderList />} />
                         <Route path="orders" element={<OrderList />} />
+                        <Route path="orders/:id" element={<OrderDetails />} />
                         {/* Add more routes here as components are developed */}
                     </Routes>
                 </PersonalLayout>

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './OrderList.css';
 
 // Sample product image import
 // import productImage from '../../assets/images/product-sample.jpg';
 
 const OrderList = () => {
+    const navigate = useNavigate();
     // Sample order data - in a real app this would come from an API
     const orders = [
         {
@@ -48,7 +50,12 @@ const OrderList = () => {
                             {order.status}
                         </div>
                         <div className="personal-order-buttons">
-                            <button className="personal-order-button detail">Chi tiết</button>
+                            <button
+                                className="personal-order-button detail"
+                                onClick={() => navigate(`/personal/orders/${order.id}`)}
+                            >
+                                Chi tiết
+                            </button>
                         </div>
                     </div>
                 ))}

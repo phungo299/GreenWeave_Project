@@ -2,7 +2,8 @@ import CartPage from '../pages/CartPage';
 import PaymentPage from '../pages/PaymentPage';
 import PaymentStatus from '../statuspages/paymentstatus/PaymentStatus';
 import Personal from '../pages/Personal';
-import OrderList from '../personalpage/OrderList';
+import OrderList from '../personalpage/order/OrderList';
+import OrderDetails from '../personalpage/order/OrderDetails';
 // TODO: Create other personal page components
 // import Favorites from '../pages/personal/Favorites';
 // import Address from '../pages/personal/Address';
@@ -26,6 +27,10 @@ const personalChildren = [
     {
         path: 'orders',
         component: OrderList
+    },
+    {
+        path: 'orders/:id',
+        component: OrderDetails
     },
     {
         path: 'settings',
