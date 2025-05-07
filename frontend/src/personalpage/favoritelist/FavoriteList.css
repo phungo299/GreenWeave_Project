@@ -1,0 +1,123 @@
+.personal-favorite-list-container {
+    padding: 0 0 32px 0;
+}
+  
+.personal-favorite-list-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #234b2c;
+    margin-bottom: 24px;
+    margin-top: 0;
+}
+  
+.personal-favorite-list-list {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+  
+.personal-favorite-list-item {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 0;
+    box-shadow: none;
+    border: none;
+}
+  
+.personal-favorite-list-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-right: 24px;
+    border: 1px solid #e0e0e0;
+}
+  
+.personal-favorite-list-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+  
+.personal-favorite-list-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #234b2c;
+    margin-bottom: 2px;
+}
+  
+.personal-favorite-list-color,
+.personal-favorite-list-qty {
+    font-size: 1rem;
+    color: #666;
+}
+  
+.personal-favorite-list-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #234b2c;
+    min-width: 120px;
+    text-align: right;
+    margin-right: 24px;
+}
+  
+.personal-favorite-list-add-btn {
+    padding: 6px 18px;
+    border: 1.5px solid #234b2c;
+    background: #fff;
+    color: #234b2c;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+  
+.personal-favorite-list-add-btn:hover {
+    background: #234b2c;
+    color: #fff;
+}
+  
+/* Responsive */
+@media (max-width: 900px) {
+    .personal-favorite-list-image {
+        width: 70px;
+        height: 70px;
+        margin-right: 14px;
+    }
+    .personal-favorite-list-price {
+        min-width: 80px;
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+    .personal-favorite-list-title {
+        font-size: 1.3rem;
+    }
+}
+  
+@media (max-width: 600px) {
+    .personal-favorite-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 0;
+    }
+    .personal-favorite-list-image {
+        width: 60px;
+        height: 60px;
+        margin-right: 0;
+        margin-bottom: 6px;
+    }
+    .personal-favorite-list-price {
+        margin-right: 0;
+        margin-bottom: 6px;
+    }
+    .personal-favorite-list-add-btn {
+        width: 100%;
+        font-size: 0.95rem;
+        padding: 6px 0;
+    }
+}

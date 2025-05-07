@@ -6,6 +6,7 @@ import Footer from '../components/layout/footer/Footer';
 import PersonalLayout from '../components/layout/personallayout/PersonalLayout';
 import OrderList from '../personalpage/order/OrderList';
 import OrderDetails from '../personalpage/order/OrderDetails';
+import FavoriteList from '../personalpage/favoritelist/FavoriteList';
 import '../assets/css/Personal.css';
 
 const Personal = () => {
@@ -32,6 +33,7 @@ const Personal = () => {
                         <Route index element={<OrderList />} />
                         <Route path="orders" element={<OrderList />} />
                         <Route path="orders/:id" element={<OrderDetails />} />
+                        <Route path="favorites" element={<FavoriteList />} />
                         {/* Add more routes here as components are developed */}
                     </Routes>
                 </PersonalLayout>
