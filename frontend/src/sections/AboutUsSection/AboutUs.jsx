@@ -22,7 +22,7 @@ const AboutUs = () => {
                             <h3 className="about-us-subtitle-line">bền vững</h3>
                         </div>
                         <img src={logoImage} alt="GreenWeave Logo" className="about-us-logo" />
-                        <a href="/about" className="about-us-link">Tìm hiểu thêm</a>
+                        <a href="/about-us" className="about-us-link">Tìm hiểu thêm</a>
                     </div>
                     <div className="about-us-image-wrapper caps-image">
                         <img src={ecoCaps} alt="Sustainable caps" className="about-us-image" />
