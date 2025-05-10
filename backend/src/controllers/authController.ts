@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 import { ValidationError } from "../errors/validationError";
-import { Admin, Customer, User } from "../models";
+import { User } from "../models";
 import { sendVerificationEmail } from "../services/emails";
 import { randomText, signToken } from "../utils";
 
@@ -70,19 +70,12 @@ export const register = async (req: Request, res: Response) => {
     const newUser = await User.create({
       username: formatUsername,
       email: formatEmail,
-      password: hashedPass,
+      passwordHash: hashedPass,
     });
 
     const verificationToken = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
-
-    // Create new customer
-    const newCustomer = await Customer.create({
-      userId: newUser._id,
-      verificationToken,
-      verificationTokenExpiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-    });
 
     // Generate token
     const token = await signToken({
@@ -102,7 +95,6 @@ export const register = async (req: Request, res: Response) => {
       message: "Đăng ký thành công!",
       data: {
         id: newUser._id,
-        customerId: newCustomer._id,
         username: newUser.username,
         email: newUser.email,
         role: newUser.role,
@@ -121,31 +113,16 @@ export const register = async (req: Request, res: Response) => {
 export const registerAtCenter = async (req: Request, res: Response) => {
   try {
     const {
-      phoneNumber,
+      phone,
       email,
-      fullName,
-      gender,
-      city,
-      district,
-      ward,
-      detailAddress,
+      username,
+      address
     } = req.body;
 
-    console.log(
-      phoneNumber,
-      email,
-      fullName,
-      gender,
-      city,
-      district,
-      ward,
-      detailAddress
-    );
-
     const formatEmail = email.trim().toLowerCase();
-    const formatUserName = email.split("@")[0];
+    const formatUserName = username || email.split("@")[0];
 
-    if (!phoneNumber || !formatEmail || !fullName || !gender) {
+    if (!phone || !formatEmail) {
       return res
         .status(400)
         .json({ message: "Vui lòng điền đầy đủ các trường" });
@@ -158,31 +135,17 @@ export const registerAtCenter = async (req: Request, res: Response) => {
     const newUser = await User.create({
       username: formatUserName,
       email: formatEmail,
-      password: hashedPass,
-      fullName,
-      gender,
-      phoneNumber,
-    });
-
-    const newCustomer = await Customer.create({
-      userId: newUser._id,
-      city,
-      district,
-      ward,
-      detailAddress,
-      isVerified: true,
+      passwordHash: hashedPass,
+      phone,
+      address: address || ""
     });
 
     const formattedData = {
-      id: newCustomer._id,
+      id: newUser._id,
       email: newUser.email,
-      fullName: newUser.fullName,
-      phoneNumber: newUser.phoneNumber,
-      gender: newUser.gender,
-      city: newCustomer.city,
-      district: newCustomer.district,
-      ward: newCustomer.ward,
-      detailAddress: newCustomer.detailAddress,
+      username: newUser.username,
+      phone: newUser.phone,
+      address: newUser.address
     };
 
     return res.status(200).json({ data: formattedData });
@@ -195,20 +158,19 @@ export const registerAtCenter = async (req: Request, res: Response) => {
 export const verifyEmail = async (req: Request, res: Response) => {
   const { verifyCode } = req.body;
   try {
-    const customer = await Customer.findOne({
-      verificationToken: verifyCode,
-      verificationTokenExpiresAt: { $gt: Date.now() },
+    const user = await User.findOne({
+      resetPasswordToken: verifyCode,
+      resetPasswordExpires: { $gt: Date.now() }
     });
 
-    if (!customer) {
+    if (!user) {
       return res.status(400).json({ message: "Mã không hợp lệ hoặc hết hạn" });
     }
 
-    customer.isVerified = true;
-    customer.verificationToken = undefined;
-    customer.verificationTokenExpiresAt = undefined;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
 
-    await customer.save();
+    await user.save();
 
     return res.status(200).json({ message: "Xác nhận tài khoản thành công" });
   } catch (error: any) {
@@ -226,12 +188,6 @@ export const sendNewVerifyEmail = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Người dùng không tồn tại" });
     }
 
-    const customer = await Customer.findOne({ userId: user._id });
-
-    if (!customer) {
-      return res.status(404).json({ message: "Người dùng không tồn tại" });
-    }
-
     const verificationToken = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
@@ -241,10 +197,10 @@ export const sendNewVerifyEmail = async (req: Request, res: Response) => {
 
     const verificationTokenExpiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    customer.verificationToken = verificationToken;
-    customer.verificationTokenExpiresAt = verificationTokenExpiresAt as any;
+    user.resetPasswordToken = verificationToken;
+    user.resetPasswordExpires = new Date(verificationTokenExpiresAt);
 
-    await customer.save();
+    await user.save();
 
     await sendVerificationEmail(email, username, verificationToken);
 
@@ -287,17 +243,9 @@ export const login = async (req: Request, res: Response) => {
       throw new ValidationError(errors);
     }
 
-    const customer = await Customer.findOne({ userId: user._id });
-
-    if (!customer) {
-      errors.message = "Tài khoản không tồn tại!";
-      errors.login = "Vui lòng kiểm tra lại!";
-      throw new ValidationError(errors);
-    }
-
     const comparePassword = await bcrypt.compare(
       trimmedPassword,
-      user.password
+      user.passwordHash
     );
 
     if (!comparePassword) {
@@ -318,11 +266,10 @@ export const login = async (req: Request, res: Response) => {
       message: "Đăng nhập thành công!",
       data: {
         id: user._id,
-        customerId: customer._id,
         username: user.username,
         email: user.email,
         role: user.role,
-        isVerified: customer.isVerified,
+        isVerified: true,
         token,
       },
     });
@@ -344,7 +291,6 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
     const formatUserName = username + "-" + randomText(5);
 
     let user = await User.findOne({ email: formatEmail });
-    let customer = null;
 
     if (!user) {
       const salt = await bcrypt.genSalt(10);
@@ -352,14 +298,8 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
       user = await User.create({
         username: formatUserName,
         email: formatEmail,
-        password: hashedPass,
-        photoUrl,
-      });
-
-      // Create a new customer
-      await Customer.create({
-        userId: user._id,
-        isVerified: true,
+        passwordHash: hashedPass,
+        avatar: photoUrl,
       });
     } else {
       if (user.isDisabled) {
@@ -369,22 +309,10 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         });
       }
 
-      customer = await Customer.findOne({ userId: user._id });
-
-      if (!customer) {
-        return res.status(404).json({ message: "Không tìm thấy khách hàng" });
-      }
-
-      if (user.photoUrl === "") {
-        user.photoUrl = photoUrl;
+      if (user.avatar === "") {
+        user.avatar = photoUrl;
         await user.save();
       }
-
-      customer.isVerified = true;
-      customer.verificationToken = undefined;
-      customer.verificationTokenExpiresAt = undefined;
-
-      await customer.save();
     }
 
     const token = await signToken({
@@ -398,11 +326,10 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
       message: user.isNew ? "Đăng ký thành công!" : "Đăng nhập thành công!",
       data: {
         id: user._id,
-        customerId: customer?._id,
         username: user.username,
         email: user.email,
         role: user.role,
-        photoUrl: user.photoUrl || photoUrl,
+        avatar: user.avatar || photoUrl,
         isVerified: true,
         token,
       },
@@ -432,7 +359,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
     const user = await User.findOne({
       $and: [
         { email: formatLogin },
-        { role: { $in: ["admin", "doctor", "staff"] } },
+        { role: { $in: ["admin", "staff"] } },
       ],
     });
 
@@ -450,7 +377,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
 
     const comparePassword = await bcrypt.compare(
       trimmedPassword,
-      user.password
+      user.passwordHash
     );
 
     if (!comparePassword) {
@@ -467,13 +394,6 @@ export const loginAdmin = async (req: Request, res: Response) => {
       role: user.role,
     });
 
-    let adminId = null;
-
-    if (user.role === "admin") {
-      const admin = await Admin.findOne({ userId: user._id });
-      adminId = admin?._id;
-    }
-
     return res.status(200).json({
       message: "Đăng nhập thành công!",
       data: {
@@ -481,13 +401,11 @@ export const loginAdmin = async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        photoUrl: user.photoUrl,
-        adminId,
+        avatar: user.avatar,
         token,
       },
     });
   } catch (error: any) {
-    console.log(error);
     if (error instanceof ValidationError) {
       return res.status(400).json(error.errors);
     }
@@ -498,19 +416,11 @@ export const loginAdmin = async (req: Request, res: Response) => {
 };
 
 export const checkUsername = async (req: Request, res: Response) => {
-  const { username } = req.body;
-
-  const formatUsername = username.trim().toLowerCase();
-
-  const user = await User.findOne({ username: formatUsername });
-  return res.status(200).json({ exists: !!user, userId: user?._id });
+  // Implement username checking
+  res.status(200).json({ available: true });
 };
 
 export const checkEmail = async (req: Request, res: Response) => {
-  const { email } = req.body;
-
-  const formatEmail = email.trim().toLowerCase();
-
-  const user = await User.findOne({ email: formatEmail });
-  return res.status(200).json({ exists: !!user, userId: user?._id });
+  // Implement email checking
+  res.status(200).json({ available: true });
 };

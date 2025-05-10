@@ -1,0 +1,105 @@
+Table Users {
+  _id ObjectId [pk]
+  username String [unique]
+  email String [unique]
+  passwordHash String
+  phone String
+  role String // "user", "admin", "staff"
+  address String
+  rewardPoints Number
+  avatar String // URL ảnh đại diện
+  createdAt DateTime
+  updatedAt DateTime
+}
+Table Categories {
+  _id ObjectId [pk]
+  name String
+  description String
+  imageUrl String // Hình ảnh minh họa cho danh mục
+  createdAt DateTime
+}
+Table Products {
+  _id ObjectId [pk]
+  categoryId ObjectId [ref: > Categories._id]
+  name String
+  description String
+  price Number
+  stock Number
+  variants embedded_document
+  isFeatured Boolean // Đánh dấu sản phẩm nổi bật
+  rating Number // Điểm đánh giá trung bình (1-5)
+  reviewCount Number // Số lượng đánh giá
+  priceHistory embedded_document // Lịch sử giá
+  createdAt DateTime
+  updatedAt DateTime
+}
+Table Cart {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  items embedded_document
+  createdAt DateTime
+  updatedAt DateTime
+}
+Table Wishlist {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  productId ObjectId [ref: > Products._id]
+  color String // Optional: màu sắc người dùng quan tâm
+  createdAt DateTime
+}
+Table Orders {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  items embedded_document
+  totalAmount Number
+  status String // "pending", "shipped", "delivered", "cancelled"
+  shippingAddress String
+  paymentId ObjectId [ref: > Payments._id]
+  createdAt DateTime
+  updatedAt DateTime
+}
+Table Payments {
+  _id ObjectId [pk]
+  orderId ObjectId [ref: > Orders._id]
+  amount Number
+  paymentMethod String // "credit_card", "paypal", "bank_transfer"
+  status String // "pending", "completed", "failed"
+  createdAt DateTime
+}
+Table Notifications {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  orderId ObjectId [ref: > Orders._id, null]
+  type String // "order_update", "promotion"
+  message String
+  status String // "unread", "read"
+  createdAt DateTime
+}
+Table Reviews {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  productId ObjectId [ref: > Products._id]
+  rating Number // 1-5
+  comment String
+  createdAt DateTime
+}
+Table Promotions {
+  _id ObjectId [pk]
+  code String [unique]
+  discount Number // Phần trăm hoặc số tiền giảm
+  startDate DateTime
+  endDate DateTime
+  createdAt DateTime
+}
+Table Messages {
+  _id ObjectId [pk]
+  name String
+  email String
+  message String
+  createdAt DateTime
+}
+
+Note: "Products.variants is an array of embedded documents with structure: { variantId: String, color: String, imageUrl: String, stock: Number }"
+Note: "Products.priceHistory is an array of embedded documents with structure: { price: Number, updatedAt: DateTime }"
+Note: "Cart.items is an array of embedded documents with structure: { productId: ObjectId [ref: > Products._id], variantId: String, color: String, quantity: Number }"
+Note: "Orders.items is an array of embedded documents with structure: { productId: ObjectId [ref: > Products._id], variantId: String, color: String, quantity: Number, unitPrice: Number }"

@@ -10,10 +10,18 @@ dotenv.config();
 
 // Routes
 import {
-  adminRoutes,
   authRoutes,
-  customerRoutes,
+  cartRoutes,
+  categoryRoutes,
+  messageRoutes,
+  notificationRoutes,
+  orderRoutes,
+  paymentRoutes,
+  productRoutes,
+  promotionRoutes,
+  reviewRoutes,
   userRoutes,
+  wishlistRoutes
 } from "./routes";
 
 const app = express();
@@ -60,10 +68,19 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
   customSiteTitle: "GreenWeave API Documentation"
 }));
 
+// Cấu hình routes
 app.use("/api/auth", authRoutes);
-app.use("/api/customers", customerRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/admins", adminRoutes);  
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/carts", cartRoutes);
+app.use("/api/wishlists", wishlistRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/promotions", promotionRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Export the app for testing purposes
 export { app };

@@ -1,11 +1,9 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import { Customer, User } from "../models";
-import { ICustomer } from "../models/Customer";
-import { IUser } from "../models/User";
+import { User } from "../models";
 import {
-  sendPasswordChangeAlert,
-  sendResetPasswordEmail,
+    sendPasswordChangeAlert,
+    sendResetPasswordEmail,
 } from "../services/emails";
 import { AuthRequest } from "../types";
 
@@ -17,40 +15,21 @@ export const getUser = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
     }
 
-    let customer: ICustomer | null = await Customer.findOne({ userId: userId })
-      .populate(
-        "userId",
-        "username email photoUrl fullName phoneNumber photoUrl gender"
-      )
-      .select("detailAddress city district ward");
-
-    if (!customer) {
-      // If customer is not found, create a new one
-      const user = await User.findById(userId);
-      if (!user) {
-        return res
-          .status(404)
-          .json({ message: "Không tìm thấy thông tin người dùng" });
-      }
-      const newCustomer = await Customer.create({ userId: user._id });
-      customer = await Customer.findById(newCustomer._id).populate<{
-        userId: IUser;
-      }>(
-        "userId",
-        "username email photoUrl fullName phoneNumber photoUrl gender"
-      );
-      if (!customer) {
-        throw new Error("Failed to create and populate new customer");
-      }
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
     const formattedProfile = {
-      email: customer?.userId.email,
-      username: customer?.userId.username,
-      fullName: customer?.userId.fullName,
-      phoneNumber: customer?.userId.phoneNumber,
-      photoUrl: customer?.userId.photoUrl,
-      gender: customer?.userId.gender,
+      email: user.email,
+      username: user.username,
+      phone: user.phone,
+      avatar: user.avatar,
+      address: user.address,
+      role: user.role
     };
     return res.status(200).json({ data: formattedProfile });
   } catch (error: any) {
@@ -66,17 +45,15 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;
     const {
       username,
-      fullName,
-      phoneNumber,
-      gender,
-      photoUrl,
+      phone,
+      avatar,
+      address,
     } = req.body;
 
     const userUpdateData: any = {
-      fullName,
-      phoneNumber,
-      photoUrl,
-      gender,
+      phone,
+      avatar,
+      address,
     };
 
     if (username) {
@@ -89,12 +66,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       { new: true }
     );
 
-    const updatedCustomer = await Customer.findOneAndUpdate(
-      { userId },
-      { new: true }
-    );
-
-    if (!updatedCustomer || !updatedUser) {
+    if (!updatedUser) {
       return res
         .status(500)
         .json({ message: "Có lỗi xảy ra khi cập nhật thông tin" });
@@ -104,8 +76,9 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       id: updatedUser._id,
       username: updatedUser.username,
       email: updatedUser.email,
-      photoUrl: updatedUser.photoUrl,
-      customerId: updatedCustomer._id,
+      avatar: updatedUser.avatar,
+      phone: updatedUser.phone,
+      address: updatedUser.address
     };
 
     return res
@@ -124,9 +97,9 @@ export const checkEmailWithPhoneNumber = async (
   res: Response
 ) => {
   try {
-    const { email, phoneNumber } = req.body;
+    const { email, phone } = req.body;
 
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ phone });
 
     if (!user) {
       const existedEmail = await User.findOne({ email });
@@ -165,9 +138,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
       id: user._id,
       username: user.username,
       email: user.email,
-      photoUrl: user.photoUrl ?? "",
-      fullName: user.fullName ?? "",
-      phoneNumber: user.phoneNumber ?? "",
+      avatar: user.avatar || "",
+      phone: user.phone || "",
       role: user.role,
       isDisabled: user.isDisabled,
     }));
@@ -207,9 +179,9 @@ export const toggleUserStatus = async (req: Request, res: Response) => {
 
 export const checkPhoneNumber = async (req: Request, res: Response) => {
   try {
-    const { phoneNumber } = req.body;
+    const { phone } = req.body;
 
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ phone });
     return res.status(200).json({ exists: !!user, userId: user?._id });
   } catch (error: any) {
     console.log(error);
@@ -229,7 +201,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Không tìm thấy người dùng" });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
       return res.status(400).json({
         message: "Mật khẩu hiện tại không đúng",
@@ -238,7 +210,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    user.passwordHash = hashedPassword;
     await user.save();
 
     // Gửi email cảnh báo
@@ -258,53 +230,49 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-
     if (!user) {
-      return res.status(404).json({
-        message: "Email không tồn tại trong hệ thống",
-        email: "Email không tồn tại trong hệ thống",
-      });
+      return res.status(404).json({ message: "Email không tồn tại" });
     }
 
-    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
-
+    const resetToken = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    
     user.resetPasswordToken = resetToken;
-
-    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
-
+    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    await sendResetPasswordEmail(email, user.username, resetToken);
+    await sendResetPasswordEmail(user.email, user.username, resetToken);
 
     return res.status(200).json({
-      message: "Email khôi phục mật khẩu đã được gửi",
+      message: "Mã xác nhận đã được gửi đến email của bạn",
     });
   } catch (error: any) {
     console.log(error);
     return res.status(500).json({
-      message: error.message || "Đã xảy ra lỗi khi xử lý yêu cầu",
+      message: error.message || "Đã xảy ra lỗi khi gửi yêu cầu",
     });
   }
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { token, newPassword } = req.body;
+    const { email, token, newPassword } = req.body;
 
     const user = await User.findOne({
+      email,
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({
-        message: "Token không hợp lệ hoặc đã hết hạn",
-        token: "Token không hợp lệ hoặc đã hết hạn",
+        message: "Mã xác nhận không hợp lệ hoặc đã hết hạn",
       });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    user.passwordHash = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
@@ -316,6 +284,74 @@ export const resetPassword = async (req: Request, res: Response) => {
     console.log(error);
     return res.status(500).json({
       message: error.message || "Đã xảy ra lỗi khi đặt lại mật khẩu",
+    });
+  }
+};
+
+// Tìm kiếm người dùng
+export const searchUsers = async (req: Request, res: Response) => {
+  try {
+    const query = req.query.q as string || "";
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const sortBy = req.query.sortBy as string || "createdAt";
+    const sortOrder = req.query.sortOrder as string || "desc";
+    const role = req.query.role as string;
+    
+    // Xây dựng query tìm kiếm
+    const searchQuery: any = {};
+    
+    // Thêm bộ lọc tìm kiếm cơ bản
+    if (query) {
+      searchQuery.$or = [
+        { username: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+        { phone: { $regex: query, $options: "i" } }
+      ];
+    }
+    
+    // Thêm bộ lọc theo role
+    if (role && ["admin", "user", "staff"].includes(role)) {
+      searchQuery.role = role;
+    }
+    
+    // Xác định hướng sắp xếp
+    const sort: any = {};
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+    
+    // Thực hiện tìm kiếm với bộ lọc và phân trang
+    const users = await User.find(searchQuery)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .select("-passwordHash"); // Không trả về trường password
+    
+    // Đếm tổng số kết quả
+    const total = await User.countDocuments(searchQuery);
+    
+    // Thêm thông tin meta
+    const filters = {
+      query: query || undefined,
+      role: role || undefined,
+      sortBy: sortBy || "createdAt",
+      sortOrder: sortOrder || "desc"
+    };
+    
+    return res.status(200).json({
+      users,
+      filters,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      message: error.message || "Đã xảy ra lỗi khi tìm kiếm người dùng",
     });
   }
 };

@@ -1,12 +1,18 @@
-import adminRoutes from "./adminRoutes";
 import authRoutes from "./authRoutes";
-import customerRoutes from "./customerRoutes";
+import cartRoutes from "./cartRoutes";
+import categoryRoutes from "./categoryRoutes";
+import messageRoutes from "./messageRoutes";
+import notificationRoutes from "./notificationRoutes";
+import orderRoutes from "./orderRoutes";
+import paymentRoutes from "./paymentRoutes";
+import productRoutes from "./productRoutes";
+import promotionRoutes from "./promotionRoutes";
+import reviewRoutes from "./reviewRoutes";
 import userRoutes from "./userRoutes";
+import wishlistRoutes from "./wishlistRoutes";
 
 export {
-  adminRoutes,
-  authRoutes,
-  customerRoutes,
-  userRoutes
+    authRoutes, cartRoutes, categoryRoutes, messageRoutes, notificationRoutes, orderRoutes,
+    paymentRoutes, productRoutes, promotionRoutes, reviewRoutes, userRoutes, wishlistRoutes
 };
 

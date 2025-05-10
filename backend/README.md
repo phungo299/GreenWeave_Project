@@ -1,243 +1,187 @@
-# GreenWeave Backend API
+# GreenWeave E-Commerce API
 
-Backend API cho dự án GreenWeave - Nền tảng thời trang bền vững.
+API backend cho ứng dụng GreenWeave E-Commerce được xây dựng với Node.js, Express, TypeScript và MongoDB.
+
+## Tính năng
+
+- **Quản lý người dùng**: Đăng ký, đăng nhập, quản lý thông tin cá nhân
+- **Quản lý sản phẩm**: CRUD và tìm kiếm nâng cao sản phẩm
+- **Giỏ hàng & Wishlist**: Quản lý giỏ hàng và danh sách yêu thích
+- **Đơn hàng & Thanh toán**: Xử lý đơn hàng và thanh toán
+- **Đánh giá sản phẩm**: Hệ thống đánh giá và bình luận
+- **Khuyến mãi**: Quản lý mã giảm giá
+- **Thông báo**: Hệ thống thông báo cho người dùng
+- **Liên hệ**: Form liên hệ
+
+## Yêu cầu
+
+- Node.js (v14+)
+- MongoDB (local hoặc Atlas)
+- npm hoặc yarn
 
 ## Cài đặt
 
-```bash
-# Cài đặt dependencies
-npm install
-
-# Chạy ở môi trường development
-npm run dev
-
-# Build cho production
-npm run build
-
-# Chạy ở môi trường production
-npm start
-```
-
-## Cấu hình môi trường
-
-Tạo file `.env` với các biến môi trường sau:
-
-```env
-PORT=5000
-MONGO_URI=your_mongodb_uri
-SECRET_KEY=your_jwt_secret_key
-
-# Server URLs
-API_URL=http://localhost:5000
-CLIENT_URL=http://localhost:5173
-ADMIN_URL=http://localhost:5174
-```
-
-## Cấu trúc Project
-
-```
-src/
-├── controllers/     # Xử lý logic nghiệp vụ
-├── middleware/      # Middleware (auth, validation, etc.)
-├── models/         # MongoDB models
-├── routes/         # API routes
-├── services/       # Business services
-├── utils/          # Utility functions
-└── index.ts        # Entry point
-```
-
-## API Documentation
-
-API documentation có sẵn tại: `http://localhost:5000/api-docs`
-
-### Authentication
-
-#### Register User
-```http
-POST /api/auth/register
-```
-Body:
-```json
-{
-  "username": "user123",
-  "email": "user@example.com",
-  "password": "Test@123"
-}
-```
-Validation:
-- Username: 8-30 ký tự, chỉ chứa chữ, số và dấu gạch dưới
-- Email: Phải đúng định dạng email
-- Password: Phải có chữ hoa, chữ thường, số, ký tự đặc biệt, 6-30 ký tự
-
-#### Login
-```http
-POST /api/auth/login
-```
-Body:
-```json
-{
-  "email": "user@example.com",
-  "password": "Test@123"
-}
-```
-
-### Users API
-
-#### Get All Users
-```http
-GET /api/users
-```
-Headers:
-```
-Authorization: Bearer {token}
-```
-
-### Customers API
-
-#### Get All Customers
-```http
-GET /api/customers
-```
-Headers:
-```
-Authorization: Bearer {token}
-```
-
-#### Get Customer by Phone
-```http
-GET /api/customers/phone
-```
-Body:
-```json
-{
-  "phoneNumber": "0123456789"
-}
-```
-
-#### Update Customer Profile
-```http
-PUT /api/customers/:customerId
-```
-Body:
-```json
-{
-  "fullName": "Nguyễn Văn A",
-  "gender": "nam",
-  "city": "Hà Nội",
-  "district": "Cầu Giấy",
-  "ward": "Dịch Vọng",
-  "detailAddress": "Số 1 Đường ABC"
-}
-```
-
-## Phân quyền và Bảo mật
-
-### Role System
-
-Hệ thống có 3 role chính:
-
-#### 1. Admin
-- Quyền cao nhất trong hệ thống
-- Có thể truy cập tất cả các API endpoints
-- Quản lý users, customers và các tài nguyên khác
-- Có thể vô hiệu hóa tài khoản người dùng
-- Xem thống kê và báo cáo
-
-#### 2. User (Customer)
-- Người dùng đã đăng ký và xác thực
-- Có thể cập nhật thông tin cá nhân
-- Truy cập các tính năng dành cho người dùng đã đăng ký
-- Không thể truy cập các API quản trị
-
-#### 3. Guest
-- Người dùng chưa đăng ký hoặc chưa đăng nhập
-- Chỉ có thể truy cập các API công khai
-- Có thể đăng ký, đăng nhập
-- Xem thông tin sản phẩm công khai
-
-### Middleware Authentication & Authorization
-
-1. **verifyToken**
-   - Kiểm tra JWT token
-   - Xác thực người dùng
-   - Kiểm tra tài khoản có bị khóa không
-
-2. **verifyAdmin**
-   - Yêu cầu role "admin"
-   - Sử dụng cho các API quản trị
-
-3. **verifyUser**
-   - Yêu cầu role "user" hoặc "admin"
-   - Sử dụng cho các API yêu cầu đăng nhập
-
-4. **verifyGuest**
-   - Cho phép tất cả các role truy cập
-   - Sử dụng cho các API công khai
-
-### Security Implementation
-
-1. **JWT Authentication**
-   ```typescript
-   Authorization: Bearer <token>
+1. Clone repository:
+   ```bash
+   git clone <repository-url>
+   cd backend
    ```
 
-2. **Password Security**
-   - Sử dụng bcrypt để hash password
-   - Không lưu trữ plain text password
-   - Yêu cầu password mạnh khi đăng ký
+2. Cài đặt các dependencies:
+   ```bash
+   npm install
+   # hoặc
+   yarn install
+   ```
 
-3. **API Security**
-   - Rate limiting để chống DDoS
-   - CORS protection
-   - Input validation
-   - Error handling chuẩn
+3. Tạo file `.env` dựa trên `.env.example` và cấu hình các biến môi trường:
+   ```
+   PORT=5000
+   MONGO_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
+   JWT_SECRET=your_jwt_secret_key
+   JWT_EXPIRES_IN=7d
+   ...
+   ```
 
-## Error Handling
+4. Khởi chạy ứng dụng ở chế độ development:
+   ```bash
+   npm run dev
+   # hoặc
+   yarn dev
+   ```
 
-API trả về các mã lỗi HTTP tiêu chuẩn:
-- 200: Success
-- 201: Created
-- 400: Bad Request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not Found
-- 500: Internal Server Error
+5. Build ứng dụng cho production:
+   ```bash
+   npm run build
+   # hoặc
+   yarn build
+   ```
 
-Response format khi có lỗi:
-```json
-{
-  "message": "Thông báo lỗi",
-  "errors": {
-    "field": "Chi tiết lỗi cho trường cụ thể"
-  }
-}
+6. Khởi chạy ứng dụng ở chế độ production:
+   ```bash
+   npm start
+   # hoặc
+   yarn start
+   ```
+
+## Cấu trúc dự án
+
+```
+backend/
+├── dist/                  # Thư mục build (tạo sau khi build)
+├── src/                   # Mã nguồn của ứng dụng
+│   ├── controllers/       # Xử lý logic của các route
+│   ├── middleware/        # Middleware (xác thực, xử lý lỗi...)
+│   ├── models/            # Schema và model MongoDB
+│   ├── routes/            # Định nghĩa API routes
+│   ├── services/          # Business logic
+│   ├── types/             # TypeScript type definitions
+│   ├── utils/             # Các tiện ích
+│   ├── index.ts           # Entry point
+│   └── swagger.yaml       # API documentation
+├── .env                   # Biến môi trường (cần tạo)
+├── .env.example           # Mẫu biến môi trường
+├── .gitignore             # Git ignore file
+├── package.json           # Cấu hình npm
+├── tsconfig.json          # Cấu hình TypeScript
+└── README.md              # Tài liệu
 ```
 
-## Dependencies chính
+## API Endpoints
 
-- Express: Web framework
-- Mongoose: MongoDB ODM
-- JWT: Authentication
-- bcrypt: Password hashing
-- cors: CORS middleware
-- dotenv: Environment variables
-- swagger-ui-express: API documentation
+### Xác thực
+- `POST /api/auth/register` - Đăng ký
+- `POST /api/auth/login` - Đăng nhập
+- `POST /api/auth/refresh-token` - Làm mới token
 
-## Scripts
+### Người dùng
+- `GET /api/users/:id` - Lấy thông tin người dùng
+- `PUT /api/users/:id` - Cập nhật thông tin người dùng
+- `DELETE /api/users/:id` - Xóa người dùng
 
-- `npm run dev`: Chạy development server với nodemon
-- `npm run build`: Build TypeScript
-- `npm start`: Chạy production server
-- `npm test`: Chạy tests
+### Danh mục
+- `GET /api/categories` - Lấy tất cả danh mục
+- `GET /api/categories/:id` - Lấy chi tiết danh mục
+- `POST /api/categories` - Tạo danh mục mới
+- `PUT /api/categories/:id` - Cập nhật danh mục
+- `DELETE /api/categories/:id` - Xóa danh mục
 
-## Contributing
+### Sản phẩm
+- `GET /api/products` - Lấy tất cả sản phẩm
+- `GET /api/products/search` - Tìm kiếm sản phẩm
+- `GET /api/products/featured` - Lấy sản phẩm nổi bật
+- `GET /api/products/:id` - Lấy chi tiết sản phẩm
+- `POST /api/products` - Tạo sản phẩm mới
+- `PUT /api/products/:id` - Cập nhật sản phẩm
+- `DELETE /api/products/:id` - Xóa sản phẩm
 
-1. Fork repository
-2. Tạo feature branch
-3. Commit changes
-4. Push to branch
-5. Tạo Pull Request
+### Giỏ hàng
+- `GET /api/carts/:userId` - Lấy giỏ hàng
+- `POST /api/carts/:userId/items` - Thêm sản phẩm vào giỏ hàng
+- `PUT /api/carts/:userId/items/:itemId` - Cập nhật sản phẩm trong giỏ hàng
+- `DELETE /api/carts/:userId/items/:itemId` - Xóa sản phẩm khỏi giỏ hàng
+- `DELETE /api/carts/:userId` - Xóa giỏ hàng
 
-## License
+### Wishlist
+- `GET /api/wishlists/:userId` - Lấy danh sách yêu thích
+- `GET /api/wishlists/:userId/check/:productId` - Kiểm tra sản phẩm trong danh sách
+- `POST /api/wishlists/:userId` - Thêm sản phẩm vào danh sách yêu thích
+- `DELETE /api/wishlists/:userId/:itemId` - Xóa sản phẩm khỏi danh sách yêu thích
+- `DELETE /api/wishlists/:userId` - Xóa danh sách yêu thích
+
+### Đơn hàng
+- `GET /api/orders` - Lấy tất cả đơn hàng (admin)
+- `GET /api/orders/user/:userId` - Lấy đơn hàng của người dùng
+- `GET /api/orders/:id` - Lấy chi tiết đơn hàng
+- `POST /api/orders/user/:userId` - Tạo đơn hàng mới
+- `PUT /api/orders/:id/status` - Cập nhật trạng thái đơn hàng
+
+### Thanh toán
+- `GET /api/payments` - Lấy tất cả thanh toán (admin)
+- `GET /api/payments/:id` - Lấy chi tiết thanh toán
+- `POST /api/payments` - Tạo thanh toán mới
+- `PUT /api/payments/:id/status` - Cập nhật trạng thái thanh toán
+
+### Đánh giá
+- `GET /api/reviews/product/:productId` - Lấy đánh giá của sản phẩm
+- `GET /api/reviews/user/:userId` - Lấy đánh giá của người dùng
+- `POST /api/reviews` - Tạo đánh giá mới
+- `PUT /api/reviews/:id` - Cập nhật đánh giá
+- `DELETE /api/reviews/:id` - Xóa đánh giá
+
+### Khuyến mãi
+- `GET /api/promotions` - Lấy tất cả khuyến mãi
+- `GET /api/promotions/active` - Lấy khuyến mãi đang hoạt động
+- `GET /api/promotions/code/:code` - Lấy chi tiết khuyến mãi theo mã
+- `POST /api/promotions/validate` - Kiểm tra mã khuyến mãi
+- `POST /api/promotions` - Tạo khuyến mãi mới
+- `PUT /api/promotions/:id` - Cập nhật khuyến mãi
+- `DELETE /api/promotions/:id` - Xóa khuyến mãi
+
+### Thông báo
+- `GET /api/notifications/user/:userId` - Lấy thông báo của người dùng
+- `PUT /api/notifications/:id/read` - Đánh dấu thông báo đã đọc
+- `PUT /api/notifications/user/:userId/read-all` - Đánh dấu tất cả thông báo đã đọc
+- `POST /api/notifications` - Tạo thông báo mới
+- `DELETE /api/notifications/:id` - Xóa thông báo
+
+### Liên hệ
+- `GET /api/messages` - Lấy tất cả tin nhắn (admin)
+- `GET /api/messages/:id` - Lấy chi tiết tin nhắn
+- `POST /api/messages` - Tạo tin nhắn mới
+- `DELETE /api/messages/:id` - Xóa tin nhắn
+
+## Tài liệu API
+
+Tài liệu API được tạo tự động bằng Swagger và có thể truy cập tại:
+```
+http://localhost:5000/api-docs
+```
+
+## Tác giả
+
+GreenWeave Team
+
+## Giấy phép
 
 MIT
