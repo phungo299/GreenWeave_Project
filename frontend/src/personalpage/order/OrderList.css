@@ -1,0 +1,28 @@
+.personal-orders-container {
+    width: 100%;
+}
+
+.personal-section-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #05502d;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.personal-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Note: The order item styles are defined in the main Personal.css file */
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .personal-section-title {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+} 
