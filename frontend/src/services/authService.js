@@ -39,6 +39,26 @@ const authService = {
     // Update user profile
     updateProfile: (data) => {
         return axiosClient.put('/auth/profile', data);
+    },
+
+    // Xác thực email
+    verifyEmail: (verifyCode) => {
+        return axiosClient.post('/auth/verify-email', { verifyCode });
+    },
+
+    // Gửi lại email xác thực
+    sendNewVerifyEmail: (email, username) => {
+        return axiosClient.post('/auth/new-verify', { email, username });
+    },
+
+    // Kiểm tra tên đăng nhập
+    checkUsername: (username) => {
+        return axiosClient.post('/auth/check-username', { username });
+    },
+
+    // Kiểm tra email
+    checkEmail: (email) => {
+        return axiosClient.post('/auth/check-email', { email });
     }
 };
 export default authService; 

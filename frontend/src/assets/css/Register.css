@@ -180,14 +180,24 @@ input::-webkit-credentials-auto-fill-button {
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
-.register-error {
-    padding: 10px;
+.register-error, .login-error {
+    position: relative;
+    padding: 10px 10px 10px 40px;
     background-color: #ffebee;
     color: #d32f2f;
     border-radius: 4px;
     margin-bottom: 20px;
     font-size: 0.9rem;
     border-left: 4px solid #f44336;
+}
+
+.register-error::before, .login-error::before {
+    content: "⚠️";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
 }
 
 .register-submit-button:disabled,
@@ -232,4 +242,68 @@ input::-webkit-credentials-auto-fill-button {
     .register-subtitle {
         font-size: 0.9rem;
     }
+}
+
+/* Styles cho form xác thực email */
+.register-resend {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.register-resend-button {
+    background: none;
+    border: none;
+    color: #0C3C54;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.register-resend-button:hover:not(:disabled) {
+    color: #1a73e8;
+}
+
+.register-resend-button:disabled {
+    color: #888;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+/* Style success message cho trang login */
+.login-success {
+    position: relative;
+    margin-bottom: 15px;
+    padding: 10px 10px 10px 40px;
+    background-color: #e7f5eb;
+    color: #2e7d32;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    border-left: 4px solid #2e7d32;
+}
+
+.login-success::before {
+    content: "✅";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+}
+
+/* Tạo hiệu ứng nhấp nháy cho trường mã xác thực */
+@keyframes highlight {
+    0% { border-color: #ddd; }
+    50% { border-color: #1a4731; }
+    100% { border-color: #ddd; }
+}
+
+.register-form input[name="verificationCode"] {
+    animation: highlight 2s infinite;
+    text-align: center;
+    letter-spacing: 3px;
+    font-size: 1.2rem;
+    font-weight: bold;
 }

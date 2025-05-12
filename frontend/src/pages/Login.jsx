@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../assets/css/Login.css';
 import loginBackground from '../assets/images/login.jpg';
 import logoImage from '../assets/images/logo.jpg';
 import InputField from '../components/ui/inputfield/InputField';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -12,6 +12,7 @@ const Login = () => {
     const { login } = useAuth();
     const [loading, setLoading] = useState(false);
     const [loginError, setLoginError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     
     // Get the redirect path after successful login
     const from = location.state?.from?.pathname || '/';
@@ -26,6 +27,15 @@ const Login = () => {
         username: '',
         password: ''
     });
+
+    // Check for verification success message
+    useEffect(() => {
+        if (location.state?.verificationSuccess) {
+            setSuccessMessage('Xác thực email thành công! Vui lòng đăng nhập.');
+        } else if (location.state?.registrationSuccess) {
+            setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
+        }
+    }, [location.state]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -49,14 +59,11 @@ const Login = () => {
         const newErrors = {};
         let isValid = true;
         if (!credentials.username) {
-            newErrors.username = 'Vui lòng nhập email hoặc số điện thoại';
+            newErrors.username = 'Vui lòng nhập email hoặc tên đăng nhập';
             isValid = false;
         }
         if (!credentials.password) {
             newErrors.password = 'Vui lòng nhập mật khẩu';
-            isValid = false;
-        } else if (credentials.password.length < 6) {
-            newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
             isValid = false;
         }
         setErrors(newErrors);
@@ -68,7 +75,6 @@ const Login = () => {
         if (validate()) {
             setLoading(true);
             try {
-                // TODO: Replace with actual API once API is available
                 const result = await login(credentials);
                 if (result.success) {
                     // Redirect user after successful login
@@ -78,7 +84,26 @@ const Login = () => {
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                setLoginError('Đã xảy ra lỗi khi đăng nhập, vui lòng thử lại sau');
+                // Hiển thị thông báo lỗi phù hợp dựa trên loại lỗi
+                if (error.status === 0) {
+                    // Lỗi kết nối
+                    if (error.message && error.message.includes('CORS')) {
+                        setLoginError('Lỗi kết nối: Không thể kết nối đến máy chủ. Vui lòng đảm bảo máy chủ đang chạy và cấu hình CORS chính xác.');
+                    } else {
+                        setLoginError('Lỗi kết nối máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
+                    }
+                } else if (error.status === 401) {
+                    // Lỗi xác thực
+                    setLoginError('Tên đăng nhập hoặc mật khẩu không chính xác');
+                } else if (error.status === 400) {
+                    // Lỗi dữ liệu
+                    const errorMsg = error.data && typeof error.data === 'object' 
+                        ? Object.values(error.data).join(', ') 
+                        : error.message || 'Dữ liệu không hợp lệ';
+                    setLoginError(errorMsg);
+                } else {
+                    setLoginError(error.message || 'Đã xảy ra lỗi khi đăng nhập, vui lòng thử lại sau');
+                }
             } finally {
                 setLoading(false);
             }
@@ -91,6 +116,7 @@ const Login = () => {
                 <div className="login-form-box">
                     <h1 className="login-title">Xin chào!</h1>
                     <p className="login-subtitle">Đăng nhập vào tài khoản của bạn</p>                    
+                    {successMessage && <div className="login-success">{successMessage}</div>}
                     {loginError && <div className="login-error">{loginError}</div>}                    
                     <form className="login-form" onSubmit={handleSubmit}>
                         <InputField
@@ -98,7 +124,7 @@ const Login = () => {
                             name="username"
                             value={credentials.username}
                             onChange={handleChange}
-                            placeholder="Nhập email hoặc số điện thoại"
+                            placeholder="Nhập email hoặc tên đăng nhập"
                             required
                             error={errors.username}
                             autoComplete="username"

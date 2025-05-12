@@ -34,6 +34,8 @@ const swaggerDocument = YAML.load(swaggerPath);
 swaggerDocument.servers[0].url = process.env.API_URL || "http://localhost:5000";
 
 const allowedOrigins = [
+  "http://localhost:3000", // Frontend development server
+  "http://127.0.0.1:3000",
   process.env.STAGING_URL,
   process.env.API_URL,
   process.env.CLIENT_URL,
@@ -41,18 +43,25 @@ const allowedOrigins = [
   process.env.BACKEND_URL,
 ].filter(Boolean); // Remove undefined values
 
+console.log("Allowed Origins:", allowedOrigins);
+
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Cho phép truy cập không có origin (như từ Postman hoặc các công cụ API)
       if (!origin) return callback(null, true);
+      
       if (allowedOrigins.indexOf(origin) === -1) {
-        var msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
+        console.log(`Origin ${origin} not allowed by CORS`);
+        var msg = "The CORS policy for this site does not allow access from the specified Origin.";
         return callback(new Error(msg), false);
       }
+      console.log(`Origin ${origin} allowed by CORS`);
       return callback(null, true);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 
@@ -99,7 +108,7 @@ if (require.main === module) {
       app.listen(port, () => {
         console.log(`Server started at ${new Date().toISOString()}`);
         console.log(`Server is running on port ${port}`);
-        console.log(`API Documentation available at ${process.env.API_URL}/api-docs`);
+        console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${port}`}/api-docs`);
       });
     })
     .catch((error) => {
