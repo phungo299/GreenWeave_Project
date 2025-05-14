@@ -144,23 +144,19 @@ const Login = () => {
                         aria-label="Quay lại trang chủ"
                     >
                         <FaArrowLeft /> Trang chủ
-                    </button>
-                    
+                    </button>                   
                     <h1 className="login-title">Xin chào!</h1>
-                    <p className="login-subtitle">Đăng nhập vào tài khoản của bạn</p>                    
-                    
+                    <p className="login-subtitle">Đăng nhập vào tài khoản của bạn</p>                     
                     {successMessage && (
                         <div className="login-success" role="alert">
                             {successMessage}
                         </div>
-                    )}
-                    
+                    )}                   
                     {loginError && (
                         <div className="login-error" role="alert">
                             {loginError}
                         </div>
-                    )}                    
-                    
+                    )}                                       
                     <form className="login-form" onSubmit={handleSubmit} noValidate>
                         <InputField
                             type="text"
@@ -174,9 +170,7 @@ const Login = () => {
                             disabled={loading}
                             aria-invalid={!!errors.username}
                             aria-describedby={errors.username ? "username-error" : undefined}
-                        />
-
-                        
+                        />                       
                         <InputField
                             type="password"
                             name="password"
@@ -190,9 +184,7 @@ const Login = () => {
                             disabled={loading}
                             aria-invalid={!!errors.password}
                             aria-describedby={errors.password ? "password-error" : undefined}
-                        />
-        
-                        
+                        />                       
                         <div className="form-options">
                             <label className="remember-me">
                                 <input 
@@ -205,8 +197,7 @@ const Login = () => {
                                 <span className="checkbox-label">Lưu mật khẩu</span>
                             </label>
                             <Link to="/forgot-password" className="forgot-password">Quên mật khẩu</Link>
-                        </div>                       
-                        
+                        </div>                                              
                         <button 
                             type="submit" 
                             className="login-button"
@@ -226,8 +217,7 @@ const Login = () => {
                         <span>Bạn chưa có tài khoản? </span>
                         <Link to="/register" className="register-link">Đăng Ký</Link>
                     </div>
-                </div>            
-                
+                </div>                           
                 <div className="brand-logo">
                     <div className="logo-wrapper">
                         <img src={logoImage} alt="Greenweave Logo" className="logo-image" />
@@ -237,5 +227,4 @@ const Login = () => {
         </div>
     );
 };
-
 export default Login;

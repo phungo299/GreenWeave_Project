@@ -35,14 +35,14 @@ const Register = () => {
         confirmPassword: ''
     });
 
-    // Xử lý trường hợp tải lại trang khi đang trong quá trình xác thực
+    // Handle page reloads while authentication is in progress
     useEffect(() => {
         if (verificationPending && pendingEmail) {
             setShowVerificationForm(true);
         }
     }, [verificationPending, pendingEmail]);
 
-    // Đếm ngược thời gian để gửi lại mã
+    // Countdown time to resend code
     useEffect(() => {
         let timer;
         if (countdown > 0) {
@@ -183,28 +183,28 @@ const Register = () => {
                 const result = await register(userData);
                 if (result.success) {
                     setShowVerificationForm(true);
-                    setCountdown(60); // Đặt thời gian đếm ngược 60 giây để gửi lại mã
+                    setCountdown(60); // Set 60 second countdown to resend code
                 } else {
                     setRegisterError(result.message || 'Đăng ký không thành công');
                 }
             } catch (error) {
                 console.error('Register error:', error);
-                // Hiển thị thông báo lỗi phù hợp dựa trên loại lỗi
+                // Display appropriate error message based on error type
                 if (error.status === 0) {
-                    // Lỗi kết nối
+                    // Connection error
                     if (error.message && error.message.includes('CORS')) {
                         setRegisterError('Lỗi kết nối: Không thể kết nối đến máy chủ. Vui lòng đảm bảo máy chủ đang chạy và cấu hình CORS chính xác.');
                     } else {
                         setRegisterError('Lỗi kết nối máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
                     }
                 } else if (error.status === 400) {
-                    // Lỗi xác thực dữ liệu
+                    // Data validation error
                     const errorMsg = error.data && typeof error.data === 'object' 
                         ? Object.values(error.data).join(', ') 
                         : error.message || 'Dữ liệu không hợp lệ';
                     setRegisterError(errorMsg);
                 } else if (error.status === 409) {
-                    // Lỗi xung đột (email/username đã tồn tại)
+                    // Conflict error (email/username already exists)
                     setRegisterError(error.message || 'Email hoặc tên đăng nhập đã được sử dụng.');
                 } else {
                     setRegisterError(error.message || 'Đã xảy ra lỗi khi đăng ký, vui lòng thử lại sau');
@@ -254,7 +254,7 @@ const Register = () => {
         try {
             const result = await resendVerification();
             if (result.success) {
-                setCountdown(60); // Đặt lại thời gian đếm ngược
+                setCountdown(60); // Reset countdown time
             } else {
                 setVerificationError(result.message || 'Gửi lại mã không thành công');
             }
@@ -268,14 +268,14 @@ const Register = () => {
 
     const handleGoogleLogin = () => {
         console.log('Google login clicked');
-        // Triển khai đăng nhập Google trong tương lai
+        // Implement Google login in the future
     };
 
     const handleBackToHome = () => {
         navigate('/');
     };
 
-    // Form xác thực email
+    // Email verification form
     if (showVerificationForm) {
         return (
             <div className="register-page" style={{ backgroundImage: `url(${loginBackground})` }}>
@@ -288,19 +288,16 @@ const Register = () => {
                         >
                             <FaArrowLeft /> Trang chủ
                         </button>
-
                         <h1 className="register-title">Xác thực email</h1>
                         <p className="register-subtitle">
                             Chúng tôi đã gửi mã xác thực đến email {userData.email || pendingEmail}.<br />
                             Vui lòng kiểm tra hộp thư và nhập mã xác thực.
-                        </p>                    
-                        
+                        </p>                                           
                         {verificationError && (
                             <div className="register-error" role="alert">
                                 {verificationError}
                             </div>
-                        )}                    
-                        
+                        )}                                           
                         <form className="register-form" onSubmit={handleVerifySubmit} noValidate>
                             <InputField
                                 type="text"
@@ -319,8 +316,7 @@ const Register = () => {
                                 <div id="verification-error" className="error-message">
                                     {verificationError}
                                 </div>
-                            )}
-                            
+                            )}                            
                             <button 
                                 type="submit" 
                                 className="register-submit-button"
@@ -334,8 +330,7 @@ const Register = () => {
                                     </>
                                 ) : 'Xác thực tài khoản'}
                             </button>
-                        </form>                  
-                        
+                        </form>                                         
                         <div className="register-resend">
                             <button 
                                 className="register-resend-button" 
@@ -344,8 +339,7 @@ const Register = () => {
                             >
                                 {countdown > 0 ? `Gửi lại mã sau ${countdown}s` : 'Gửi lại mã'}
                             </button>
-                        </div>
-                        
+                        </div>                       
                         <div className="register-login-prompt">
                             <span>Quay lại đăng nhập? </span>
                             <Link to="/login" className="login-link">Đăng Nhập</Link>
@@ -367,7 +361,6 @@ const Register = () => {
                     >
                         <FaArrowLeft /> Trang chủ
                     </button>
-
                     <h1 className="register-title">Tạo tài khoản</h1>
                     <p className="register-subtitle">Đăng ký để trải nghiệm dịch vụ của chúng tôi</p>
                     
@@ -375,8 +368,7 @@ const Register = () => {
                         <div className="register-error" role="alert">
                             {registerError}
                         </div>
-                    )}
-                    
+                    )}                    
                     <form className="register-form" onSubmit={handleSubmit} noValidate>
                         <InputField
                             type="text"
@@ -392,8 +384,6 @@ const Register = () => {
                             isChecking={checkingUsername}
                             isValid={userData.username.length >= 8 && !errors.username && !checkingUsername ? true : (errors.username && errors.username !== 'Đang kiểm tra tên đăng nhập...' ? false : null)}
                         />
-
-
                         <InputField
                             type="email"
                             name="email"
@@ -408,7 +398,6 @@ const Register = () => {
                             isChecking={checkingEmail}
                             isValid={/\S+@\S+\.\S+/.test(userData.email) && !errors.email && !checkingEmail ? true : (errors.email && errors.email !== 'Đang kiểm tra email...' ? false : null)}
                         />
-
                         <InputField
                             type="password"
                             name="password"
@@ -422,8 +411,6 @@ const Register = () => {
                             aria-invalid={!!errors.password}
                             aria-describedby={errors.password ? "password-error" : undefined}
                         />
-
-
                         <InputField
                             type="password"
                             name="confirmPassword"
@@ -437,8 +424,6 @@ const Register = () => {
                             aria-invalid={!!errors.confirmPassword}
                             aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
                         />
-
-
                         <button 
                             type="submit" 
                             className="register-submit-button"
@@ -452,11 +437,9 @@ const Register = () => {
                                 </>
                             ) : 'Đăng Ký'}
                         </button>
-
                         <div className="register-divider">
                             <span>hoặc</span>
                         </div>
-
                         <button 
                             type="button" 
                             className="google-login-button"
@@ -467,7 +450,6 @@ const Register = () => {
                             Đăng ký với Google
                         </button>
                     </form>
-
                     <div className="register-login-prompt">
                         <span>Đã có tài khoản? </span>
                         <Link to="/login" className="login-link">Đăng Nhập</Link>
@@ -477,5 +459,4 @@ const Register = () => {
         </div>
     );
 };
-
 export default Register;
