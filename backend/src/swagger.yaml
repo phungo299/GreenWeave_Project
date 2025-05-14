@@ -300,6 +300,75 @@ paths:
                     type: string
                     example: "Thông tin đăng nhập không chính xác"
 
+  /api/auth/check-verification:
+    post:
+      tags:
+        - Auth
+      summary: Kiểm tra trạng thái xác thực và gửi mã OTP
+      description: |
+        Kiểm tra xem email đã được xác thực hay chưa. Nếu chưa, sẽ gửi mã OTP 6 số đến email.
+        Được sử dụng trong trường hợp người dùng quên xác thực email sau khi đăng ký.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Email chưa được xác thực, đã gửi mã OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mã xác thực đã được gửi đến email của bạn"
+                  isVerified:
+                    type: boolean
+                    example: false
+        '400':
+          description: Email đã được xác thực
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tài khoản này đã được xác thực"
+                  isVerified:
+                    type: boolean
+                    example: true
+        '404':
+          description: Email không tồn tại
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Không tìm thấy tài khoản với email này"
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đã xảy ra lỗi khi kiểm tra trạng thái xác thực"
+
   /api/users:
     get:
       tags:

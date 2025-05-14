@@ -181,6 +181,59 @@ export const verifyEmail = async (req: Request, res: Response) => {
   }
 };
 
+// API to check email authentication status
+export const checkVerificationStatus = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: "Vui lòng cung cấp email" });
+    }
+    
+    const formatEmail = email.trim().toLowerCase();
+    
+    // Check email format
+    if (!/^[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}$/.test(formatEmail)) {
+      return res.status(400).json({ message: "Email không hợp lệ" });
+    }
+    
+    const user = await User.findOne({ email: formatEmail });
+    
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy tài khoản với email này" });
+    }
+    
+    // If the user is authenticated, return a message
+    if (user.isVerified) {
+      return res.status(400).json({ 
+        message: "Tài khoản này đã được xác thực",
+        isVerified: true
+      });
+    }
+    
+    // If not authenticated, generate and send new OTP code
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationTokenExpiresAt = Date.now() + 10 * 60 * 1000; // 10 phút
+    
+    user.resetPasswordToken = verificationToken;
+    user.resetPasswordExpires = new Date(verificationTokenExpiresAt);
+    
+    await user.save();
+    
+    // Send email containing verification code
+    await sendVerificationEmail(user.email, user.username, verificationToken);
+    
+    return res.status(200).json({
+      message: "Mã xác thực đã được gửi đến email của bạn",
+      isVerified: false
+    });
+    
+  } catch (error: any) {
+    console.error("Check verification status error:", error);
+    return res.status(500).json({ message: "Đã xảy ra lỗi khi kiểm tra trạng thái xác thực" });
+  }
+};
+
 export const sendNewVerifyEmail = async (req: Request, res: Response) => {
   const { email, username } = req.body;
   try {

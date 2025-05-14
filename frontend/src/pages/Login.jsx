@@ -6,6 +6,7 @@ import loginBackground from '../assets/images/login.jpg';
 import logoImage from '../assets/images/logo-no-background.png';
 import InputField from '../components/ui/inputfield/InputField';
 import { useAuth } from '../context/AuthContext';
+import ForgotVerifyEmail from './ForgotVerifyEmail';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -14,6 +15,8 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [loginError, setLoginError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [showVerifyModal, setShowVerifyModal] = useState(false); // State to display modal
+    const [userEmail, setUserEmail] = useState('');
     
     // Get the redirect path after successful login
     const from = location.state?.from?.pathname || '/';
@@ -96,6 +99,17 @@ const Login = () => {
         return !Object.values(newErrors).some(error => error);
     };
 
+    // Handle when closing authentication modal
+    const handleCloseVerifyModal = () => {
+        setShowVerifyModal(false);
+    };
+
+    // Process when email authentication is successful
+    const handleVerificationSuccess = () => {
+        setShowVerifyModal(false);
+        setSuccessMessage('Xác thực email thành công! Vui lòng đăng nhập.');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault(); 
         if (validate()) {
@@ -110,25 +124,33 @@ const Login = () => {
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                // Hiển thị thông báo lỗi phù hợp dựa trên loại lỗi
-                if (error.status === 0) {
-                    // Lỗi kết nối
-                    if (error.message && error.message.includes('CORS')) {
-                        setLoginError('Lỗi kết nối: Không thể kết nối đến máy chủ. Vui lòng đảm bảo máy chủ đang chạy và cấu hình CORS chính xác.');
-                    } else {
-                        setLoginError('Lỗi kết nối máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
-                    }
-                } else if (error.status === 401) {
-                    // Lỗi xác thực
-                    setLoginError('Tên đăng nhập hoặc mật khẩu không chính xác');
-                } else if (error.status === 400) {
-                    // Lỗi dữ liệu
-                    const errorMsg = error.data && typeof error.data === 'object' 
-                        ? Object.values(error.data).join(', ') 
-                        : error.message || 'Dữ liệu không hợp lệ';
-                    setLoginError(errorMsg);
+                // Check email authentication errors
+                if (error.status === 400 && error.message && error.message.includes('chưa được xác thực')) {
+                    // Lấy email từ thông báo lỗi hoặc từ input nếu là email
+                    const userEmail = credentials.username.includes('@') ? credentials.username : '';
+                    setUserEmail(userEmail);
+                    setShowVerifyModal(true);
                 } else {
-                    setLoginError(error.message || 'Đã xảy ra lỗi khi đăng nhập, vui lòng thử lại sau');
+                    // Display appropriate error message based on error type
+                    if (error.status === 0) {
+                        // Connection error
+                        if (error.message && error.message.includes('CORS')) {
+                            setLoginError('Lỗi kết nối: Không thể kết nối đến máy chủ. Vui lòng đảm bảo máy chủ đang chạy và cấu hình CORS chính xác.');
+                        } else {
+                            setLoginError('Lỗi kết nối máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
+                        }
+                    } else if (error.status === 401) {
+                        // Authentication error
+                        setLoginError('Tên đăng nhập hoặc mật khẩu không chính xác');
+                    } else if (error.status === 400) {
+                        // Data error
+                        const errorMsg = error.data && typeof error.data === 'object' 
+                            ? Object.values(error.data).join(', ') 
+                            : error.message || 'Dữ liệu không hợp lệ';
+                        setLoginError(errorMsg);
+                    } else {
+                        setLoginError(error.message || 'Đã xảy ra lỗi khi đăng nhập, vui lòng thử lại sau');
+                    }
                 }
             } finally {
                 setLoading(false);
@@ -230,6 +252,19 @@ const Login = () => {
                     </div>
                 </div>
             </div>
+            {/* Email verification modal */}
+            {showVerifyModal && (
+                <div className="verify-modal-overlay">
+                    <div className="verify-modal-content">
+                        <button className="verify-modal-close" onClick={handleCloseVerifyModal}>×</button>
+                        <ForgotVerifyEmail 
+                            initialEmail={userEmail} 
+                            onVerificationSuccess={handleVerificationSuccess}
+                            isModal={true}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -139,6 +139,29 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // Check verification status
+    const checkVerificationStatus = async (email) => {
+        try {
+            const response = await authService.checkVerificationStatus(email);
+            
+            if (!response.isVerified) {
+                // If email is not verified, update state
+                setPendingEmail(email);
+                setVerificationPending(true);
+            }
+        
+            return {
+                success: true,
+                isVerified: response.isVerified,
+                message: response.message
+            };
+        } catch (error) {
+            console.error('Check verification status error:', error);
+            // Forward the error so the component can handle it
+            throw error;
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -150,7 +173,8 @@ export const AuthProvider = ({ children }) => {
             logout,
             register,
             verifyEmail,
-            resendVerification
+            resendVerification,
+            checkVerificationStatus
         }}>
             {children}
         </AuthContext.Provider>

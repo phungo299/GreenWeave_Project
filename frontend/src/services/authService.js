@@ -41,22 +41,27 @@ const authService = {
         return axiosClient.put('/auth/profile', data);
     },
 
-    // Xác thực email
+    // Email authentication
     verifyEmail: (verifyCode) => {
         return axiosClient.post('/auth/verify-email', { verifyCode });
     },
 
-    // Gửi lại email xác thực
+    // Resend verification email
     sendNewVerifyEmail: (email, username) => {
         return axiosClient.post('/auth/new-verify', { email, username });
     },
 
-    // Kiểm tra tên đăng nhập
+    // Forgot verify email
+    checkVerificationStatus: (email) => {
+        return axiosClient.post('/auth/check-verification', { email });
+    },
+
+    // Check login name
     checkUsername: (username) => {
         return axiosClient.post('/auth/check-username', { username });
     },
 
-    // Kiểm tra email
+    // Check email
     checkEmail: (email) => {
         return axiosClient.post('/auth/check-email', { email });
     }
