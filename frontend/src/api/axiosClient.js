@@ -7,7 +7,7 @@ const axiosClient = axios.create({
         'Content-Type': 'application/json',
     },
     timeout: 10000, // Timeout after 10 seconds
-    withCredentials: true, // Cho phép gửi cookies qua các domain khác nhau
+    withCredentials: true, // Allow sending cookies across different domains
 });
 
 // Interceptor for request (eg: attach token)

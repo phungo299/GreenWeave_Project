@@ -9,6 +9,7 @@ export interface IUser {
   address: string;
   rewardPoints: number;
   avatar: string;
+  isVerified: boolean;
   isDisabled?: boolean;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -28,6 +29,10 @@ const userSchema = new mongoose.Schema<IUser>(
     address: { type: String, default: "" },
     rewardPoints: { type: Number, default: 0 },
     avatar: { type: String, default: "" },
+    isVerified: { 
+      type: Boolean, 
+      default: false 
+    },
     isDisabled: {
       type: Boolean,
       default: false,

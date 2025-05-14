@@ -14,6 +14,8 @@ frontend/dist/
 
 # misc
 frontend/.DS_Store
+backend/.env
+frontend/.env
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local

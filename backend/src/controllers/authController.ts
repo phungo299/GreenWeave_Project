@@ -71,6 +71,7 @@ export const register = async (req: Request, res: Response) => {
       username: formatUsername,
       email: formatEmail,
       passwordHash: hashedPass,
+      isVerified: false,
     });
 
     const verificationToken = Math.floor(
@@ -169,6 +170,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    user.isVerified = true;
 
     await user.save();
 
@@ -240,6 +242,11 @@ export const login = async (req: Request, res: Response) => {
     if (user.isDisabled) {
       errors.message =
         "Tài khoản của bạn đã bị khóa! Vui lòng liên hệ quản trị viên để được hỗ trợ";
+      throw new ValidationError(errors);
+    }
+
+    if (!user.isVerified && user.role === 'user') {
+      errors.message = "Tài khoản chưa được xác thực! Vui lòng kiểm tra email và xác thực tài khoản.";
       throw new ValidationError(errors);
     }
 
