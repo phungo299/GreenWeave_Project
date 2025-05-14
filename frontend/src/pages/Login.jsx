@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FaArrowLeft } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../assets/css/Login.css';
 import loginBackground from '../assets/images/login.jpg';
@@ -37,18 +38,42 @@ const Login = () => {
         }
     }, [location.state]);
 
+    // Real-time validation
+    const validateField = (name, value) => {
+        let error = '';
+        switch (name) {
+            case 'username':
+                if (!value) {
+                    error = 'Vui lòng nhập email hoặc tên đăng nhập';
+                }
+                break;
+            case 'password':
+                if (!value) {
+                    error = 'Vui lòng nhập mật khẩu';
+                }
+                break;
+            default:
+                break;
+        }
+        return error;
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setCredentials({
-            ...credentials,
-            [name]: type === 'checkbox' ? checked : value
-        });
-        if (errors[name]) {
-            setErrors({
-                ...errors,
-                [name]: ''
-            });
-        }
+        const newValue = type === 'checkbox' ? checked : value;
+        
+        setCredentials(prev => ({
+            ...prev,
+            [name]: newValue
+        }));
+
+        // Real-time validation
+        const error = validateField(name, newValue);
+        setErrors(prev => ({
+            ...prev,
+            [name]: error
+        }));
+
         // Remove login error message when user changes input
         if (loginError) {
             setLoginError('');
@@ -56,18 +81,13 @@ const Login = () => {
     };
 
     const validate = () => {
-        const newErrors = {};
-        let isValid = true;
-        if (!credentials.username) {
-            newErrors.username = 'Vui lòng nhập email hoặc tên đăng nhập';
-            isValid = false;
-        }
-        if (!credentials.password) {
-            newErrors.password = 'Vui lòng nhập mật khẩu';
-            isValid = false;
-        }
+        const newErrors = {
+            username: validateField('username', credentials.username),
+            password: validateField('password', credentials.password)
+        };
+        
         setErrors(newErrors);
-        return isValid;
+        return !Object.values(newErrors).some(error => error);
     };
 
     const handleSubmit = async (e) => {
@@ -110,15 +130,38 @@ const Login = () => {
         }
     };
 
+    const handleBackToHome = () => {
+        navigate('/');
+    };
+
     return (
         <div className="login-page" style={{ backgroundImage: `url(${loginBackground})` }}>
             <div className="login-container">
                 <div className="login-form-box">
+                    <button 
+                        className="back-button"
+                        onClick={handleBackToHome}
+                        aria-label="Quay lại trang chủ"
+                    >
+                        <FaArrowLeft /> Trang chủ
+                    </button>
+                    
                     <h1 className="login-title">Xin chào!</h1>
                     <p className="login-subtitle">Đăng nhập vào tài khoản của bạn</p>                    
-                    {successMessage && <div className="login-success">{successMessage}</div>}
-                    {loginError && <div className="login-error">{loginError}</div>}                    
-                    <form className="login-form" onSubmit={handleSubmit}>
+                    
+                    {successMessage && (
+                        <div className="login-success" role="alert">
+                            {successMessage}
+                        </div>
+                    )}
+                    
+                    {loginError && (
+                        <div className="login-error" role="alert">
+                            {loginError}
+                        </div>
+                    )}                    
+                    
+                    <form className="login-form" onSubmit={handleSubmit} noValidate>
                         <InputField
                             type="text"
                             name="username"
@@ -129,7 +172,11 @@ const Login = () => {
                             error={errors.username}
                             autoComplete="username"
                             disabled={loading}
-                        />                        
+                            aria-invalid={!!errors.username}
+                            aria-describedby={errors.username ? "username-error" : undefined}
+                        />
+
+                        
                         <InputField
                             type="password"
                             name="password"
@@ -141,7 +188,11 @@ const Login = () => {
                             showTogglePassword={true}
                             autoComplete="current-password"
                             disabled={loading}
-                        />                        
+                            aria-invalid={!!errors.password}
+                            aria-describedby={errors.password ? "password-error" : undefined}
+                        />
+        
+                        
                         <div className="form-options">
                             <label className="remember-me">
                                 <input 
@@ -155,19 +206,28 @@ const Login = () => {
                             </label>
                             <Link to="/forgot-password" className="forgot-password">Quên mật khẩu</Link>
                         </div>                       
+                        
                         <button 
                             type="submit" 
                             className="login-button"
                             disabled={loading}
+                            aria-busy={loading}
                         >
-                            {loading ? 'Đang xử lý...' : 'Đăng Nhập'}
+                            {loading ? (
+                                <>
+                                    <span className="loading-spinner"></span>
+                                    Đang xử lý...
+                                </>
+                            ) : 'Đăng Nhập'}
                         </button>
                     </form>                    
+                    
                     <div className="register-prompt">
                         <span>Bạn chưa có tài khoản? </span>
                         <Link to="/register" className="register-link">Đăng Ký</Link>
                     </div>
                 </div>            
+                
                 <div className="brand-logo">
                     <div className="logo-wrapper">
                         <img src={logoImage} alt="Greenweave Logo" className="logo-image" />
@@ -177,4 +237,5 @@ const Login = () => {
         </div>
     );
 };
+
 export default Login;
