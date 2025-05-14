@@ -45,6 +45,12 @@ const Login = () => {
             case 'username':
                 if (!value) {
                     error = 'Vui lòng nhập email hoặc tên đăng nhập';
+                } else {
+                    // Check email format if user enters
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!emailRegex.test(value)) {
+                        error = 'Định dạng email không hợp lệ';
+                    }
                 }
                 break;
             case 'password':
