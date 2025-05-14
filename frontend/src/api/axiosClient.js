@@ -47,7 +47,7 @@ axiosClient.interceptors.response.use(
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('user');
                     console.error('Chưa xác thực: Vui lòng đăng nhập để tiếp tục');
-                    // Chỉ chuyển hướng nếu không phải đang ở trang đăng nhập hoặc đăng ký
+                    // Only redirect if not on login or registration page
                     if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
                         window.location.href = '/login';
                     }

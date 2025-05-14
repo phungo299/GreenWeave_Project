@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../assets/css/Login.css';
 import loginBackground from '../assets/images/login.jpg';
-import logoImage from '../assets/images/logo.jpg';
+import logoImage from '../assets/images/logo-no-background.png';
 import InputField from '../components/ui/inputfield/InputField';
 import { useAuth } from '../context/AuthContext';
 
