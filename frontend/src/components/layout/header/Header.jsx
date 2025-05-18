@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import cartIcon from '../../../assets/icons/cart.png';
+import exitIcon from '../../../assets/icons/exit.png';
+import userIcon from '../../../assets/icons/user.png';
+import Logo from '../../../assets/images/logo.jpg';
+import { useAuth } from '../../../context/AuthContext';
+import { useCart } from '../../../context/CartContext';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { useScrollToSection } from '../../hooks/useScrollToSection';
-import { useCart } from '../../../context/CartContext';
-import { useAuth } from '../../../context/AuthContext';
 import './Header.css';
-import Logo from '../../../assets/images/logo.jpg';
-import cartIcon from '../../../assets/icons/cart.png';
-import userIcon from '../../../assets/icons/user.png';
-import exitIcon from '../../../assets/icons/exit.png';
 
 const Header = () => {
     const activeSection = useActiveSection();
@@ -21,6 +21,7 @@ const Header = () => {
     
     // Check if the current URL is a products page
     const isProductsPage = location.pathname === '/products';
+    const isAboutUsPage = location.pathname === '/about-us';
     
     // Logout handling
     const handleLogout = () => {
@@ -70,12 +71,8 @@ const Header = () => {
                                 <a href="#products" onClick={(e) => scrollToSection(e, 'products')}>Product</a>
                             )}
                         </li>
-                        <li className={(!isProductsPage && activeSection === 'about') ? 'active' : ''}>
-                            {isProductsPage ? (
-                                <Link to="/#about">About Us</Link>
-                            ) : (
-                                <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>About Us</a>
-                            )}
+                        <li className={isAboutUsPage || (!isProductsPage && activeSection === 'about') ? 'active' : ''}>
+                            <Link to="/about-us">About Us</Link>
                         </li>
                         <li className={(!isProductsPage && activeSection === 'contact') ? 'active' : ''}>
                             {isProductsPage ? (

@@ -1,315 +1,978 @@
-.aboutpage-container {
-    width: 100%;
-    max-width: 100%;
-    background-color: #e3e3e3;
-    padding-top: 80px;
+/* About Us Hero Section 1 */
+.about-hero-section {
+    padding: 60px 0;
 }
 
-/* Hero Section */
-.aboutpage-hero-section {
-    width: 100%;
-    padding: 0 20px 60px;
-}
-  
-.aboutpage-hero-content {
-    max-width: 1320px;
+.about-hero-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 100%;
     margin: 0 auto;
+    padding: 30px;
+
 }
 
-.aboutpage-main-content {
+/* Left section container */
+.left-section-container {
+    flex: 3;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 40px;
-}
-  
-.aboutpage-layout {
-    display: flex;
-    width: 100%;
-    gap: 40px;
-    align-items: center;
-    min-height: 650px;
-}
-  
-.aboutpage-left-content {
-    flex: 0 0 60%;
-    display: flex;
-    flex-direction: column;
+    flex-direction: column; 
     gap: 20px;
-    position: relative;
-    height: auto;
-    min-height: 600px;
-    padding-top: 30px;
-    background-color: transparent;
 }
-  
-.aboutpage-image-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
-    gap: 20px;
-    position: relative;
-    height: 100%;
-}
-  
-.aboutpage-logo-center {
-    grid-column: 2;
-    grid-row: 1;
-    background-color: transparent;
-    border-radius: 4px;
-    padding: 15px 0 15px 0;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    height: 180px;
-    width: 100%;
-    margin-top: -50px;
-}
-  
-.aboutpage-image-bottom {
-    grid-column: 2;
-    grid-row: 2;
-    height: 400px;
+
+.blue-image {
+    margin-top: 40%;
+    max-width: 360px;
     border-radius: 8px;
-    overflow: hidden;
-    width: 100%;
-    margin-top: -50px;
 }
-  
-.aboutpage-image-top {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    height: 400px;
+
+.blue-image img {
+    max-width: 360px;
+    aspect-ratio: 360 / 430;
     border-radius: 8px;
-    overflow: hidden;
-    width: 100%;
-    margin-top: 160px;
 }
-  
-.aboutpage-ratings {
-    grid-column: 1;
-    grid-row: 3;
+
+.ratings-box {
+    position: absolute;
+    top: 0;
+    right: 0;
     background-color: white;
-    padding: 15px 0 15px 15px;
+    padding: 12px 15px;
     border-radius: 8px;
-    text-align: start;
-    width: 160px;
-    margin-left: auto;
-    margin-right: 0;
-    justify-self: end;
+    width: fit-content;
+    border: 1px solid #f0f0f0;
 }
-  
-.aboutpage-logo-center img  {
+
+.ratings-box h4 {
+    margin: 0 0 8px 0;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.emojis {
+    display: flex;
+    gap: 5px;
+    font-size: 20px;
+}
+
+/* Middle section */
+.middle-section {
+    flex: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.logo-section {
+
+    background-color: white;
+
+    width: 80%;
+    display: flex;
+    border-radius: 8px;
+    text-align: center;
+    justify-content: center;
+}
+
+.logo-image {
     max-width: 100%;
-    max-height: 100%;
+
 }
-  
-.aboutpage-image-top img,
-.aboutpage-image-bottom img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+
+.stairs-image {
+    max-width: 340px;
+    border-radius: 8px;
 }
-  
-.aboutpage-right-content  {
-    flex: 0 0 40%;
-    padding: 30px;
-    align-self: center;
+
+.stairs-image img {
+    max-width: 340px;
+    aspect-ratio: 360 / 430;
+    border-radius: 8px;
 }
-  
-.aboutpage-right-content h1 {
-    color: #195130;
-    font-size: 60px;
-    font-weight: 700;
+
+/* Right section container */
+.right-section-container {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Right section */
+.right-section {
+    flex: 6;
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.about-title {
+    color: #0A4B3E;
+    font-size: 42px;
+    font-weight: 800;
     margin-bottom: 20px;
+    text-transform: uppercase;
 }
-  
-.aboutpage-description {
-    color: #358e5a;
-    font-size: 18px;
+
+.about-description {
+
+    color: #0A4B3E;
+}
+
+.about-description p {
+    font-size: 17px;
     line-height: 1.6;
     text-align: justify;
+    margin: 0;
 }
 
 .highlight {
-    color: #195130;
+    color: #0A4B3E;
     font-weight: 700;
-    text-decoration: none;
+    font-size: 22px;
 }
 
-.brand-highlight {
-    color: #195130;
-    font-weight: 700;
-    font-style: italic;
-}
-  
-/* Recycled Materials Section */
-.aboutpage-recycled-section {
-    width: 100%;
-    background-color: #e3e3e3;
-    padding: 60px 20px;
-}
-  
-.aboutpage-recycled-content {
-    max-width: 1320px;
-    margin: 0 auto;
-    display: flex;
-    gap: 30px;
-}
-  
-.aboutpage-recycled-image {
-    flex: 1;
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: white;
-    padding: 30px;
-    height: 720px;
-    display: flex;
-    align-items: center;
-}
-  
-.aboutpage-recycled-image img {
-    width: 100%;
-    height: calc(100% - 30px);
-    object-fit: cover;
-    border-radius: 4px;
-}
-  
-.aboutpage-recycled-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    height: 720px;
-}
-  
-.aboutpage-caps-image {
-    width: 100%;
-    height: 480px;
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: white;
-    padding: 30px;
-}
-  
-.aboutpage-caps-image img {
-    width: 100%;
-    height: calc(100% - 30px);
-    object-fit: cover;
-    border-radius: 4px;
-}
-  
-.aboutpage-recycled-badge {
-    width: 100%;
-    background-color: #195130;
-    color: white;
-    padding: 15px 40px;
-    border-radius: 60px;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-    align-self: center;
-    position: relative;
-}
-
-.aboutpage-recycled-badge::before {
-    content: "";
-    width: 60px;
-    height: 60px;
-    background-color: #195130;
-    border-radius: 50%;
-    position: absolute;
-    top: -25px;
-    left: -15px;
-    z-index: 2;
-}
-  
-.aboutpage-recycled-badge h2 {
-    font-size: 46px;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1;
-    position: relative;
-    z-index: 1;
-}
-  
-.percentage {
-    font-size: 32px;
-    vertical-align: bottom;
-    position: relative;
-    z-index: 1;
-}
-  
-.aboutpage-recycled-badge h3 {
-    font-size: 32px;
-    font-weight: 600;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    position: relative;
-    z-index: 1;
-}
-  
-.aboutpage-recycled-description {
-    color: #195130;
-    font-size: 18px;
-    line-height: 1.6;
-    margin-top: 20px;
-    text-align: center;
-    padding: 0 20px;
-}
-
-/* Responsive Styles */
-@media (max-width: 992px) {
-    .aboutpage-layout {
+/* Responsive styles for hero section */
+@media (max-width: 1100px) {
+    .about-hero-container {
         flex-direction: column;
     }
-      
-    .aboutpage-left-content, 
-    .aboutpage-right-content {
+    
+    .left-section-container, .right-section-container, .right-section {
         width: 100%;
     }
     
-    .aboutpage-recycled-content {
-        flex-direction: column;
+    .ratings-box {
+        width: 100%;
+        max-width: 150px;
+    }
+    
+    .blue-image, .stairs-image {
+        height: 250px;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .blue-image img {
+        max-width: 100%;
     }
 }
-  
+
 @media (max-width: 768px) {
-    .aboutpage-image-wrapper {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto;
-    }
-      
-    .aboutpage-logo-center {
-        grid-column: 1;
-        grid-row: 1;
-    }
-      
-    .aboutpage-image-bottom {
-        grid-column: 1;
-        grid-row: 2;
-        height: 250px;
-    }
-      
-    .aboutpage-image-top {
-        grid-column: 1;
-        grid-row: 3;
-        height: 250px;
-    }
-      
-    .aboutpage-ratings {
-        grid-column: 1;
-        grid-row: 4;
-    }
-      
-    .aboutpage-right-content h1 {
+    .about-title {
         font-size: 32px;
     }
-      
-    .aboutpage-recycled-badge {
-        width: 100%;
-        text-align: center;
+    
+    .blue-image,
+    .stairs-image {
+        height: 220px;
     }
+    
+    .about-hero-container {
+        padding: 15px;
+    }
+}
+
+/* Chung */
+.aboutpage-container {
+    background-color: #f5f5f5;
+    width: 100%;
+    max-width: 100%;
+    padding-top: 80px;
+}
+
+.about-us-content {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+section {
+    margin-bottom: 60px;
+}
+
+/* Recycled section */
+.recycled-section {
+    padding: 40px 0;
+}
+
+.recycled-container {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.recycled-mailer {
+    flex: 1;
+    height: 400px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+.recycled-mailer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.recycled-badge-container {
+    flex: 1;
+}
+
+.recycled-badge {
+    background-color: #0A4B3E;
+    color: white;
+    padding: 30px 40px;
+    border-radius: 40px;
+    text-align: center;
+    position: relative;
+    margin-top:30px;
+    margin-bottom: 20px;
+}
+
+.recycled-percentage {
+    font-size: 65px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1;
+}
+
+.recycled-percentage span {
+    font-size: 36px;
+    vertical-align: super;
+}
+
+.recycled-title {
+    font-size: 28px;
+
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 10px 0 0;
+    
+}
+
+.recycled-description {
+    
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
+    color: #0A4B3E;
+    text-align: center;
+
+
+}
+
+/* Unique points section */
+.unique-section {
+    padding: 80px 0;
+    background-color: #fff;
+}
+
+.unique-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 40px;
+    padding: 0 20px;
+}
+
+.unique-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.unique-title {
+    color: #000;
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 0 0 2rem 0;
+    line-height: 1.2;
+}
+
+.unique-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.unique-list li {
+    display: flex;
+    margin-bottom: 2rem;
+    align-items: flex-start;
+}
+
+.bullet-point {
+    font-size: 1.5rem;
+    margin-right: 10px;
+    color: #000;
+    line-height: 1.5;
+}
+
+.unique-list li p {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #333;
+}
+
+.highlight-text {
+    color: #0A4B3E;
+    font-weight: 600;
+}
+
+.unique-images-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.image-container {
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.image-container img:hover {
+    transform: scale(1.05);
+}
+
+/* Design section */
+.design-section {
+    padding: 40px 0;
+}
+
+.design-header {
+    margin-bottom: 30px;
+}
+
+.design-title {
+    color: #0A4B3E;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.design-description {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #0A4B3E;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.design-gallery {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.design-gallery img {
+    width: calc(25% - 15px);
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.design-custom {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #0A4B3E;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Team section */
+.team-section {
+    padding: 60px 0;
+}
+
+.team-title {
+    color: #0A4B3E;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.team-description {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #0A4B3E;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.team-members {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.team-member {
+    text-align: center;
+}
+
+.team-member img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.team-member h3 {
+    color: #0A4B3E;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.team-member p {
+    color: #6abda3;
+    font-size: 16px;
+}
+
+/* Achievements and certifications sections */
+.achievements-section,
+.certification-section {
+    padding: 40px 0;
+}
+
+.achievements-container {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+}
+
+.achievements-list,
+.certification-container {
+    flex: 1;
+}
+
+.achievements-list h2,
+.certification-container h2 {
+    color: #0A4B3E;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.achievements-list ul,
+.certification-container ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.achievements-list li,
+.certification-container li {
+    margin-bottom: 15px;
+    font-size: 16px;
+    line-height: 1.6;
+    padding-left: 30px;
+    position: relative;
+    color: #0A4B3E;
+}
+
+.achievements-list li:before,
+.certification-container li:before {
+    content: "•";
+    color: #0A4B3E;
+    font-size: 18px;
+    position: absolute;
+    left: 10px;
+}
+
+.certificates {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.certificates img {
+    height: 250px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Commitment section */
+.commitment-section {
+    padding: 60px 0;
+}
+
+.commitment-container {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+}
+
+.commitment-image {
+    flex: 1;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.commitment-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.commitment-text {
+    flex: 1;
+}
+
+.commitment-text h2 {
+    color: #0A4B3E;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.commitment-text ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.commitment-text li {
+    margin-bottom: 15px;
+    font-size: 16px;
+    line-height: 1.6;
+    padding-left: 30px;
+    position: relative;
+    color: #0A4B3E;
+}
+
+.commitment-text li:before {
+    content: "✓";
+    color: #0A4B3E;
+    font-weight: bold;
+    position: absolute;
+    left: 5px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .recycled-container,
+    .unique-container,
+    .commitment-container,
+    .achievements-container {
+        flex-direction: column;
+    }
+    
+    .values-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .team-members {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .design-gallery {
+        flex-wrap: wrap;
+    }
+    
+    .design-gallery img {
+        width: calc(50% - 10px);
+    }
+    
+    .unique-images-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 200px);
+    }
+}
+
+@media (max-width: 768px) {
+    .team-members {
+        grid-template-columns: 1fr;
+    }
+    
+    .unique-images-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 200px);
+    }
+}
+
+/* Section 2 - GreenWeave Description */
+.about-description-section {
+    padding: 60px 0 30px;
+}
+
+.about-brand-heading {
+    margin-bottom: 20px;
+}
+
+.about-brand-heading h2 {
+    color: #0A4B3E;
+    font-size: 42px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.about-brand-description {
+    max-width: 1100px;
+}
+
+.about-brand-description p {
+    color: #0A4B3E;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Section 3 - Recycled Ocean */
+.recycled-ocean-section {
+    width: 100%;
+
+}
+
+.recycled-ocean-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
+.recycled-cards {
+    display: flex;
+    gap: 40px;
+}
+
+.recycled-card-left {
+    width: 40%!important;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    padding: 30px 15px;
+}
+.recycled-card-left img {
+    width: 100%;
+    aspect-ratio: 5/6;
+    border-radius: 20px;
+}
+
+.recycled-card-right {
+    width: 60%!important;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  
+}
+.recycled-hats-image-container {
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    padding: 20px 30px;
+}
+.recycled-card-right img {
+    width: 100%;
+    aspect-ratio: 5/1;
+    border-radius: 20px;
+}
+.recycled-bag-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.recycled-hats-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recycled-badge {
+    background-color: #0d5a3f;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 30px;
+    margin-top: auto;
+}
+
+.recycled-percentage {
+    font-size: 5rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1;
+    color: #ffffff;
+    text-align: center;
+}
+
+.percentage-symbol {
+    font-size: 2.5rem;
+    position: relative;
+    top: -20px;
+}
+
+.recycled-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.recycled-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .recycled-cards {
+        flex-direction: column;
+    }
+    
+    .recycled-card-left, .recycled-card-right {
+        width: 100%;
+    }
+    
+    .recycled-bag-image {
+        height: 400px;
+    }
+}
+
+@media (max-width: 576px) {
+    .recycled-percentage {
+        font-size: 4rem;
+    }
+    
+    .percentage-symbol {
+        font-size: 2rem;
+        top: -15px;
+    }
+    
+    .recycled-title {
+        font-size: 1.5rem;
+    }
+    
+    .recycled-description {
+        font-size: 0.9rem;
+    }
+}
+
+/* Flip Gallery cho Unique Section */
+.flip-gallery-container {
+    flex: 1;
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.075);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.5rem;
+}
+
+.flip-gallery {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    text-align: center;
+    perspective: 800px;
+}
+
+/* image title/author với transition */
+.flip-gallery::before {
+    content: attr(data-title);
+    color: rgba(10, 75, 62, 0.95);
+    font-size: 0.85rem;
+    font-weight: bold;
+    left: 0;
+    position: absolute;
+    top: calc(100% + 12px);
+    line-height: 2;
+    opacity: var(--title-opacity, 0);
+    translate: 0 var(--title-y, 0);
+    transition: opacity 500ms ease-in-out, translate 500ms ease-in-out;
+    width: 100%;
+}
+
+/* divider line giữa */
+.flip-gallery::after {
+    content: "";
+    position: absolute;
+    background-color: #0A4B3E;
+    width: 100%;
+    height: 3px;
+    top: 50%;
+    left: 0;
+    translate: 0 -50%;
+}
+
+/* image đặt trong các elements riêng biệt để tạo hiệu ứng flip */
+.flip-gallery > * {
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-size: 100% 200%;
+}
+
+.flip-gallery .top,
+.flip-gallery .overlay-top {
+    top: 0;
+    transform-origin: bottom;
+    background-position: top;
+}
+
+.flip-gallery .bottom,
+.flip-gallery .overlay-bottom {
+    bottom: 0;
+    transform-origin: top;
+    background-position: bottom;
+}
+
+/* gallery controls */
+.gallery-nav {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.gallery-nav > button {
+    border: none;
+    outline: none;
+    padding: 0;
+    background: rgba(10, 75, 62, 0.1);
+    color: #0A4B3E;
+    opacity: 0.75;
+    font-size: 1rem;
+    transition: scale 150ms ease-in-out, opacity 150ms ease-in-out;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.gallery-nav > button:focus-visible,
+.gallery-nav > button:hover {
+    scale: 1.2;
+    opacity: 1;
+    background: rgba(10, 75, 62, 0.2);
+}
+
+@media (max-width: 992px) {
+    .unique-container {
+        flex-direction: column;
+    }
+    
+    .flip-gallery-container {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+}
+
+/* Gallery loading state */
+.gallery-loading {
+    position: relative;
+}
+
+.gallery-loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.gallery-loading::before {
+    content: "Đang tải...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    color: #0A4B3E;
+    z-index: 11;
+    font-weight: bold;
+}
+
+/* Animation và hover effects */
+.design-gallery img,
+.team-member img,
+.certificates img,
+.commitment-image img {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.design-gallery img:hover,
+.certificates img:hover,
+.commitment-image img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.team-member img:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading placeholder */
+@keyframes pulse-bg {
+    0% { background-color: rgba(106, 189, 163, 0.1); }
+    50% { background-color: rgba(106, 189, 163, 0.2); }
+    100% { background-color: rgba(106, 189, 163, 0.1); }
+}
+
+.loading-placeholder {
+    animation: pulse-bg 1.5s infinite;
+    min-height: 100px;
+    border-radius: 8px;
+}
+
+/* Enhancement for mobile performance */
+@media (max-width: 768px) {
+    .design-gallery img:hover,
+    .certificates img:hover,
+    .commitment-image img:hover,
+    .team-member img:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* Ensure smooth transitions */
+.about-hero-section,
+.recycled-ocean-section,
+.unique-section,
+.design-section,
+.team-section,
+.achievements-section,
+.certification-section,
+.commitment-section {
+    will-change: opacity, transform;
+    overflow: hidden;
 }
