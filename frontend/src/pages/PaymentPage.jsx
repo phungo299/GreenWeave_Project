@@ -1,12 +1,187 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import InputField from '../components/ui/inputfield/InputField';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import countriesData from '../assets/data/countriesV1.json';
 import creditCardIcon from '../assets/icons/credit-card.png';
+import vietqrIcon from '../assets/icons/vietqr.jpg';
 import '../assets/css/PaymentPage.css';
+import axios from 'axios';
+
+// Initialize Stripe with public key
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+
+// Separate Card Form component to use Stripe hooks
+const StripeCardForm = ({ orderTotal, shippingInfo, selectedCountry, onPaymentSuccess, onPaymentError }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const { token } = useAuth();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [paymentError, setPaymentError] = useState('');
+    const [clientSecret, setClientSecret] = useState('');
+    const [paymentId, setPaymentId] = useState('');
+    const { cartItems } = useCart();
+    
+    // Create payment intent when component mounts
+    useEffect(() => {
+        const createPaymentIntent = async () => {
+            try {
+                // Create orderId from server first (this step is not shown in code)
+                // Assuming orderId already exists
+                const orderId = localStorage.getItem('currentOrderId');                
+                if (!orderId) {
+                    setPaymentError('Không tìm thấy thông tin đơn hàng');
+                    return;
+                }               
+                const response = await axios.post(
+                    `${process.env.REACT_APP_API_URL}/api/stripe/create-payment-intent`,
+                    {
+                        orderId: orderId,
+                        amount: orderTotal
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );               
+                setClientSecret(response.data.clientSecret);
+                setPaymentId(response.data.paymentId);
+            } catch (error) {
+                console.error('Error creating payment intent:', error);
+                setPaymentError(error.response?.data?.error?.message || 'Không thể tạo phiên thanh toán');
+            }
+        };       
+        if (orderTotal > 0) {
+            createPaymentIntent();
+        }
+    }, [orderTotal, token]);
+    
+    const handleSubmit = async (event) => {
+        event.preventDefault();       
+        if (!stripe || !elements) {
+            return;
+        }        
+        setIsProcessing(true);
+        setPaymentError('');       
+        // Get card information from CardElement
+        const cardNumberElement = elements.getElement(CardNumberElement);     
+        // Confirm payment with Stripe
+        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+                card: cardNumberElement,
+                billing_details: {
+                    name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+                    address: {
+                        line1: shippingInfo.address,
+                        city: shippingInfo.city,
+                        postal_code: shippingInfo.postalCode,
+                        country: selectedCountry?.alpha2Code
+                    }
+                }
+            }
+        });
+
+        if (error) {
+            setPaymentError(error.message);
+            
+            // Send payment error message to server
+            try {
+                await axios.post(
+                    `${process.env.REACT_APP_API_URL}/api/stripe/payment-failure`,
+                    {
+                        paymentId: paymentId,
+                        errorMessage: error.message
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+            } catch (serverError) {
+                console.error('Không thể gửi thông báo lỗi thanh toán:', serverError);
+            }            
+            onPaymentError(error.message);
+        } else {
+            // Payment successful
+            try {
+                await axios.post(
+                    `${process.env.REACT_APP_API_URL}/api/stripe/payment-success`,
+                    {
+                        paymentIntentId: paymentIntent.id,
+                        paymentId: paymentId
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );               
+                onPaymentSuccess();
+            } catch (serverError) {
+                console.error('Lỗi khi cập nhật thanh toán trên server:', serverError);
+                setPaymentError('Thanh toán đã được xác nhận nhưng có lỗi khi cập nhật trạng thái');
+            }
+        }        
+        setIsProcessing(false);
+    };
+
+    const cardElementOptions = {
+        style: {
+            base: {
+                fontSize: '16px',
+                color: '#424770',
+                '::placeholder': {
+                    color: '#aab7c4',
+                },
+                fontFamily: 'Arial, sans-serif',
+            },
+            invalid: {
+                color: '#9e2146',
+            },
+        },
+    };
+    
+    return (
+        <form onSubmit={handleSubmit} className="stripe-card-form">
+            <div className="card-element-container">
+                <label className="card-label">Số thẻ:</label>
+                <CardNumberElement options={cardElementOptions} className="card-element" />
+            </div>
+            
+            <div className="card-elements-row">
+                <div className="card-element-container expiry-container">
+                    <label className="card-label">Ngày hết hạn:</label>
+                    <CardExpiryElement options={cardElementOptions} className="card-element" />
+                </div>
+                
+                <div className="card-element-container cvc-container">
+                    <label className="card-label">Mã bảo mật (CVC):</label>
+                    <CardCvcElement options={cardElementOptions} className="card-element" />
+                </div>
+            </div>
+            
+            {paymentError && <div className="stripe-error">{paymentError}</div>}
+            
+            <button 
+                type="submit" 
+                disabled={!stripe || isProcessing || !clientSecret} 
+                className="place-order-btn"
+            >
+                {isProcessing ? 'Đang xử lý...' : 'Thanh toán ngay'}
+            </button>
+        </form>
+    );
+};
 
 const PaymentPage = () => {
     const navigate = useNavigate();
@@ -19,8 +194,8 @@ const PaymentPage = () => {
     const [visibleCountries, setVisibleCountries] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState('credit-card');
     const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
+    const [checkValidation, setCheckValidation] = useState(false);
     const [saveShippingInfo, setSaveShippingInfo] = useState(false);
-    const [savePaymentInfo, setSavePaymentInfo] = useState(false);
     const [itemsTotal, setItemsTotal] = useState(0);
     const [shipping, setShipping] = useState(40000);
     const [orderTotal, setOrderTotal] = useState(0);
@@ -35,13 +210,6 @@ const PaymentPage = () => {
         postalCode: '',
     });
 
-    const [paymentInfo, setPaymentInfo] = useState({
-        cardNumber: '',
-        expirationDate: '',
-        securityCode: '',
-        cardHolderName: '',
-    });
-
     const [errors, setErrors] = useState({
         firstName: '',
         lastName: '',
@@ -49,10 +217,6 @@ const PaymentPage = () => {
         city: '',
         postalCode: '',
         country: '',
-        cardNumber: '',
-        expirationDate: '',
-        securityCode: '',
-        cardHolderName: '',
     });
 
     // Load countries on mount
@@ -155,37 +319,6 @@ const PaymentPage = () => {
                     [name]: ''
                 });
             }
-        } else if (Object.keys(paymentInfo).includes(name)) {
-            let formattedValue = value;           
-            // Format card number with spaces
-            if (name === 'cardNumber') {
-                formattedValue = value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
-                formattedValue = formattedValue.substring(0, 19); // Limit to 16 digits + 3 spaces
-            }           
-            // Format expiration date MM/YY
-            if (name === 'expirationDate') {
-                formattedValue = value.replace(/\D/g, '');
-                if (formattedValue.length > 2) {
-                    formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2, 4);
-                }
-                formattedValue = formattedValue.substring(0, 5);
-            }           
-            // Limit security code to 3 or 4 digits
-            if (name === 'securityCode') {
-                formattedValue = value.replace(/\D/g, '');
-                formattedValue = formattedValue.substring(0, 4);
-            }            
-            setPaymentInfo({
-                ...paymentInfo,
-                [name]: formattedValue
-            });           
-            // Clear error when user types
-            if (errors[name]) {
-                setErrors({
-                    ...errors,
-                    [name]: ''
-                });
-            }
         }
     };
 
@@ -219,75 +352,64 @@ const PaymentPage = () => {
         setShowPaymentDropdown(false);
     };
 
-    const validateForm = () => {
+    const isShippingInfoValid = useMemo(() => {
+        return (
+            shippingInfo.firstName.trim() !== '' &&
+            shippingInfo.lastName.trim() !== '' &&
+            shippingInfo.address.trim() !== '' &&
+            shippingInfo.city.trim() !== '' &&
+            shippingInfo.postalCode.trim() !== '' &&
+            selectedCountry !== null
+        );
+    }, [shippingInfo.firstName, shippingInfo.lastName, shippingInfo.address, 
+        shippingInfo.city, shippingInfo.postalCode, selectedCountry]);
+
+    const validateShippingInfo = () => {
         const newErrors = {};
-        let isValid = true;       
+        let isValid = true;           
         // Validate shipping info
         if (!shippingInfo.firstName.trim()) {
             newErrors.firstName = 'Vui lòng nhập tên';
             isValid = false;
-        }       
+        }            
         if (!shippingInfo.lastName.trim()) {
             newErrors.lastName = 'Vui lòng nhập họ';
             isValid = false;
-        }        
+        }            
         if (!shippingInfo.address.trim()) {
             newErrors.address = 'Vui lòng nhập địa chỉ';
             isValid = false;
-        }       
+        }            
         if (!shippingInfo.city.trim()) {
             newErrors.city = 'Vui lòng nhập tên thành phố';
             isValid = false;
-        }       
+        }           
         if (!shippingInfo.postalCode.trim()) {
             newErrors.postalCode = 'Vui lòng nhập mã bưu điện';
             isValid = false;
-        }        
+        }           
         if (!selectedCountry) {
             newErrors.country = 'Vui lòng chọn quốc gia/khu vực';
             isValid = false;
-        }        
-        // Validate payment info
-        if (paymentMethod === 'credit-card') {
-            if (!paymentInfo.cardNumber.trim() || paymentInfo.cardNumber.replace(/\s/g, '').length < 16) {
-                newErrors.cardNumber = 'Vui lòng nhập số thẻ hợp lệ';
-                isValid = false;
-            }            
-            if (!paymentInfo.expirationDate.trim() || paymentInfo.expirationDate.length < 5) {
-                newErrors.expirationDate = 'Vui lòng nhập ngày hết hạn hợp lệ';
-                isValid = false;
-            }           
-            if (!paymentInfo.securityCode.trim() || paymentInfo.securityCode.length < 3) {
-                newErrors.securityCode = 'Vui lòng nhập mã bảo mật hợp lệ';
-                isValid = false;
-            }            
-            if (!paymentInfo.cardHolderName.trim()) {
-                newErrors.cardHolderName = 'Vui lòng nhập tên chủ thẻ';
-                isValid = false;
-            }
-        }       
+        }            
         setErrors(newErrors);
+        setCheckValidation(true);
         return isValid;
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        if (validateForm()) {
-            // In fact, this is where you will send the data to the API
-            console.log('Order submitted:', {
-                shippingInfo,
-                paymentInfo,
-                selectedCountry,
-                cartItems,
-                total: orderTotal
-            });
-            
-            // Payment processed successfully
-            clearCart();
-            alert('Đặt hàng thành công!');
-            navigate('/');
-        }
+    const handleCheckValidation = () => {
+        validateShippingInfo();
+    };
+
+    const handlePaymentSuccess = () => {
+        clearCart();
+        // Điều hướng đến trang thanh toán thành công
+        navigate('/payment-status/success');
+    };
+
+    const handlePaymentError = (errorMessage) => {
+        // Có thể hiển thị lỗi hoặc điều hướng đến trang lỗi thanh toán
+        navigate('/payment-status/failed');
     };
 
     // Format price in Vietnamese currency
@@ -302,199 +424,184 @@ const PaymentPage = () => {
                 <h1 className="payment-title">Thanh toán</h1>               
                 <div className="payment-content">
                     <div className="payment-form-container">
-                        <form onSubmit={handleSubmit}>
-                            <section className="shipping-section">
-                                <h2 className="section-title">Giao hàng</h2>                               
-                                <div className="country-dropdown-container" ref={dropdownRef}>
-                                    <div className="country-dropdown-header" onClick={toggleCountryDropdown}>
-                                        {selectedCountry ? (
-                                            <div className="selected-country">
-                                                {selectedCountry.alpha2Code && (
-                                                    <img 
-                                                        src={`../assets/images/flags/${selectedCountry.alpha2Code.toLowerCase()}.svg`} 
-                                                        alt={selectedCountry.name} 
-                                                        className="country-flag"
-                                                    />
-                                                )}
-                                                <span>{selectedCountry.name}</span>
-                                            </div>
-                                        ) : (
-                                            <span className="placeholder">Country / Region</span>
-                                        )}
-                                        <span className={`dropdown-arrow ${showCountryDropdown ? 'open' : ''}`}></span>
-                                    </div>                                   
-                                    {errors.country && <div className="input-error-message">{errors.country}</div>}                                   
-                                    {showCountryDropdown && (
-                                        <div className="country-dropdown-list-container">
-                                            <div className="country-search-container">
-                                                <input
-                                                    type="text"
-                                                    name="countrySearch"
-                                                    placeholder="Tìm kiếm quốc gia..."
-                                                    value={searchQuery}
-                                                    onChange={handleInputChange}
-                                                    className="country-search-input"
+                        <section className="shipping-section">
+                            <h2 className="section-title">Giao hàng</h2>                               
+                            <div className="country-dropdown-container" ref={dropdownRef}>
+                                <div className="country-dropdown-header" onClick={toggleCountryDropdown}>
+                                    {selectedCountry ? (
+                                        <div className="selected-country">
+                                            {selectedCountry.alpha2Code && (
+                                                <img 
+                                                    src={`../assets/images/flags/${selectedCountry.alpha2Code.toLowerCase()}.svg`} 
+                                                    alt={selectedCountry.name} 
+                                                    className="country-flag"
                                                 />
-                                            </div>
-                                            <div 
-                                                className="country-dropdown-list" 
-                                                ref={countryListRef}
-                                                onScroll={handleCountryListScroll}
-                                            >
-                                                {visibleCountries.length > 0 ? (
-                                                    visibleCountries.map((country) => (
-                                                        <div
-                                                            key={country.alpha3Code}
-                                                            className="country-dropdown-item"
-                                                            onClick={() => selectCountry(country)}
-                                                        >
-                                                            {country.alpha2Code && (
-                                                                <img 
-                                                                    src={`../assets/images/flags/${country.alpha2Code.toLowerCase()}.svg`} 
-                                                                    alt={country.name} 
-                                                                    className="country-flag"
-                                                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                                                />
-                                                            )}
-                                                            <span>{country.name}</span>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="no-results">Không tìm thấy quốc gia</div>
-                                                )}
-                                            </div>
+                                            )}
+                                            <span>{selectedCountry.name}</span>
                                         </div>
+                                    ) : (
+                                        <span className="placeholder">Country / Region</span>
                                     )}
-                                </div>                               
-                                <div className="name-row">
-                                    <InputField
-                                        type="text"
-                                        name="firstName"
-                                        value={shippingInfo.firstName}
-                                        onChange={handleInputChange}
-                                        placeholder="First Name"
-                                        error={errors.firstName}
-                                    />                                   
-                                    <InputField
-                                        type="text"
-                                        name="lastName"
-                                        value={shippingInfo.lastName}
-                                        onChange={handleInputChange}
-                                        placeholder="Last Name"
-                                        error={errors.lastName}
-                                    />
-                                </div>                               
-                                <InputField
-                                    type="text"
-                                    name="address"
-                                    value={shippingInfo.address}
-                                    onChange={handleInputChange}
-                                    placeholder="Address"
-                                    error={errors.address}
-                                />                               
-                                <div className="city-postal-row">
-                                    <InputField
-                                        type="text"
-                                        name="city"
-                                        value={shippingInfo.city}
-                                        onChange={handleInputChange}
-                                        placeholder="City"
-                                        error={errors.city}
-                                    />                                   
-                                    <InputField
-                                        type="text"
-                                        name="postalCode"
-                                        value={shippingInfo.postalCode}
-                                        onChange={handleInputChange}
-                                        placeholder="Postal Code"
-                                        error={errors.postalCode}
-                                    />
-                                </div>                                
-                                <div className="checkbox-container">
-                                    <input
-                                        type="checkbox"
-                                        id="saveShippingInfo"
-                                        checked={saveShippingInfo}
-                                        onChange={() => setSaveShippingInfo(!saveShippingInfo)}
-                                    />
-                                    <label htmlFor="saveShippingInfo">Lưu Thông Tin Cho Đơn Hàng Sau</label>
-                                </div>
-                            </section>                            
-                            <section className="payment-section">
-                                <h2 className="section-title">Thanh toán</h2>                               
-                                <div className="payment-dropdown-container" ref={dropdownRef}>
-                                    <div className="payment-dropdown-header" onClick={togglePaymentDropdown}>
-                                        <div className="selected-payment-method">
-                                            <img src={creditCardIcon} alt="Credit Card" className="payment-method-icon" />
-                                            <span>Credit Card</span>
-                                        </div>
-                                        <span className={`dropdown-arrow ${showPaymentDropdown ? 'open' : ''}`}></span>
-                                    </div>                                   
-                                    {showPaymentDropdown && (
-                                        <div className="payment-dropdown-list">
-                                            <div 
-                                                className="payment-dropdown-item" 
-                                                onClick={() => selectPaymentMethod('credit-card')}
-                                            >
-                                                <img src={creditCardIcon} alt="Credit Card" className="payment-method-icon" />
-                                                <span>Credit Card</span>
-                                            </div>
-                                            {/* Add more payment methods here in the future */}
-                                        </div>
-                                    )}
-                                </div>                             
-                                {paymentMethod === 'credit-card' && (
-                                    <div className="credit-card-form">
-                                        <InputField
-                                            type="text"
-                                            name="cardNumber"
-                                            value={paymentInfo.cardNumber}
-                                            onChange={handleInputChange}
-                                            placeholder="Card Number"
-                                            error={errors.cardNumber}
-                                        />                                       
-                                        <div className="card-details-row">
-                                            <InputField
-                                                type="text"
-                                                name="expirationDate"
-                                                value={paymentInfo.expirationDate}
-                                                onChange={handleInputChange}
-                                                placeholder="Expiration Date"
-                                                error={errors.expirationDate}
-                                            />                                           
-                                            <InputField
-                                                type="text"
-                                                name="securityCode"
-                                                value={paymentInfo.securityCode}
-                                                onChange={handleInputChange}
-                                                placeholder="Security Code"
-                                                error={errors.securityCode}
-                                            />
-                                        </div>                                       
-                                        <InputField
-                                            type="text"
-                                            name="cardHolderName"
-                                            value={paymentInfo.cardHolderName}
-                                            onChange={handleInputChange}
-                                            placeholder="Card Holder Name"
-                                            error={errors.cardHolderName}
-                                        />                                        
-                                        <div className="checkbox-container">
+                                    <span className={`dropdown-arrow ${showCountryDropdown ? 'open' : ''}`}></span>
+                                </div>                                   
+                                {errors.country && <div className="input-error-message">{errors.country}</div>}                                   
+                                {showCountryDropdown && (
+                                    <div className="country-dropdown-list-container">
+                                        <div className="country-search-container">
                                             <input
-                                                type="checkbox"
-                                                id="savePaymentInfo"
-                                                checked={savePaymentInfo}
-                                                onChange={() => setSavePaymentInfo(!savePaymentInfo)}
+                                                type="text"
+                                                name="countrySearch"
+                                                placeholder="Tìm kiếm quốc gia..."
+                                                value={searchQuery}
+                                                onChange={handleInputChange}
+                                                className="country-search-input"
                                             />
-                                            <label htmlFor="savePaymentInfo">Lưu Thông Tin Cho Đơn Hàng Sau</label>
+                                        </div>
+                                        <div 
+                                            className="country-dropdown-list" 
+                                            ref={countryListRef}
+                                            onScroll={handleCountryListScroll}
+                                        >
+                                            {visibleCountries.length > 0 ? (
+                                                visibleCountries.map((country) => (
+                                                    <div
+                                                        key={country.alpha3Code}
+                                                        className="country-dropdown-item"
+                                                        onClick={() => selectCountry(country)}
+                                                    >
+                                                        {country.alpha2Code && (
+                                                            <img 
+                                                                src={`../assets/images/flags/${country.alpha2Code.toLowerCase()}.svg`} 
+                                                                alt={country.name} 
+                                                                className="country-flag"
+                                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                                            />
+                                                        )}
+                                                        <span>{country.name}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="no-results">Không tìm thấy quốc gia</div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
-                            </section>                            
-                            <button type="submit" className="place-order-btn">
-                                Đặt Hàng Ngay
-                            </button>
-                        </form>
+                            </div>                               
+                            <div className="name-row">
+                                <InputField
+                                    type="text"
+                                    name="firstName"
+                                    value={shippingInfo.firstName}
+                                    onChange={handleInputChange}
+                                    placeholder="First Name"
+                                    error={errors.firstName}
+                                />                                   
+                                <InputField
+                                    type="text"
+                                    name="lastName"
+                                    value={shippingInfo.lastName}
+                                    onChange={handleInputChange}
+                                    placeholder="Last Name"
+                                    error={errors.lastName}
+                                />
+                            </div>                               
+                            <InputField
+                                type="text"
+                                name="address"
+                                value={shippingInfo.address}
+                                onChange={handleInputChange}
+                                placeholder="Address"
+                                error={errors.address}
+                            />                               
+                            <div className="city-postal-row">
+                                <InputField
+                                    type="text"
+                                    name="city"
+                                    value={shippingInfo.city}
+                                    onChange={handleInputChange}
+                                    placeholder="City"
+                                    error={errors.city}
+                                />                                   
+                                <InputField
+                                    type="text"
+                                    name="postalCode"
+                                    value={shippingInfo.postalCode}
+                                    onChange={handleInputChange}
+                                    placeholder="Postal Code"
+                                    error={errors.postalCode}
+                                />
+                            </div>                                
+                            <div className="checkbox-container">
+                                <input
+                                    type="checkbox"
+                                    id="saveShippingInfo"
+                                    checked={saveShippingInfo}
+                                    onChange={() => setSaveShippingInfo(!saveShippingInfo)}
+                                />
+                                <label htmlFor="saveShippingInfo">Lưu Thông Tin Cho Đơn Hàng Sau</label>
+                            </div>
+                        </section>                            
+                        <section className="payment-section">
+                            <h2 className="section-title">Thanh toán</h2>                               
+                            <div className="payment-dropdown-container" ref={dropdownRef}>
+                                <div className="payment-dropdown-header" onClick={togglePaymentDropdown}>
+                                    <div className="selected-payment-method">
+                                        <img 
+                                            src={paymentMethod === 'credit-card' ? creditCardIcon : './assets/icons/qr-code.png'} 
+                                            alt={paymentMethod === 'credit-card' ? "Credit Card" : "VietQR"} 
+                                            className="payment-method-icon" 
+                                        />
+                                        <span>{paymentMethod === 'credit-card' ? 'Thẻ Tín Dụng/Ghi Nợ' : 'VietQR'}</span>
+                                    </div>
+                                    <span className={`dropdown-arrow ${showPaymentDropdown ? 'open' : ''}`}></span>
+                                </div>
+                                
+                                {showPaymentDropdown && (
+                                    <div className="payment-dropdown-list">
+                                        <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('credit-card')}>
+                                            <img src={creditCardIcon} alt="Credit Card" className="payment-method-icon" />
+                                            <span>Thẻ Tín Dụng/Ghi Nợ</span>
+                                        </div>
+                                        <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('vietqr')}>
+                                            <img src={vietqrIcon} alt="VietQR" className="payment-method-icon" />
+                                            <span>VietQR</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>                           
+                            {/* Payment Methods */}
+                            {isShippingInfoValid ? (
+                                paymentMethod === 'credit-card' ? (
+                                    <Elements stripe={stripePromise}>
+                                        <StripeCardForm 
+                                            orderTotal={orderTotal}
+                                            shippingInfo={shippingInfo}
+                                            selectedCountry={selectedCountry}
+                                            onPaymentSuccess={handlePaymentSuccess}
+                                            onPaymentError={handlePaymentError}
+                                        />
+                                    </Elements>
+                                ) : (
+                                    <div className="vietqr-container">
+                                        <p className="vietqr-text">Quét mã QR bên dưới để thanh toán</p>
+                                        <div className="qr-placeholder">
+                                            <p>Mã QR sẽ được hiển thị ở đây</p>
+                                            <button className="place-order-btn">Xác nhận đã thanh toán</button>
+                                        </div>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="shipping-validation-message">
+                                    Vui lòng điền đầy đủ thông tin giao hàng để tiếp tục thanh toán
+                                    <button 
+                                        onClick={handleCheckValidation} 
+                                        className="validate-shipping-btn"
+                                    >
+                                        Kiểm tra thông tin
+                                    </button>
+                                </div>
+                            )}
+                        </section>                            
                     </div>                   
                     <div className="order-summary-container">
                         <div className="order-items">

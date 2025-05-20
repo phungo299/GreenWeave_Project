@@ -20,6 +20,7 @@ import {
   productRoutes,
   promotionRoutes,
   reviewRoutes,
+  stripeRoutes,
   userRoutes,
   wishlistRoutes
 } from "./routes";
@@ -90,6 +91,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/stripe", stripeRoutes);
 
 // Export the app for testing purposes
 export { app };

@@ -130,6 +130,28 @@ components:
               type: string
         paymentId:
           type: string
+    
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [credit_card, vietqr]
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Review:
       type: object
@@ -157,6 +179,8 @@ tags:
     description: Product management endpoints
   - name: Orders
     description: Order management endpoints
+  - name: Payment
+    description: Payment processing endpoints
   - name: Reviews
     description: Review management endpoints
 
@@ -1465,4 +1489,167 @@ paths:
         '404':
           description: Review not found
         '500':
-          description: Server error 
+          description: Server error
+  
+  /api/stripe/create-payment-intent:
+    post:
+      tags:
+        - Payment
+      summary: Tạo payment intent cho thanh toán Stripe
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderId
+                - amount
+              properties:
+                orderId:
+                  type: string
+                  description: ID của đơn hàng cần thanh toán
+                amount:
+                  type: number
+                  description: Số tiền cần thanh toán (VND)
+      responses:
+        '200':
+          description: Payment intent created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clientSecret:
+                    type: string
+                    description: Client secret để xác thực thanh toán ở phía client
+                  paymentId:
+                    type: string
+                    description: ID của payment record trong database
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+
+  /api/stripe/payment-success:
+    post:
+      tags:
+        - Payment
+      summary: Xử lý khi thanh toán thành công
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - paymentIntentId
+                - paymentId
+              properties:
+                paymentIntentId:
+                  type: string
+                  description: ID của payment intent từ Stripe
+                paymentId:
+                  type: string
+                  description: ID của payment record trong database
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '500':
+          description: Server error
+
+  /api/stripe/payment-failure:
+    post:
+      tags:
+        - Payment
+      summary: Xử lý khi thanh toán thất bại
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - paymentId
+              properties:
+                paymentId:
+                  type: string
+                  description: ID của payment record trong database
+                paymentIntentId:
+                  type: string
+                  description: ID của payment intent từ Stripe (optional)
+                errorMessage:
+                  type: string
+                  description: Thông báo lỗi từ Stripe (optional)
+      responses:
+        '200':
+          description: Payment failure recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '500':
+          description: Server error
