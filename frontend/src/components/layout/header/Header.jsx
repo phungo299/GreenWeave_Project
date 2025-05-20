@@ -57,30 +57,49 @@ const Header = () => {
                 </div>
                 <nav className="nav-menu">
                     <ul>
-                    <li className={(!isProductsPage && activeSection === 'home') ? 'active' : ''}>
-                            {isProductsPage ? (
-                                <Link to="/#home">Home</Link>
-                            ) : (
-                                <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>Home</a>
-                            )}
-                        </li>
-                        <li className={isProductsPage || (!isProductsPage && activeSection === 'products') ? 'active' : ''}>
-                            {isProductsPage ? (
-                                <Link to="/#products">Product</Link>
-                            ) : (
-                                <a href="#products" onClick={(e) => scrollToSection(e, 'products')}>Product</a>
-                            )}
-                        </li>
-                        <li className={isAboutUsPage || (!isProductsPage && activeSection === 'about') ? 'active' : ''}>
-                            <Link to="/about-us">About Us</Link>
-                        </li>
-                        <li className={(!isProductsPage && activeSection === 'contact') ? 'active' : ''}>
-                            {isProductsPage ? (
-                                <Link to="/#contact">Contact</Link>
-                            ) : (
-                                <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
-                            )}
-                        </li>
+                        {isAboutUsPage || isProductsPage ? (
+                            // Menu when on About Us page or Products page
+                            <>
+                                <li className={isAboutUsPage ? "active" : ""}>
+                                    <Link to="/about-us">About Us</Link>
+                                </li>
+                                <li className={isProductsPage ? "active" : ""}>
+                                    <Link to="/products">Collection</Link>
+                                </li>
+                            </>
+                        ) : (
+                            // Menu when on other pages
+                            <>
+                                <li className={(!isProductsPage && activeSection === 'home') ? 'active' : ''}>
+                                    {isProductsPage ? (
+                                        <Link to="/#home">Home</Link>
+                                    ) : (
+                                        <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>Home</a>
+                                    )}
+                                </li>
+                                <li className={isProductsPage || (!isProductsPage && activeSection === 'products') ? 'active' : ''}>
+                                    {isProductsPage ? (
+                                        <Link to="/#products">Product</Link>
+                                    ) : (
+                                        <a href="#products" onClick={(e) => scrollToSection(e, 'products')}>Product</a>
+                                    )}
+                                </li>
+                                <li className={(!isProductsPage && activeSection === 'about') ? 'active' : ''}>
+                                    {isProductsPage ? (
+                                        <Link to="/#about">About Us</Link>
+                                    ) : (
+                                        <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>About Us</a>
+                                    )}
+                                </li>
+                                <li className={(!isProductsPage && activeSection === 'contact') ? 'active' : ''}>
+                                    {isProductsPage ? (
+                                        <Link to="/#contact">Contact</Link>
+                                    ) : (
+                                        <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
+                                    )}
+                                </li>
+                            </>
+                        )}
                     </ul>
                 </nav>
                 <div className="auth-buttons">

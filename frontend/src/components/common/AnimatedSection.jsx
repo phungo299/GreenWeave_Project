@@ -16,7 +16,7 @@ import { useInView } from 'react-intersection-observer';
  * @param {boolean} props.once - Chỉ chạy animation một lần
  */
 
-// Các animation variants mặc định
+// Default animation variants
 const animationVariants = {
   fadeIn: {
     hidden: { opacity: 0 },
@@ -80,7 +80,7 @@ const animationVariants = {
   }
 };
 
-// Các hiệu ứng hover
+// Hover effects
 const getHoverEffects = (effect) => {
   switch (effect) {
     case 'zoom':
@@ -130,18 +130,18 @@ const AnimatedSection = ({
     }
   }, [controls, inView, once]);
 
-  // Chọn variants dựa vào animation type
+  // Select variants based on animation type
   let selectedVariants = variants;
   if (!variants && animation !== 'custom') {
     selectedVariants = animationVariants[animation];
   }
 
-  // Tạo một bản sao của variants để tránh mutation
+  // Make a copy of the variants to avoid mutation
   const customVariants = selectedVariants ? JSON.parse(JSON.stringify(selectedVariants)) : undefined;
   
-  // Thêm delay hoặc duration nếu được cung cấp
+  // Add delay or duration if provided
   if (customVariants && (delay > 0 || duration)) {
-    // Đảm bảo visible và transition tồn tại
+    // Make sure visible and transition exist
     if (!customVariants.visible) {
       customVariants.visible = {};
     }
@@ -159,7 +159,7 @@ const AnimatedSection = ({
     }
   }
 
-  // Xác định hiệu ứng hover
+  // Define hover effect
   const hoverStyles = getHoverEffects(hoverEffect);
 
   return (
@@ -177,5 +177,4 @@ const AnimatedSection = ({
     </motion.div>
   );
 };
-
 export default AnimatedSection; 
