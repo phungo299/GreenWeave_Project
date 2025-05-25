@@ -59,7 +59,7 @@ const UserList = () => {
             label: 'Trạng thái',
             field: 'status',
             options: [
-                { label: 'Tất cả', value: '' },
+                { label: 'Tất cả', value: 'all' },
                 { label: 'Đang hoạt động', value: 'false' },
                 { label: 'Vô hiệu hóa', value: 'true' },
             ],
@@ -125,7 +125,7 @@ const UserList = () => {
                 ((user.username || '').toLowerCase().includes(search.toLowerCase())) || 
                 ((user.email || '').toLowerCase().includes(search.toLowerCase()));
                 ((user.address || '').toLowerCase().includes(search.toLowerCase()));
-            const matchStatus = filterValues.status === '' || 
+            const matchStatus = !filterValues.status || filterValues.status === 'all' || 
                               String(user.isDisabled) === filterValues.status;
             return matchSearch && matchStatus;
         });

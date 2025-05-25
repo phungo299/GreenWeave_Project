@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminProductList.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
@@ -6,19 +6,19 @@ import SearchBar from '../../components/ui/searchbar/SearchBar';
 import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
+import productService from '../../services/productService';
 
 const AdminProductList = () => {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [sortField, setSortField] = useState('');
     const [sortOrder, setSortOrder] = useState('none'); // 'asc', 'desc', 'none'
-
-    const [products] = useState([
-        { id: 1, image: '/path/to/image1.jpg', name: 'Mũ lưỡi trai', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ',  note: '...'},
-        { id: 2, image: '/path/to/image2.jpg', name: 'Túi tote', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ', note: '...'},
-        { id: 3, image: '/path/to/image3.jpg', name: 'Balo', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ', note: '...'},
-        { id: 4, image: '/path/to/image4.jpg', name: 'Áo phông', orderCode: '47514501', price: '220,000 đ', stock: 'Còn hàng', category: 'Mũ', note: '...'},
-    ]);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize] = useState(10);
 
     const [filterValues, setFilterValues] = useState({
         status: '',
@@ -45,9 +45,63 @@ const AdminProductList = () => {
         },
     ];
 
+    // Fetch products on component mount and when filters/pagination change
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setLoading(true);               
+                // Prepare query parameters
+                const params = {
+                    page: currentPage,
+                    limit: pageSize,
+                };              
+                // Add category filter if selected
+                if (filterValues.category) {
+                    params.categoryId = filterValues.category;
+                }               
+                // Add status filter if selected
+                if (filterValues.status) {
+                    params.status = filterValues.status === 'in-stock' ? true : false;
+                }             
+                // Add search query if provided
+                if (search) {
+                    params.q = search;
+                }                
+                console.log('Fetching products with params:', params);             
+                const response = await productService.getAll(params);
+                console.log('API Response:', response);               
+                if (response && response.products) {
+                    // Transform product data to match our table structure
+                    const formattedProducts = response.products.map(product => ({
+                        id: product.id,
+                        image: product.imageUrl || '/path/to/default-image.jpg',
+                        name: product.name,
+                        orderCode: product.id, // Using ID as orderCode
+                        price: `${product.price.toLocaleString()} đ`,
+                        stock: product.stock > 0 ? 'Còn hàng' : 'Hết hàng',
+                        category: product.categoryId,
+                        note: product.description || '...'
+                    }));                   
+                    setProducts(formattedProducts);                   
+                    // Update pagination info
+                    if (response.pagination) {
+                        setTotalPages(response.pagination.totalPages || 1);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching products:', err);
+                setError('Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchProducts();
+    }, [currentPage, pageSize, filterValues, search]);
+
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
-        // If you want to filter products by search, filter in render or create variable filteredProducts
+        setCurrentPage(1); // Reset to first page on new search
     };
 
     const handleFilterChange = (field, value) => {
@@ -55,28 +109,18 @@ const AdminProductList = () => {
             ...prev,
             [field]: value,
         }));
-        // Can filter data here or in render
+        setCurrentPage(1); // Reset to first page on filter change
     };
-
-    const filteredProducts = products.filter(product => {
-        if (filterValues.status && (filterValues.status === 'in-stock' ? product.stock !== 'Còn hàng' : product.stock !== 'Hết hàng')) {
-            return false;
-        }
-        if (filterValues.category && product.category !== filterValues.category) {
-            return false;
-        }
-        // ... other filters if any
-        return true;
-    });
 
     const sortFunctions = {
         name: (a, b, order) => order === 'asc'
             ? a.name.localeCompare(b.name)
             : b.name.localeCompare(a.name),
-        price: (a, b, order) => order === 'asc'
-            ? parseInt(a.price.replace(/\D/g, '')) - parseInt(b.price.replace(/\D/g, ''))
-            : parseInt(b.price.replace(/\D/g, '')) - parseInt(a.price.replace(/\D/g, '')),
-        // ... other fields
+        price: (a, b, order) => {
+            const priceA = parseInt(a.price.replace(/\D/g, ''));
+            const priceB = parseInt(b.price.replace(/\D/g, ''));
+            return order === 'asc' ? priceA - priceB : priceB - priceA;
+        },
     };
       
     const handleSort = (field) => {
@@ -87,7 +131,7 @@ const AdminProductList = () => {
         setSortOrder(nextOrder);
     };
       
-    let sortedProducts = [...filteredProducts];
+    let sortedProducts = [...products];
     if (sortField && sortOrder !== 'none') {
         sortedProducts.sort((a, b) => sortFunctions[sortField](a, b, sortOrder));
     }
@@ -99,9 +143,6 @@ const AdminProductList = () => {
     const handleUpdateProduct = (productId) => {
         navigate(`/admin/products/edit/${productId}`);
     };
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = 24;
 
     return (
         <div className="admin-product-list-container">
@@ -130,65 +171,80 @@ const AdminProductList = () => {
                 />
             </div>
             <div className="admin-product-list-table-container">
-                <table className="admin-product-list-table">
-                    <thead>
-                        <tr>
-                            <th>TT</th>
-                            <th>
-                                <SortableHeader
-                                    label="Tên sản phẩm"
-                                    sortState={sortField === 'name' ? sortOrder : 'none'}
-                                    onSort={() => handleSort('name')}
-                                />
-                            </th>
-                            <th>
-                                <SortableHeader
-                                    label="Giá"
-                                    sortState={sortField === 'price' ? sortOrder : 'none'}
-                                    onSort={() => handleSort('price')}
-                                />
-                            </th>
-                            <th>Giá</th>
-                            <th>Kho hàng</th>
-                            <th>Thể loại</th>
-                            <th>Note</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map((product, index) => (
-                            <tr key={product.id}>
-                                <td>{index + 1}</td>
-                                <td className="admin-product-list-name-cell">
-                                    <img 
-                                        src={product.image} 
-                                        alt={product.name}
-                                        className="admin-product-list-product-image"
+                {loading ? (
+                    <div className="admin-product-list-loading">Đang tải...</div>
+                ) : error ? (
+                    <div className="admin-product-list-error">{error}</div>
+                ) : (
+                    <table className="admin-product-list-table">
+                        <thead>
+                            <tr>
+                                <th>TT</th>
+                                <th>
+                                    <SortableHeader
+                                        label="Tên sản phẩm"
+                                        sortState={sortField === 'name' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('name')}
                                     />
-                                    {product.name}
-                                </td>
-                                <td>{product.orderCode}</td>
-                                <td>{product.price}</td>
-                                <td>{product.stock}</td>
-                                <td>{product.category}</td>
-                                <td>{product.note}</td>
-                                <td>
-                                    <div className="admin-product-list-actions">
-                                        <button 
-                                            className="admin-product-list-action-button update"
-                                            onClick={() => handleUpdateProduct(product.id)}
-                                        >
-                                            Cập nhật
-                                        </button>
-                                        <button className="admin-product-list-action-button delete">
-                                            Xóa
-                                        </button>
-                                    </div>
-                                </td>
+                                </th>
+                                <th>Mã sản phẩm</th>
+                                <th>
+                                    <SortableHeader
+                                        label="Giá"
+                                        sortState={sortField === 'price' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('price')}
+                                    />
+                                </th>
+                                <th>Kho hàng</th>
+                                <th>Thể loại</th>
+                                <th>Note</th>
+                                <th></th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {sortedProducts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" className="admin-product-list-no-data">
+                                        Không có sản phẩm nào
+                                    </td>
+                                </tr>
+                            ) : (
+                                sortedProducts.map((product, index) => (
+                                    <tr key={product.id}>
+                                        <td>{(currentPage - 1) * pageSize + index + 1}</td>
+                                        <td className="admin-product-list-name-cell">
+                                            <img 
+                                                src={product.image} 
+                                                alt={product.name}
+                                                className="admin-product-list-product-image"
+                                                onError={(e) => {e.target.src = '/placeholder.jpg'}}
+                                            />
+                                            {product.name}
+                                        </td>
+                                        <td>{product.orderCode}</td>
+                                        <td>{product.price}</td>
+                                        <td>{product.stock}</td>
+                                        <td>{product.category}</td>
+                                        <td>{product.note}</td>
+                                        <td>
+                                            <div className="admin-product-list-actions">
+                                                <button 
+                                                    className="admin-product-list-action-button update"
+                                                    onClick={() => handleUpdateProduct(product.id)}
+                                                >
+                                                    Cập nhật
+                                                </button>
+                                                <button className="admin-product-list-action-button delete">
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                )}
             </div>
             <Pagination
                 currentPage={currentPage}

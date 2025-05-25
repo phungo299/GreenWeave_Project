@@ -15,7 +15,7 @@ const FilterBar = ({ filters, values, onChange }) => {
                     value={values[filter.field] || ''}
                     onChange={e => onChange(filter.field, e.target.value)}
                 >
-                    <option value="">{filter.label}</option>
+                    <option value="" disabled hidden>{filter.label}</option>
                     {filter.options.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
