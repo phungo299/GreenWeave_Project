@@ -100,6 +100,15 @@
     animation: spin 1s linear infinite;
 }
 
+.admin-login-modal .info-message {
+    background-color: #cff4fc;
+    color: #055160;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

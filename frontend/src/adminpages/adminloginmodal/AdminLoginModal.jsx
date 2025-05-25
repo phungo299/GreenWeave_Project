@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import InputField from '../../components/ui/inputfield/InputField';
@@ -7,10 +7,18 @@ import './AdminLoginModal.css';
 
 const AdminLoginModal = ({ isOpen, onClose, intendedPath }) => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, logout, isAuthenticated, user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [credentials, setCredentials] = useState({ username: '', password: '' });
+    
+    // Check and log out current user if not admin
+    useEffect(() => {
+        if (isAuthenticated && user && user.role !== 'admin') {
+            // Log out the current user to avoid token conflicts
+            logout();
+        }
+    }, [isAuthenticated, user, logout]);
 
     if (!isOpen) return null;
 
@@ -25,6 +33,11 @@ const AdminLoginModal = ({ isOpen, onClose, intendedPath }) => {
         setLoading(true);
         
         try {
+            // Make sure you are logged out before logging in again
+            if (isAuthenticated) {
+                await logout();
+            }
+            
             const result = await login(credentials);
             if (result.success) {
                 if (result.isAdmin) {
@@ -33,6 +46,7 @@ const AdminLoginModal = ({ isOpen, onClose, intendedPath }) => {
                 } else {
                     // If not admin
                     setError('Tài khoản không có quyền truy cập trang admin');
+                    await logout(); // Log out immediately to avoid conflicts
                 }
             } else {
                 setError(result.message || 'Đăng nhập không thành công');
@@ -57,7 +71,12 @@ const AdminLoginModal = ({ isOpen, onClose, intendedPath }) => {
                     <img src={logoImage} alt="Greenweave Logo" style={{ maxWidth: '120px' }} />
                 </div>               
                 <h2>Đăng nhập Admin</h2>
-                <p>Vui lòng đăng nhập với tài khoản admin để tiếp tục</p>               
+                <p>Vui lòng đăng nhập với tài khoản admin để tiếp tục</p>
+                {isAuthenticated && user && user.role !== 'admin' && (
+                    <div className="info-message">
+                        Bạn cần đăng nhập bằng tài khoản có quyền admin
+                    </div>
+                )}
                 {error && <div className="error-message">{error}</div>}                
                 <form onSubmit={handleSubmit}>
                     <InputField
