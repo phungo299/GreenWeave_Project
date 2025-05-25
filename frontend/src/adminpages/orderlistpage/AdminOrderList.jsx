@@ -73,7 +73,7 @@ const AdminOrderList = () => {
             label: 'Trạng thái',
             field: 'status',
             options: [
-                { label: 'Tất cả', value: '' },
+                { label: 'Tất cả', value: 'all' },
                 { label: 'Đang xử lý', value: 'processing' },
                 { label: 'Đã Giao', value: 'delivered' },
             ],
@@ -92,7 +92,7 @@ const AdminOrderList = () => {
         // Filter by search
         const matchSearch = order.name.toLowerCase().includes(search.toLowerCase());
         // Filter by status
-        const matchStatus = !filterValues.status || order.statusType === filterValues.status;
+        const matchStatus = !filterValues.status || filterValues.status === 'all' || order.statusType === filterValues.status;
         return matchSearch && matchStatus;
     });
 
