@@ -32,10 +32,10 @@ const UserList = () => {
             try {
                 setLoading(true);
                 const response = await axiosClient.get('/users/all');
-                //console.log('API Response:', response);
-                //console.log('API Response type:', typeof response);
-                //console.log('API Response has data property:', response.hasOwnProperty('data'));
-                //console.log('API Response data type:', typeof response.data);
+                console.log('API Response:', response);
+                console.log('API Response type:', typeof response);
+                console.log('API Response has data property:', response.hasOwnProperty('data'));
+                console.log('API Response data type:', typeof response.data);
                 
                 if (response && response.data) {
                     //console.log('Setting users to:', response);
@@ -83,8 +83,24 @@ const UserList = () => {
         },
         email: (a, b, order) => order === 'asc' ? a.email.localeCompare(b.email) : b.email.localeCompare(a.email),
         address: (a, b, order) => {
-            const aAddress = a.address || '';
-            const bAddress = b.address || '';
+            // Convert address objects to strings for comparison
+            const getAddressString = (user) => {
+                if (!user.address) return '';
+                if (typeof user.address === 'string') return user.address;
+                if (typeof user.address === 'object') {
+                    const addr = user.address;
+                    return [
+                        addr.streetAddress,
+                        addr.ward,
+                        addr.district,
+                        addr.province,
+                        addr.country
+                    ].filter(Boolean).join(' ');
+                }
+                return '';
+            };     
+            const aAddress = getAddressString(a);
+            const bAddress = getAddressString(b);
             return order === 'asc' ? aAddress.localeCompare(bAddress) : bAddress.localeCompare(aAddress);
         }
     };
@@ -121,12 +137,29 @@ const UserList = () => {
     
     if (users && users.data) {
         filteredUsers = users.data.filter(user => {
+            // Get a string representation of address if it's an object
+            let addressStr = '';
+            if (user.address) {
+                if (typeof user.address === 'string') {
+                    addressStr = user.address;
+                } else if (typeof user.address === 'object') {
+                    // Extract address properties and concatenate them
+                    const addr = user.address;
+                    addressStr = [
+                        addr.streetAddress,
+                        addr.ward,
+                        addr.district,
+                        addr.province,
+                        addr.country
+                    ].filter(Boolean).join(' ');
+                }
+            }
             const matchSearch = 
                 ((user.username || '').toLowerCase().includes(search.toLowerCase())) || 
-                ((user.email || '').toLowerCase().includes(search.toLowerCase()));
-                ((user.address || '').toLowerCase().includes(search.toLowerCase()));
+                ((user.email || '').toLowerCase().includes(search.toLowerCase())) ||
+                (addressStr.toLowerCase().includes(search.toLowerCase()));       
             const matchStatus = !filterValues.status || filterValues.status === 'all' || 
-                              String(user.isDisabled) === filterValues.status;
+                String(user.isDisabled) === filterValues.status;
             return matchSearch && matchStatus;
         });
     }
@@ -248,7 +281,23 @@ const UserList = () => {
                                         <td>{user.username || '-'}</td>
                                         <td>{user.email}</td>
                                         <td>{user.phone || 'Chưa cập nhật'}</td>
-                                        <td>{user.address || 'Chưa cập nhật'}</td>
+                                        <td>
+                                            {(() => {
+                                                if (!user.address) return 'Chưa cập nhật';
+                                                if (typeof user.address === 'string') return user.address;
+                                                if (typeof user.address === 'object') {
+                                                    const addr = user.address;
+                                                    return [
+                                                        addr.streetAddress,
+                                                        addr.ward,
+                                                        addr.district,
+                                                        addr.province,
+                                                        addr.country
+                                                    ].filter(Boolean).join(', ');
+                                                }
+                                                return 'Chưa cập nhật';
+                                            })()}
+                                        </td>
                                         <td>{user.role}</td>
                                         <td>
                                             <div className={`admin-user-list-status admin-user-list-status-${user.isDisabled ? 'disabled' : 'active'}`}>
