@@ -140,6 +140,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       email: user.email,
       avatar: user.avatar || "",
       phone: user.phone || "",
+      address: user.address || "",
       role: user.role,
       isDisabled: user.isDisabled,
     }));
@@ -307,7 +308,8 @@ export const searchUsers = async (req: Request, res: Response) => {
       searchQuery.$or = [
         { username: { $regex: query, $options: "i" } },
         { email: { $regex: query, $options: "i" } },
-        { phone: { $regex: query, $options: "i" } }
+        { phone: { $regex: query, $options: "i" } },
+        { address: { $regex: query, $options: "i" } }
       ];
     }
     

@@ -1,55 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminBreadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
 import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
+import axiosClient from '../../api/axiosClient';
 import './UserList.css';
 
-const MOCK_USERS = [
-    {
-        id: 1,
-        name: 'Trần Minh Hiếu',
-        email: 'brooklyn.simmons@gmail.com',
-        address: '1234 Hoàng Văn Thụ, TP Quy Nhơn',
-        color: '#C9D8CD',
-        status: 'unverified'
-    },
-    {
-        id: 2,
-        name: 'Trần Thảo Vy',
-        email: 'brooklyn.simmons@gmail.com',
-        address: '1234 Hoàng Văn Thụ, TP Quy Nhơn',
-        color: '#C9D8CD',
-        status: 'active'
-    },
-    {
-        id: 3,
-        name: 'Nguyễn Thiên Kim',
-        email: 'brooklyn.simmons@gmail.com',
-        address: '1234 Hoàng Văn Thụ, TP Quy Nhơn',
-        color: '#F6A96B',
-        status: 'disabled'
-    },
-    {
-        id: 4,
-        name: 'Doãn Hải My',
-        email: 'brooklyn.simmons@gmail.com',
-        address: '1234 Hoàng Văn Thụ, TP Quy Nhơn',
-        color: '#5B7CB2',
-        status: 'active'
-    },
-];
-
 const STATUS_MAP = {
-    unverified: { label: 'Chưa xác thực', className: 'unverified' },
-    active: { label: 'Đang hoạt động', className: 'active' },
-    disabled: { label: 'Vô hiệu hóa', className: 'disabled' },
+    false: { label: 'Đang hoạt động', className: 'active' },
+    true: { label: 'Vô hiệu hóa', className: 'disabled' },
 };
 
 const PAGE_SIZE = 10;
 
 const UserList = () => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
     const [filterValues, setFilterValues] = useState({
         status: '',
@@ -58,15 +26,41 @@ const UserList = () => {
     const [sortField, setSortField] = useState('');
     const [sortOrder, setSortOrder] = useState('none');
 
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                setLoading(true);
+                const response = await axiosClient.get('/users/all');
+                //console.log('API Response:', response);
+                //console.log('API Response type:', typeof response);
+                //console.log('API Response has data property:', response.hasOwnProperty('data'));
+                //console.log('API Response data type:', typeof response.data);
+                
+                if (response && response.data) {
+                    //console.log('Setting users to:', response);
+                    setUsers(response);
+                } else {
+                    //console.error('No data in response');
+                    setError('Không nhận được dữ liệu từ API.');
+                }
+            } catch (err) {
+                console.error('Error fetching users:', err);
+                setError('Không thể tải danh sách người dùng. Vui lòng thử lại sau.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUsers();
+    }, []);
+
     const filterConfig = [
         {
             label: 'Trạng thái',
             field: 'status',
             options: [
                 { label: 'Tất cả', value: '' },
-                { label: 'Chưa xác thực', value: 'unverified' },
-                { label: 'Đang hoạt động', value: 'active' },
-                { label: 'Vô hiệu hóa', value: 'disabled' },
+                { label: 'Đang hoạt động', value: 'false' },
+                { label: 'Vô hiệu hóa', value: 'true' },
             ],
         },
     ];
@@ -80,9 +74,18 @@ const UserList = () => {
     };
 
     const sortFunctions = {
-        id: (a, b, order) => order === 'asc' ? a.id - b.id : b.id - a.id,
-        name: (a, b, order) => order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name),
+        id: (a, b, order) => order === 'asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id),
+        username: (a, b, order) => {
+            const aUsername = a.username || '';
+            const bUsername = b.username || '';
+            return order === 'asc' ? aUsername.localeCompare(bUsername) : bUsername.localeCompare(aUsername);
+        },
         email: (a, b, order) => order === 'asc' ? a.email.localeCompare(b.email) : b.email.localeCompare(a.email),
+        address: (a, b, order) => {
+            const aAddress = a.address || '';
+            const bAddress = b.address || '';
+            return order === 'asc' ? aAddress.localeCompare(bAddress) : bAddress.localeCompare(aAddress);
+        }
     };
 
     const handleSort = (field) => {
@@ -93,11 +96,40 @@ const UserList = () => {
         setSortOrder(nextOrder);
     };
 
-    const filteredUsers = MOCK_USERS.filter(user => {
-        const matchSearch = user.name.toLowerCase().includes(search.toLowerCase());
-        const matchStatus = !filterValues.status || user.status === filterValues.status;
-        return matchSearch && matchStatus;
-    });
+    // Handle user state on/off
+    const toggleUserStatus = async (userId) => {
+        try {
+            await axiosClient.patch(`/users/toggle-status/${userId}`);
+            setUsers(prevUsers => {
+                return {
+                    ...prevUsers,
+                    data: prevUsers.data.map(user => 
+                        user.id === userId 
+                            ? { ...user, isDisabled: !user.isDisabled } 
+                            : user
+                    )
+                };
+            });
+        } catch (err) {
+            console.error('Error toggling user status:', err);
+            alert('Không thể thay đổi trạng thái người dùng. Vui lòng thử lại sau.');
+        }
+    };
+
+    let filteredUsers = [];
+    
+    if (users && users.data) {
+        filteredUsers = users.data.filter(user => {
+            const matchSearch = 
+                ((user.username || '').toLowerCase().includes(search.toLowerCase())) || 
+                ((user.email || '').toLowerCase().includes(search.toLowerCase()));
+                ((user.address || '').toLowerCase().includes(search.toLowerCase()));
+            const matchStatus = filterValues.status === '' || 
+                              String(user.isDisabled) === filterValues.status;
+            return matchSearch && matchStatus;
+        });
+    }
+    
 
     let sortedUsers = [...filteredUsers];
     if (sortField && sortOrder !== 'none') {
@@ -111,6 +143,14 @@ const UserList = () => {
         setSearch(e.target.value);
         setPage(1);
     };
+
+    if (loading) {
+        return <div className="admin-user-list-loading">Đang tải dữ liệu...</div>;
+    }
+
+    if (error) {
+        return <div className="admin-user-list-error">{error}</div>;
+    }
 
     return (
         <div className="admin-user-list-container">
@@ -147,9 +187,9 @@ const UserList = () => {
                                 <th></th>
                                 <th>
                                     <SortableHeader
-                                        label="Họ và tên"
-                                        sortState={sortField === 'name' ? sortOrder : 'none'}
-                                        onSort={() => handleSort('name')}
+                                        label="Tên đăng nhập"
+                                        sortState={sortField === 'username' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('username')}
                                     />
                                 </th>
                                 <th>
@@ -159,31 +199,62 @@ const UserList = () => {
                                         onSort={() => handleSort('email')}
                                     />
                                 </th>
-                                <th>Địa chỉ</th>
+                                <th>Số điện thoại</th>
+                                <th>
+                                    <SortableHeader
+                                        label="Địa chỉ"
+                                        sortState={sortField === 'address' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('address')}
+                                    />
+                                </th>
+                                <th>Vai trò</th>
                                 <th>Trạng thái</th>
-                                <th></th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedUsers.map((user, idx) => (
-                                <tr key={user.id} className="admin-user-list-row">
-                                    <td>{user.id}</td>
-                                    <td>
-                                        <div className="admin-user-list-avatar" style={{ background: user.color }} />
-                                    </td>
-                                    <td>{user.name}</td>
-                                    <td>{user.email}</td>
-                                    <td>{user.address}</td>
-                                    <td>
-                                        <div className={`admin-user-list-status admin-user-list-status-${user.status}`}>
-                                            {STATUS_MAP[user.status]?.label}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button className="admin-user-list-action-btn">Quản lý</button>
+                            {paginatedUsers.length > 0 ? (
+                                paginatedUsers.map((user) => (
+                                    <tr key={user.id} className="admin-user-list-row">
+                                        <td>{user.id.substring(0, 8)}...</td>
+                                        <td>
+                                            <div 
+                                                className="admin-user-list-avatar"
+                                                style={{ 
+                                                    background: user.avatar ? 'transparent' : '#C9D8CD',
+                                                    backgroundImage: user.avatar ? `url(${user.avatar})` : 'none',
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center'
+                                                }}
+                                            />
+                                        </td>
+                                        <td>{user.username || '-'}</td>
+                                        <td>{user.email}</td>
+                                        <td>{user.phone || 'Chưa cập nhật'}</td>
+                                        <td>{user.address || 'Chưa cập nhật'}</td>
+                                        <td>{user.role}</td>
+                                        <td>
+                                            <div className={`admin-user-list-status admin-user-list-status-${user.isDisabled ? 'disabled' : 'active'}`}>
+                                                {STATUS_MAP[user.isDisabled]?.label}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className="admin-user-list-action-btn"
+                                                onClick={() => toggleUserStatus(user.id)}
+                                            >
+                                                {user.isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="9" className="admin-user-list-no-data">
+                                        Không có dữ liệu phù hợp
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
