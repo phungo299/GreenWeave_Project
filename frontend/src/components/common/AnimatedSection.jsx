@@ -142,17 +142,17 @@ const AnimatedSection = ({
   });
 
   // Throttled animation trigger
-  const triggerAnimation = useCallback(
-    throttle(() => {
+  const triggerAnimation = useCallback(() => {
+    const throttledFunction = throttle(() => {
       if (inView && (!once || !hasAnimated.current)) {
         controls.start("visible");
         hasAnimated.current = true;
       } else if (!once && !inView) {
         controls.start("hidden");
       }
-    }, 16), // ~60fps throttling
-    [controls, inView, once]
-  );
+    }, 16);  
+    throttledFunction();
+  }, [controls, inView, once]);
 
   useEffect(() => {
     triggerAnimation();

@@ -16,7 +16,6 @@ const PersonalInformation = () => {
     
     const [errors, setErrors] = useState({});
     const [avatar, setAvatar] = useState(null);
-    const [avatarFile, setAvatarFile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -118,14 +117,12 @@ const PersonalInformation = () => {
     
     const handleFileChange = async (e) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            
+            const file = e.target.files[0];         
             // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 window.toast?.error('Kích thước file không được vượt quá 5MB');
                 return;
-            }
-            
+            }            
             // Validate file type
             if (!file.type.startsWith('image/')) {
                 window.toast?.error('Vui lòng chọn file hình ảnh');
@@ -135,7 +132,6 @@ const PersonalInformation = () => {
             // Show preview immediately
             const imageUrl = URL.createObjectURL(file);
             setAvatar(imageUrl);
-            setAvatarFile(file);
             
             // Upload to Cloudinary
             try {
@@ -201,7 +197,6 @@ const PersonalInformation = () => {
                 }
             } finally {
                 setUploadingAvatar(false);
-                setAvatarFile(null);
             }
         }
     };

@@ -166,6 +166,10 @@
     flex: 1;
 }
 
+.payment-section {
+    margin-top: 150px;
+}
+
 /* Payment Method Dropdown */
 .payment-dropdown-container {
     position: relative;

@@ -1,5 +1,5 @@
 import axiosClient from '../api/axiosClient';
-import API_CONFIG from '../config/api';
+// import API_CONFIG from '../config/api';
 
 // Parse Cloudinary URL from environment
 const parseCloudinaryUrl = () => {

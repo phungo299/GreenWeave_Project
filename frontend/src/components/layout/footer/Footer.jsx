@@ -48,7 +48,7 @@ const Footer = () => {
                         <ul className="contact-info">
                             <li>
                                 <img src={LocationIcon} alt="Location" className="contact-icon" />
-                                123 Đường Xanh, Quận 1, TP. Quy Nhơn
+                                Khu Đô Thị Mới An Phú Thịnh, Nhơn Bình, Quy Nhơn
                             </li>
                             <li>
                                 <img src={PhoneIcon} alt="Phone" className="contact-icon" />

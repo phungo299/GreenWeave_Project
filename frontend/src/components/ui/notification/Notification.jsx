@@ -13,6 +13,13 @@ const Notification = ({
     const [isVisible, setIsVisible] = useState(false);
     const [isExiting, setIsExiting] = useState(false);
 
+    const handleClose = React.useCallback(() => {
+        setIsExiting(true);
+        setTimeout(() => {
+            onClose && onClose(id);
+        }, 300);
+    }, [onClose, id]);
+
     useEffect(() => {
         // Show notification with animation
         const showTimer = setTimeout(() => {
@@ -28,14 +35,7 @@ const Notification = ({
             clearTimeout(showTimer);
             clearTimeout(hideTimer);
         };
-    }, [duration]);
-
-    const handleClose = () => {
-        setIsExiting(true);
-        setTimeout(() => {
-            onClose && onClose(id);
-        }, 300); // Match CSS animation duration
-    };
+    }, [duration, handleClose]);
 
     const getIcon = () => {
         switch (type) {

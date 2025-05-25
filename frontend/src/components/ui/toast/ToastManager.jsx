@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './ToastManager.css';
 
 let toastId = 0;
-let toastManagerInstance = null;
 
 const ToastManager = () => {
   const [toasts, setToasts] = useState([]);
@@ -35,14 +34,11 @@ const ToastManager = () => {
       warning: (message) => window.showToast('warning', message, 3500),
       info: (message) => window.showToast('info', message, 3000)
     };
-
-    toastManagerInstance = { setToasts };
     
     return () => {
       window.showToast = null;
       window.removeToast = null;
       window.toast = null;
-      toastManagerInstance = null;
     };
   }, []);
 

@@ -7,9 +7,12 @@ import initFlipGallery from '../assets/js/flipGallery';
 import AnimatedSection from '../components/common/AnimatedSection';
 import Footer from '../components/layout/footer/Footer';
 import Header from '../components/layout/header/Header';
-// import ab3 from '../assets/images/ab3.png';
-// import ab4 from '../assets/images/ab4.png';
-// import ab5 from '../assets/images/ab5.png';
+import DangThuyDuong from '../assets/images/group-member-photo/Dang Thuy Duong.jpg';
+import NguyenThiBichMui from '../assets/images/group-member-photo/Nguyen Thi Bich Mui.jpg';
+import PhamNgocHuongQuynh from '../assets/images/group-member-photo/Pham Ngoc Huong Quynh.jpg';
+import NgoTranAnhPhu from '../assets/images/group-member-photo/Ngo Tran Anh Phu.jpg';
+import LeBaoDuy from '../assets/images/group-member-photo/Le Bao Duy.jpg';
+import NguyenVanCuong from '../assets/images/group-member-photo/Nguyen Van Cuong.jpg';
 
 const AboutUsPage = () => {
     const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -256,48 +259,41 @@ const AboutUsPage = () => {
                             <p className="team-description">
                                 GreenWeave là tập hợp của những con người trẻ trung, sáng tạo, giàu tinh thần trách nhiệm
                             </p>
-                        </AnimatedSection>
-                        
+                        </AnimatedSection>                       
                         <div className="team-members">
                             <AnimatedSection animation="zoomIn" delay={0.3} hoverEffect="float" className="team-member">
-                                <img src="https://picsum.photos/150" alt="Đặng Thùy Dương" />
+                                <img src={DangThuyDuong} alt="Đặng Thùy Dương" />
                                 <h3>Đặng Thùy Dương</h3>
                                 <p>Người đại diện</p>
-                            </AnimatedSection>
-                            
+                            </AnimatedSection>                           
                             <AnimatedSection animation="zoomIn" delay={0.4} hoverEffect="float" className="team-member">
-                                <img src="https://picsum.photos/150" alt="Nguyễn Thị Bích Mai" />
-                                <h3>Nguyễn Thị Bích Mai</h3>
+                                <img src={NguyenThiBichMui} alt="Nguyễn Thị Bích Mùi" />
+                                <h3>Nguyễn Thị Bích Mùi</h3>
                                 <p>CMO</p>
-                            </AnimatedSection>
-                            
+                            </AnimatedSection>                           
                             <AnimatedSection animation="zoomIn" delay={0.5} hoverEffect="float" className="team-member">
-                                <img src="https://picsum.photos/150" alt="Phạm Ngọc Hương Quỳnh" />
+                                <img src={PhamNgocHuongQuynh} alt="Phạm Ngọc Hương Quỳnh" />
                                 <h3>Phạm Ngọc Hương Quỳnh</h3>
                                 <p>CEO</p>
-                            </AnimatedSection>
-                            
+                            </AnimatedSection>                           
                             <AnimatedSection animation="zoomIn" delay={0.6} hoverEffect="float" className="team-member">
-                                <img src="https://picsum.photos/150" alt="Ngô Trần Anh Phú" />
+                                <img src={NgoTranAnhPhu} alt="Ngô Trần Anh Phú" />
                                 <h3>Ngô Trần Anh Phú</h3>
                                 <p>CTO</p>
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="zoomIn" delay={0.7} hoverEffect="float" className="team-member">
-                                <img src="https://picsum.photos/150" alt="Lê Bảo Duy" />
+                            </AnimatedSection>                         
+                           <AnimatedSection animation="zoomIn" delay={0.7} hoverEffect="float" className="team-member">
+                                <img src={LeBaoDuy} alt="Lê Bảo Duy" />
                                 <h3>Lê Bảo Duy</h3>
                                 <p>COO</p>
-                            </AnimatedSection>
-                            
+                            </AnimatedSection>                           
                             <AnimatedSection animation="zoomIn" delay={0.8} hoverEffect="float" className="team-member">
-                                <img src="https://picsum.photos/150" alt="Nguyễn Văn Cường" />
+                                <img src={NguyenVanCuong} alt="Nguyễn Văn Cường" />
                                 <h3>Nguyễn Văn Cường</h3>
                                 <p>CBDO</p>
                             </AnimatedSection>
                         </div>
                     </section>
                 </AnimatedSection>
-
                 {/* Achievements section */}
                 <AnimatedSection animation="fadeIn">
                     <section className="achievements-section">

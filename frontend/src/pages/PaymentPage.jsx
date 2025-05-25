@@ -193,7 +193,6 @@ const PaymentPage = () => {
     const [visibleCountries, setVisibleCountries] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState('credit-card');
     const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
-    const [checkValidation, setCheckValidation] = useState(false);
     const [saveShippingInfo, setSaveShippingInfo] = useState(false);
     const [itemsTotal, setItemsTotal] = useState(0);
     const [shipping] = useState(40000);
@@ -392,7 +391,6 @@ const PaymentPage = () => {
             isValid = false;
         }            
         setErrors(newErrors);
-        setCheckValidation(true);
         return isValid;
     };
 
