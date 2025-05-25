@@ -157,27 +157,64 @@ export const registerAtCenter = async (req: Request, res: Response) => {
 };
 
 export const verifyEmail = async (req: Request, res: Response) => {
-  const { verifyCode } = req.body;
   try {
+    const { verifyCode } = req.body;
+    
+    // Validate input
+    if (!verifyCode) {
+      return res.status(400).json({ 
+        message: "Vui lòng nhập mã xác thực",
+        success: false 
+      });
+    }
+
+    // Trim and validate code format
+    const trimmedCode = verifyCode.toString().trim();
+    if (!/^\d{6}$/.test(trimmedCode)) {
+      return res.status(400).json({ 
+        message: "Mã xác thực phải là 6 chữ số",
+        success: false 
+      });
+    }
+
+    // Find user with valid token
     const user = await User.findOne({
-      resetPasswordToken: verifyCode,
+      resetPasswordToken: trimmedCode,
       resetPasswordExpires: { $gt: Date.now() }
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Mã không hợp lệ hoặc hết hạn" });
+      return res.status(400).json({ 
+        message: "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.",
+        success: false 
+      });
     }
 
+    // Check if user is already verified
+    if (user.isVerified) {
+      return res.status(400).json({ 
+        message: "Tài khoản đã được xác thực trước đó",
+        success: false 
+      });
+    }
+
+    // Update user verification status
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     user.isVerified = true;
 
     await user.save();
 
-    return res.status(200).json({ message: "Xác nhận tài khoản thành công" });
+    return res.status(200).json({ 
+      message: "Xác thực tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.",
+      success: true 
+    });
   } catch (error: any) {
-    console.log(error);
-    return res.status(500).json({ message: error.message });
+    console.error("Verify email error:", error);
+    return res.status(500).json({ 
+      message: "Đã xảy ra lỗi khi xác thực. Vui lòng thử lại sau.",
+      success: false 
+    });
   }
 };
 

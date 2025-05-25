@@ -2,6 +2,47 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { Review } from "../models";
 
+// Lấy tất cả đánh giá (Admin only)
+export const getAllReviews = async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const sortBy = req.query.sortBy as string || "createdAt";
+    const sortOrder = req.query.sortOrder as string || "desc";
+    
+    // Xác định hướng sắp xếp
+    const sort: any = {};
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+    
+    // Lấy tất cả reviews với phân trang
+    const reviews = await Review.find()
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "username avatar email")
+      .populate("productId", "name price");
+    
+    // Đếm tổng số reviews
+    const total = await Review.countDocuments();
+    
+    return res.status(200).json({
+      reviews,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error: any) {
+    console.error("Get all reviews error:", error);
+    return res.status(500).json({ 
+      message: "Đã xảy ra lỗi khi lấy danh sách đánh giá" 
+    });
+  }
+};
+
 // Lấy đánh giá cho một sản phẩm
 export const getProductReviews = async (req: Request, res: Response) => {
   try {

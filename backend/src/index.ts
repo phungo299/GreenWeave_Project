@@ -20,8 +20,10 @@ import {
   productRoutes,
   promotionRoutes,
   reviewRoutes,
+  settingRoutes,
   stripeRoutes,
   userRoutes,
+  visitorLogRoutes,
   wishlistRoutes
 } from "./routes";
 
@@ -37,6 +39,8 @@ swaggerDocument.servers[0].url = process.env.API_URL || "http://localhost:5000";
 const allowedOrigins = [
   "http://localhost:3000", // Frontend development server
   "http://127.0.0.1:3000",
+  "http://localhost:5000", // Backend development server
+  "http://127.0.0.1:5000",
   process.env.STAGING_URL,
   process.env.API_URL,
   process.env.CLIENT_URL,
@@ -91,6 +95,8 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/settings", settingRoutes);
+app.use("/api/visitor-logs", visitorLogRoutes);
 app.use("/api/stripe", stripeRoutes);
 
 // Export the app for testing purposes
