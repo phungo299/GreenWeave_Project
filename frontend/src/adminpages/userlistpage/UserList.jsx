@@ -6,6 +6,7 @@ import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
 import axiosClient from '../../api/axiosClient';
 import './UserList.css';
+import { FaEdit, FaToggleOn, FaToggleOff, FaUserPlus } from 'react-icons/fa';
 
 const STATUS_MAP = {
     false: { label: 'Đang hoạt động', className: 'active' },
@@ -152,12 +153,28 @@ const UserList = () => {
         return <div className="admin-user-list-error">{error}</div>;
     }
 
+    const handleAddUser = () => {
+        console.log('Add new user');
+        // Implement add user functionality
+        alert('Chức năng thêm người dùng sẽ được phát triển sau.');
+    };
+
+    const handleEditUser = (userId) => {
+        console.log('Edit user:', userId);
+        // Implement edit user functionality
+        // For example, navigate to edit page or open a modal
+    };
+
     return (
         <div className="admin-user-list-container">
             <AdminBreadcrumb />
             <div className="admin-user-list-content">
                 <div className="admin-user-list-header-row">
                     <h1 className="admin-user-list-title">Người Dùng</h1>
+                    <button className="admin-user-list-add-btn" onClick={handleAddUser}>
+                        <FaUserPlus className="admin-user-list-add-icon" />
+                        Add User
+                    </button>
                 </div>
                 <div className="admin-user-list-controls">
                     <FilterBar
@@ -239,12 +256,22 @@ const UserList = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <button 
-                                                className="admin-user-list-action-btn"
-                                                onClick={() => toggleUserStatus(user.id)}
-                                            >
-                                                {user.isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa'}
-                                            </button>
+                                            <div className="admin-user-list-actions">
+                                                <button 
+                                                    className="admin-user-list-icon-btn edit"
+                                                    onClick={() => handleEditUser(user.id)}
+                                                    title="Chỉnh sửa thông tin"
+                                                >
+                                                    <FaEdit />
+                                                </button>
+                                                <button 
+                                                    className="admin-user-list-icon-btn toggle"
+                                                    onClick={() => toggleUserStatus(user.id)}
+                                                    title={user.isDisabled ? 'Kích hoạt tài khoản' : 'Vô hiệu hóa tài khoản'}
+                                                >
+                                                    {user.isDisabled ? <FaToggleOff /> : <FaToggleOn />}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

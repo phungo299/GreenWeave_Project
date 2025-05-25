@@ -55,6 +55,32 @@
     margin: 0;
 }
 
+.admin-user-list-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #234b2c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-user-list-add-btn:hover {
+    background-color: #1a3921;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.admin-user-list-add-icon {
+    font-size: 1.1rem;
+}
+
 .admin-user-list-table-wrapper {
     border-radius: 12px;
     overflow: hidden;
@@ -133,21 +159,50 @@
     border: 1px solid #ffb3b3;
 }
 
-.admin-user-list-action-btn {
-    background: #87afff;
-    color: #0e11d4;
-    border: 1px solid #2234fe;
-    border-radius: 6px;
-    padding: 4px 14px;
-    font-size: 0.93rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+.admin-user-list-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
 }
 
-.admin-user-list-action-btn:hover {
-    background: #071ecd;
-    color: #fff;
+.admin-user-list-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+    color: #234b2c;
+    font-size: 1.2rem;
+}
+
+.admin-user-list-icon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.admin-user-list-icon-btn.edit {
+    background-color: #e8f5ff;
+    color: #0073e6;
+}
+
+.admin-user-list-icon-btn.edit:hover {
+    background-color: #0073e6;
+    color: white;
+}
+
+.admin-user-list-icon-btn.toggle {
+    background-color: #e8fdf5;
+    color: #00b074;
+}
+
+.admin-user-list-icon-btn.toggle:hover {
+    background-color: #00b074;
+    color: white;
 }
 
 .admin-user-list-pagination {
@@ -166,6 +221,10 @@
     .admin-user-list-title {
         font-size: 1.3rem;
     }
+    .admin-user-list-add-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
     .admin-user-list-table th, .admin-user-list-table td {
         padding: 10px 6px;
         font-size: 0.93rem;
@@ -180,6 +239,11 @@
         font-size: 0.8rem;
         padding: 2px 6px;
     }
+    .admin-user-list-icon-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
 }
 
 /* Mobile */
@@ -191,10 +255,16 @@
         box-shadow: none;
     }
     .admin-user-list-header-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 10px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .admin-user-list-add-btn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    .admin-user-list-add-icon {
+        font-size: 1rem;
     }
     .admin-user-list-title {
         font-size: 1.05rem;
@@ -235,9 +305,13 @@
         font-size: 0.75rem;
         padding: 1px 4px;
     }
-    .admin-user-list-action-btn {
-        padding: 3px 8px;
-        font-size: 0.85rem;
+    .admin-user-list-icon-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 0.9rem;
+    }
+    .admin-user-list-actions {
+        gap: 5px;
     }
     .admin-user-list-pagination {
         margin-top: 12px;
