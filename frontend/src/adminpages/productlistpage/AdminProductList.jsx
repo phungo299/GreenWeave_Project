@@ -79,6 +79,8 @@ const AdminProductList = () => {
                 const params = {
                     page: currentPage,
                     limit: pageSize,
+                    sortBy: 'createdAt',
+                    sortOrder: 'desc'
                 };              
                 // Add category filter if selected
                 if (filterValues.category) {
@@ -89,11 +91,14 @@ const AdminProductList = () => {
                     params.status = filterValues.status === 'in-stock' ? true : false;
                 }             
                 // Add search query if provided
+                let response;
+                // Use different API endpoint if search is provided
                 if (search) {
-                    params.q = search;
-                }                
-                //console.log('Fetching products with params:', params);             
-                const response = await productService.getAll(params);
+                    response = await productService.search(search);
+                } else {
+                    response = await productService.getAll(params);
+                }               
+                //console.log('Fetching products with params:', params);
                 //console.log('API Response:', response);               
                 if (response && response.products) {
                     // Transform product data to match our table structure
@@ -107,7 +112,7 @@ const AdminProductList = () => {
                         name: product.name,
                         productCode: product.productCode || product._id,
                         price: `${product.price.toLocaleString()} đ`,
-                        stock: product.stock > 0 ? 'Còn hàng' : 'Hết hàng',
+                        stock: product.stock === "Còn hàng" || product.quantity > 0 ? 'Còn hàng' : 'Hết hàng',
                         category: product.categoryId && typeof product.categoryId === 'object' 
                             ? product.categoryId.name 
                             : (product.category || 'Chưa phân loại'),
@@ -131,7 +136,8 @@ const AdminProductList = () => {
     }, [currentPage, pageSize, filterValues, search]);
 
     const handleSearchChange = (e) => {
-        setSearch(e.target.value);
+        const value = e.target.value;
+        setSearch(value);
         setCurrentPage(1); // Reset to first page on new search
     };
 

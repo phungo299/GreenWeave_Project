@@ -27,7 +27,7 @@ const AdminProductDetails = () => {
         selectedSize: ''
     });
 
-    const availableColors = ['#E5E7EB', '#FDE68A', '#A7F3D0', '#93C5FD'];
+    const availableColors = ['#E5E7EB', '#FDE68A', '#A7F3D0', '#93C5FD', '#FCA5A5'];
     const availableSizes = ['S', 'M', 'X', 'XL', 'XXL'];
 
     // Fetch categories

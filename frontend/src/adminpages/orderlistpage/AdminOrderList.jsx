@@ -127,7 +127,7 @@ const AdminOrderList = () => {
             price: order.total,
             colorImage: require('../../assets/images/cap-3.jpg'),
             text: 'kiti',
-            patternImage: require('../../assets/images/arfg.jpg'),
+            patternImage: require('../../assets/images/SP11.jpg'),
         });
         setOpenDesignForm(true);
     };
