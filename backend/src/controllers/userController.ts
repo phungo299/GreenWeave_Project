@@ -29,7 +29,9 @@ export const getUser = async (req: AuthRequest, res: Response) => {
       phone: user.phone,
       avatar: user.avatar,
       address: user.address,
-      role: user.role
+      role: user.role,
+      fullName: user.fullName,
+      rewardPoints: user.rewardPoints
     };
     return res.status(200).json({ data: formattedProfile });
   } catch (error: any) {
@@ -48,17 +50,20 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       phone,
       avatar,
       address,
+      fullName,
     } = req.body;
 
     const userUpdateData: any = {
       phone,
       avatar,
       address,
+      fullName,
     };
 
-    if (username) {
-      userUpdateData.username = username.toLowerCase();
-    }
+    // Không cho phép cập nhật username và email qua API này
+    // if (username) {
+    //   userUpdateData.username = username.toLowerCase();
+    // }
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId },
@@ -78,7 +83,9 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       email: updatedUser.email,
       avatar: updatedUser.avatar,
       phone: updatedUser.phone,
-      address: updatedUser.address
+      address: updatedUser.address,
+      fullName: updatedUser.fullName,
+      rewardPoints: updatedUser.rewardPoints
     };
 
     return res
@@ -566,43 +573,415 @@ export const changeUserRole = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { role } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ 
-        message: "User ID là bắt buộc" 
-      });
+    if (!["admin", "user", "staff"].includes(role)) {
+      return res.status(400).json({ message: "Role không hợp lệ" });
     }
 
-    if (!role || !["admin", "user", "staff"].includes(role)) {
-      return res.status(400).json({ 
-        message: "Role phải là admin, user hoặc staff" 
-      });
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    return res.status(200).json({
+      message: "Cập nhật role thành công",
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      message: error.message || "Đã xảy ra lỗi khi cập nhật role",
+    });
+  }
+};
+
+// Thêm các function mới cho profile và addresses
+export const getUserProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
     }
 
     const user = await User.findById(userId);
+    
     if (!user) {
-      return res.status(404).json({ 
-        message: "Không tìm thấy người dùng" 
-      });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
-    user.role = role;
-    await user.save();
-
-    const formattedUser = {
+    const formattedProfile = {
       id: user._id,
-      username: user.username,
       email: user.email,
-      role: user.role
+      username: user.username,
+      phone: user.phone,
+      avatar: user.avatar,
+      address: user.address,
+      role: user.role,
+      fullName: user.fullName,
+      rewardPoints: user.rewardPoints,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     };
-
-    return res.status(200).json({
-      message: `Đã thay đổi role thành ${role}`,
-      data: formattedUser
+    
+    return res.status(200).json({ 
+      success: true,
+      data: formattedProfile 
     });
   } catch (error: any) {
-    console.error("Change user role error:", error);
+    console.log("Error in getUserProfile:", error);
     return res.status(500).json({
-      message: "Đã xảy ra lỗi khi thay đổi role"
+      success: false,
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu",
+    });
+  }
+};
+
+export const getUserAddresses = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
+    }
+
+    // Nếu address là object, chuyển thành array
+    let addresses = [];
+    if (user.address) {
+      if (Array.isArray(user.address)) {
+        addresses = user.address;
+      } else {
+        // Nếu address là object, chuyển thành array với 1 phần tử
+        addresses = [{
+          id: "default",
+          street: user.address.street || "",
+          city: user.address.city || "",
+          state: user.address.state || "",
+          zipCode: user.address.zipCode || "",
+          country: user.address.country || "",
+          isDefault: true
+        }];
+      }
+    }
+    
+    return res.status(200).json({ 
+      success: true,
+      data: addresses 
+    });
+  } catch (error: any) {
+    console.log("Error in getUserAddresses:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi lấy danh sách địa chỉ",
+    });
+  }
+};
+
+export const addUserAddress = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { 
+      // Cấu trúc mới cho địa chỉ Việt Nam
+      country,
+      countryCode,
+      province,
+      provinceCode,
+      district,
+      districtCode,
+      ward,
+      wardCode,
+      streetAddress,
+      zipCode,
+      isDefault,
+      // Cấu trúc cũ để tương thích ngược
+      street,
+      city,
+      state
+    } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
+    }
+
+    // Tạo địa chỉ mới với cấu trúc linh hoạt
+    const newAddress: any = {
+      _id: new Date().getTime().toString(),
+      isDefault: isDefault || false
+    };
+
+    // Ưu tiên cấu trúc mới (Việt Nam)
+    if (province && district) {
+      newAddress.country = country || "Việt Nam";
+      newAddress.countryCode = countryCode || "VN";
+      newAddress.province = province;
+      newAddress.provinceCode = provinceCode;
+      newAddress.district = district;
+      newAddress.districtCode = districtCode;
+      newAddress.ward = ward || "";
+      newAddress.wardCode = wardCode || "";
+      newAddress.streetAddress = streetAddress || "";
+      newAddress.zipCode = zipCode || "";
+    } else {
+      // Fallback cho cấu trúc cũ
+      newAddress.street = street || "";
+      newAddress.city = city || "";
+      newAddress.state = state || "";
+      newAddress.zipCode = zipCode || "";
+      newAddress.country = country || "Vietnam";
+    }
+
+    // Khởi tạo addresses array nếu chưa có
+    if (!user.address || !Array.isArray(user.address)) {
+      user.address = [];
+    }
+
+    // Nếu địa chỉ mới là default, bỏ default của các địa chỉ khác
+    if (newAddress.isDefault) {
+      user.address = user.address.map((addr: any) => ({
+        ...addr,
+        isDefault: false
+      }));
+    }
+
+    // Nếu đây là địa chỉ đầu tiên, tự động đặt làm default
+    if (user.address.length === 0) {
+      newAddress.isDefault = true;
+    }
+
+    user.address.push(newAddress);
+    await user.save();
+    
+    return res.status(201).json({ 
+      success: true,
+      message: "Thêm địa chỉ thành công",
+      data: newAddress 
+    });
+  } catch (error: any) {
+    console.log("Error in addUserAddress:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi thêm địa chỉ",
+    });
+  }
+};
+
+export const updateUserAddress = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { addressId } = req.params;
+    const { 
+      // Cấu trúc mới cho địa chỉ Việt Nam
+      country,
+      countryCode,
+      province,
+      provinceCode,
+      district,
+      districtCode,
+      ward,
+      wardCode,
+      streetAddress,
+      zipCode,
+      isDefault,
+      // Cấu trúc cũ để tương thích ngược
+      street,
+      city,
+      state
+    } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
+    }
+
+    if (!user.address || !Array.isArray(user.address)) {
+      return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+    }
+
+    const addressIndex = user.address.findIndex((addr: any) => addr._id === addressId || addr.id === addressId);
+    
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+    }
+
+    // Nếu địa chỉ được set làm default, bỏ default của các địa chỉ khác
+    if (isDefault) {
+      user.address = user.address.map((addr: any, index: number) => ({
+        ...addr,
+        isDefault: index === addressIndex
+      }));
+    }
+
+    // Cập nhật địa chỉ với cấu trúc linh hoạt
+    const currentAddress = user.address[addressIndex];
+    
+    // Ưu tiên cấu trúc mới (Việt Nam)
+    if (province && district) {
+      user.address[addressIndex] = {
+        ...currentAddress,
+        country: country || currentAddress.country || "Việt Nam",
+        countryCode: countryCode || currentAddress.countryCode || "VN",
+        province: province,
+        provinceCode: provinceCode,
+        district: district,
+        districtCode: districtCode,
+        ward: ward || "",
+        wardCode: wardCode || "",
+        streetAddress: streetAddress || currentAddress.streetAddress || "",
+        zipCode: zipCode || currentAddress.zipCode || "",
+        isDefault: isDefault !== undefined ? isDefault : currentAddress.isDefault
+      };
+    } else {
+      // Fallback cho cấu trúc cũ
+      user.address[addressIndex] = {
+        ...currentAddress,
+        street: street || currentAddress.street,
+        city: city || currentAddress.city,
+        state: state || currentAddress.state,
+        zipCode: zipCode || currentAddress.zipCode,
+        country: country || currentAddress.country,
+        isDefault: isDefault !== undefined ? isDefault : currentAddress.isDefault
+      };
+    }
+
+    await user.save();
+    
+    return res.status(200).json({ 
+      success: true,
+      message: "Cập nhật địa chỉ thành công",
+      data: user.address[addressIndex] 
+    });
+  } catch (error: any) {
+    console.log("Error in updateUserAddress:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi cập nhật địa chỉ",
+    });
+  }
+};
+
+export const deleteUserAddress = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { addressId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
+    }
+
+    if (!user.address || !Array.isArray(user.address)) {
+      return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+    }
+
+    const addressIndex = user.address.findIndex((addr: any) => addr._id === addressId || addr.id === addressId);
+    
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+    }
+
+    user.address.splice(addressIndex, 1);
+    await user.save();
+    
+    return res.status(200).json({ 
+      success: true,
+      message: "Xóa địa chỉ thành công"
+    });
+  } catch (error: any) {
+    console.log("Error in deleteUserAddress:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi xóa địa chỉ",
+    });
+  }
+};
+
+export const setDefaultAddress = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { addressId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Không tìm thấy ID người dùng" });
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
+    }
+
+    if (!user.address || !Array.isArray(user.address)) {
+      return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+    }
+
+    const addressIndex = user.address.findIndex((addr: any) => addr._id === addressId || addr.id === addressId);
+    
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+    }
+
+    // Bỏ default của tất cả địa chỉ khác
+    user.address = user.address.map((addr: any, index: number) => ({
+      ...addr,
+      isDefault: index === addressIndex
+    }));
+
+    await user.save();
+    
+    return res.status(200).json({ 
+      success: true,
+      message: "Đã đặt làm địa chỉ mặc định",
+      data: user.address[addressIndex]
+    });
+  } catch (error: any) {
+    console.log("Error in setDefaultAddress:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi đặt địa chỉ mặc định",
     });
   }
 };

@@ -2,9 +2,86 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    padding-top: 90px; /* Space for fixed header */
 }
 
 .main-content {
     flex: 1;
-    padding-top: 72px;
+    position: relative;
+}
+
+/* Smooth transitions between sections */
+.main-content > * {
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* Add subtle animations for section transitions */
+@media (prefers-reduced-motion: no-preference) {
+    .landing-page {
+        scroll-behavior: smooth;
+    }
+    
+    .main-content section {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.6s ease;
+        position: relative;
+    }
+}
+
+/* Prevent layout shift and improve performance */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 90px; /* Account for fixed header */
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Enhanced scrollbar styling */
+.landing-page::-webkit-scrollbar {
+    width: 8px;
+}
+
+.landing-page::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.landing-page::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #0A4B3E 0%, #2a6358 100%);
+    border-radius: 4px;
+}
+
+.landing-page::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2a6358 0%, #0A4B3E 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .landing-page {
+        padding-top: 80px;
+    }
+    
+    html {
+        scroll-padding-top: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-page {
+        padding-top: 70px;
+    }
+    
+    html {
+        scroll-padding-top: 70px;
+    }
 } 

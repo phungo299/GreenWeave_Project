@@ -83,11 +83,11 @@ export const sendResetPasswordEmail = async (
     <!DOCTYPE html>
     <html lang="vi">
     <head>
-      <meta charset="极UTF-8">
+      <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Khôi phục mật khẩu</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.极6; color: #333; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
         .header { background-color: #0C3C54; color: white; padding: 10px; text-align: center; }
         .content { background-color: white; padding: 20px; border-radius: 5px; }
@@ -109,11 +109,9 @@ export const sendResetPasswordEmail = async (
           <p>Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này.</p>
           <p>Trân trọng,<br>Đội ngũ GreenWeave</p>
         </div>  
-        <极div class="footer">
         <div class="footer">
           <p>© 2023 GreenWeave. Tất cả các quyền được bảo lưu.</p>
         </div>
-      </极div>
     </body>
     </html>
   `,

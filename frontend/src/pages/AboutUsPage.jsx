@@ -13,64 +13,81 @@ import Header from '../components/layout/header/Header';
 
 const AboutUsPage = () => {
     const [imagesLoaded, setImagesLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        // Dữ liệu hình ảnh cho unique points flip gallery
-        const images = [
-            { title: "Chai nhựa PET", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585584/chai-nhua_eyinh4.jpg" },
-            { title: "Bao bì thân thiện môi trường", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585736/recycled-mailer-packaging-design-for-kids-clothing-brand_w8g30x.jpg" },
-            { title: "Sản phẩm từ chất liệu bền vững", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585563/recycled-tote-bag-3_j142it.jpg" }
-        ];
+        try {
+            // Dữ liệu hình ảnh cho unique points flip gallery
+            const images = [
+                { title: "Chai nhựa PET", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585584/chai-nhua_eyinh4.jpg" },
+                { title: "Bao bì thân thiện môi trường", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585736/recycled-mailer-packaging-design-for-kids-clothing-brand_w8g30x.jpg" },
+                { title: "Sản phẩm từ chất liệu bền vững", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585563/recycled-tote-bag-3_j142it.jpg" }
+            ];
 
-        // Preload hình ảnh trong head và kiểm tra khi đã tải xong
-        const preloadImages = () => {
-            const head = document.head;
-            
-            // Xóa các thẻ preload cũ nếu có
-            const oldLinks = document.querySelectorAll('link[data-flip-preload]');
-            oldLinks.forEach(link => link.remove());
-            
-            // Tạo Promise chứa tất cả việc tải hình ảnh
-            const imageLoadPromises = images.map(image => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve();
-                    img.onerror = () => resolve(); // Vẫn resolve ngay cả khi lỗi
-                    img.src = image.url;
-                    
-                    // Thêm preload link
-                    const link = document.createElement('link');
-                    link.rel = 'preload';
-                    link.href = image.url;
-                    link.as = 'image';
-                    link.type = 'image/jpeg';
-                    link.setAttribute('data-flip-preload', 'true');
-                    head.appendChild(link);
+            // Preload hình ảnh trong head và kiểm tra khi đã tải xong
+            const preloadImages = () => {
+                const head = document.head;
+                
+                // Xóa các thẻ preload cũ nếu có
+                const oldLinks = document.querySelectorAll('link[data-flip-preload]');
+                oldLinks.forEach(link => link.remove());
+                
+                // Tạo Promise chứa tất cả việc tải hình ảnh
+                const imageLoadPromises = images.map(image => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve();
+                        img.onerror = () => {
+                            console.warn(`Không thể tải hình ảnh: ${image.url}`);
+                            resolve(); // Vẫn resolve ngay cả khi lỗi
+                        };
+                        img.src = image.url;
+                        
+                        // Thêm preload link
+                        const link = document.createElement('link');
+                        link.rel = 'preload';
+                        link.href = image.url;
+                        link.as = 'image';
+                        link.type = 'image/jpeg';
+                        link.setAttribute('data-flip-preload', 'true');
+                        head.appendChild(link);
+                    });
                 });
-            });
+                
+                // Khi tất cả hình ảnh đã tải xong
+                Promise.all(imageLoadPromises)
+                    .then(() => {
+                        setImagesLoaded(true);
+                        // Khởi tạo flip gallery sau khi ảnh đã tải xong
+                        if (typeof initFlipGallery === 'function') {
+                            initFlipGallery('unique-flip-gallery', images);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Lỗi khi tải hình ảnh:', err);
+                        setImagesLoaded(true); // Vẫn hiển thị gallery ngay cả khi lỗi
+                        setHasError(true);
+                    });
+            };
             
-            // Khi tất cả hình ảnh đã tải xong
-            Promise.all(imageLoadPromises)
-                .then(() => {
-                    setImagesLoaded(true);
-                    // Khởi tạo flip gallery sau khi ảnh đã tải xong
-                    initFlipGallery('unique-flip-gallery', images);
-                })
-                .catch(err => {
-                    console.error('Lỗi khi tải hình ảnh:', err);
-                    setImagesLoaded(true); // Vẫn hiển thị gallery ngay cả khi lỗi
-                    initFlipGallery('unique-flip-gallery', images);
-                });
-        };
-        
-        // Thực hiện preload
-        preloadImages();
+            // Thực hiện preload
+            preloadImages();
+            
+        } catch (error) {
+            console.error('Lỗi khởi tạo AboutUsPage:', error);
+            setHasError(true);
+            setImagesLoaded(true);
+        }
         
         // Dọn dẹp khi unmount
         return () => {
-            // Xóa các thẻ preload khi unmount
-            const oldLinks = document.querySelectorAll('link[data-flip-preload]');
-            oldLinks.forEach(link => link.remove());
+            try {
+                // Xóa các thẻ preload khi unmount
+                const oldLinks = document.querySelectorAll('link[data-flip-preload]');
+                oldLinks.forEach(link => link.remove());
+            } catch (error) {
+                console.warn('Lỗi khi dọn dẹp:', error);
+            }
         };
     }, []);
 
@@ -164,19 +181,31 @@ const AboutUsPage = () => {
                             </AnimatedSection>
                             
                             <AnimatedSection animation="zoomIn" delay={0.4} className="flip-gallery-container">
-                                <div 
-                                    id="unique-flip-gallery" 
-                                    className={`flip-gallery ${!imagesLoaded ? 'gallery-loading' : ''}`}
-                                >
-                                    <div className="top unite"></div>
-                                    <div className="bottom unite"></div>
-                                    <div className="overlay-top unite"></div>
-                                    <div className="overlay-bottom unite"></div>
-                                </div>
-                                <div className="gallery-nav">
-                                    <button type="button" data-gallery-nav="-1" title="Previous">&#10094;</button>
-                                    <button type="button" data-gallery-nav="1" title="Next">&#10095;</button>
-                                </div>
+                                {hasError ? (
+                                    <div className="gallery-fallback">
+                                        <div className="fallback-images">
+                                            <img src="https://via.placeholder.com/300x200/4CAF50/white?text=Chai+nhựa+PET" alt="Chai nhựa PET" />
+                                            <img src="https://via.placeholder.com/300x200/2196F3/white?text=Bao+bì+thân+thiện" alt="Bao bì thân thiện môi trường" />
+                                            <img src="https://via.placeholder.com/300x200/FF9800/white?text=Sản+phẩm+bền+vững" alt="Sản phẩm từ chất liệu bền vững" />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div 
+                                            id="unique-flip-gallery" 
+                                            className={`flip-gallery ${!imagesLoaded ? 'gallery-loading' : ''}`}
+                                        >
+                                            <div className="top unite"></div>
+                                            <div className="bottom unite"></div>
+                                            <div className="overlay-top unite"></div>
+                                            <div className="overlay-bottom unite"></div>
+                                        </div>
+                                        <div className="gallery-nav">
+                                            <button type="button" data-gallery-nav="-1" title="Previous">&#10094;</button>
+                                            <button type="button" data-gallery-nav="1" title="Next">&#10095;</button>
+                                        </div>
+                                    </>
+                                )}
                             </AnimatedSection>
                         </div>
                     </section>

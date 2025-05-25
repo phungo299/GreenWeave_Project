@@ -10,6 +10,7 @@ import promotionRoutes from "./promotionRoutes";
 import reviewRoutes from "./reviewRoutes";
 import settingRoutes from "./settingRoutes";
 import stripeRoutes from "./stripeRoutes";
+import uploadRoutes from "./uploadRoutes";
 import userRoutes from "./userRoutes";
 import visitorLogRoutes from "./visitorLogRoutes";
 import wishlistRoutes from "./wishlistRoutes";
@@ -26,7 +27,8 @@ export {
     promotionRoutes, 
     reviewRoutes, 
     settingRoutes,
-    stripeRoutes, 
+    stripeRoutes,
+    uploadRoutes, 
     userRoutes, 
     visitorLogRoutes,
     wishlistRoutes

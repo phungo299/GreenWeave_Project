@@ -4,6 +4,10 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// Force light mode only - add classes to body
+document.body.classList.add('light-only', 'force-light', 'no-dark-mode');
+document.documentElement.setAttribute('data-theme', 'light');
+
 ReactDOM.render(
     <React.StrictMode>
         <App />

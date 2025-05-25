@@ -62,12 +62,31 @@ components:
           type: string
         name:
           type: string
+        title:
+          type: string
         description:
           type: string
         price:
           type: number
         stock:
+          type: string
+          default: "Còn hàng"
+        quantity:
           type: integer
+        category:
+          type: string
+        slug:
+          type: string
+        productCode:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        selectedColor:
+          type: string
+        selectedSize:
+          type: string
         categoryId:
           type: string
         variants:
@@ -75,20 +94,54 @@ components:
           items:
             type: object
             properties:
+              variantId:
+                type: string
               color:
                 type: string
-              size:
+              imageUrl:
                 type: string
               stock:
                 type: integer
-              imageUrl:
-                type: string
         isFeatured:
           type: boolean
         rating:
           type: number
         reviewCount:
           type: integer
+        priceHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              price:
+                type: number
+              updatedAt:
+                type: string
+                format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     
     Order:
       type: object
@@ -170,6 +223,164 @@ components:
           type: string
           format: date-time
 
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              productId:
+                type: string
+              variantId:
+                type: string
+              color:
+                type: string
+              quantity:
+                type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Promotion:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percentage, fixed]
+        value:
+          type: number
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        usageLimit:
+          type: integer
+        usageCount:
+          type: integer
+        minOrderAmount:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [order, promotion, system, general]
+        relatedId:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Setting:
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
+          enum: [string, number, boolean, json]
+        category:
+          type: string
+        description:
+          type: string
+        isPublic:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VisitorLog:
+      type: object
+      properties:
+        id:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        page:
+          type: string
+        referrer:
+          type: string
+        userId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
 tags:
   - name: Auth
     description: Authentication endpoints
@@ -177,12 +388,30 @@ tags:
     description: User management endpoints
   - name: Products
     description: Product management endpoints
+  - name: Categories
+    description: Category management endpoints
   - name: Orders
     description: Order management endpoints
+  - name: Wishlist
+    description: Wishlist management endpoints
+  - name: Cart
+    description: Shopping cart endpoints
   - name: Payment
     description: Payment processing endpoints
   - name: Reviews
     description: Review management endpoints
+  - name: Promotion
+    description: Promotion management endpoints
+  - name: Notification
+    description: Notification management endpoints
+  - name: Message
+    description: Message management endpoints
+  - name: Setting
+    description: System setting endpoints
+  - name: VisitorLog
+    description: Visitor log tracking endpoints
+  - name: Upload
+    description: File upload endpoints
 
 paths:
   /api/auth/register:
@@ -393,6 +622,423 @@ paths:
                     type: string
                     example: "Đã xảy ra lỗi khi kiểm tra trạng thái xác thực"
 
+  /api/auth/verify-email:
+    post:
+      tags:
+        - Auth
+      summary: Xác thực email bằng OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                otp:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Xác thực email thành công!"
+        '400':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mã OTP không hợp lệ hoặc đã hết hạn"
+        '500':
+          description: Server error
+
+  /api/auth/new-verify:
+    post:
+      tags:
+        - Auth
+      summary: Gửi lại mã OTP xác thực
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: New OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mã OTP mới đã được gửi đến email của bạn"
+        '400':
+          description: Email already verified or invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email đã được xác thực hoặc không hợp lệ"
+        '500':
+          description: Server error
+
+  /api/auth/login-google:
+    post:
+      tags:
+        - Auth
+      summary: Đăng nhập bằng Google
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - googleToken
+              properties:
+                googleToken:
+                  type: string
+                  description: Google ID token
+      responses:
+        '200':
+          description: Google login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đăng nhập Google thành công!"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      token:
+                        type: string
+                      avatar:
+                        type: string
+        '400':
+          description: Invalid Google token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Google token không hợp lệ"
+        '500':
+          description: Server error
+
+  /api/auth/login-admin:
+    post:
+      tags:
+        - Auth
+      summary: Đăng nhập admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "admin@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "Admin@123"
+      responses:
+        '200':
+          description: Admin login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đăng nhập admin thành công!"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      token:
+                        type: string
+                      avatar:
+                        type: string
+        '401':
+          description: Invalid credentials or not admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Thông tin đăng nhập không chính xác hoặc không có quyền admin"
+        '500':
+          description: Server error
+
+  /api/auth/check-username:
+    post:
+      tags:
+        - Auth
+      summary: Kiểm tra username có tồn tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+              properties:
+                username:
+                  type: string
+                  example: "user123"
+      responses:
+        '200':
+          description: Username check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid username format
+        '500':
+          description: Server error
+
+  /api/auth/check-email:
+    post:
+      tags:
+        - Auth
+      summary: Kiểm tra email có tồn tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Email check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid email format
+        '500':
+          description: Server error
+
+  /api/auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Quên mật khẩu - gửi OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Reset OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn"
+        '404':
+          description: Email not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Không tìm thấy tài khoản với email này"
+        '500':
+          description: Server error
+
+  /api/auth/verify-reset-otp:
+    post:
+      tags:
+        - Auth
+      summary: Xác thực OTP đặt lại mật khẩu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                otp:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mã OTP hợp lệ"
+                  resetToken:
+                    type: string
+                    description: Token để đặt lại mật khẩu
+        '400':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mã OTP không hợp lệ hoặc đã hết hạn"
+        '500':
+          description: Server error
+
+  /api/auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Đặt lại mật khẩu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - resetToken
+                - newPassword
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                resetToken:
+                  type: string
+                  description: Token từ verify-reset-otp
+                newPassword:
+                  type: string
+                  format: password
+                  example: "NewPass@123"
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đặt lại mật khẩu thành công!"
+        '400':
+          description: Invalid token or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token không hợp lệ hoặc mật khẩu không đúng định dạng"
+        '500':
+          description: Server error
+
   /api/users:
     get:
       tags:
@@ -557,15 +1203,78 @@ paths:
               properties:
                 username:
                   type: string
+                  description: Tên người dùng (3-30 ký tự)
+                email:
+                  type: string
+                  format: email
+                  description: Địa chỉ email
                 phone:
                   type: string
+                  description: Số điện thoại
+                address:
+                  type: string
+                  description: Địa chỉ
                 avatar:
                   type: string
-                address:
-                  type: object
+                  description: URL ảnh đại diện
       responses:
         '200':
           description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+
+  /api/users/change-password:
+    patch:
+      tags:
+        - Users
+      summary: Change user password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  description: Mật khẩu hiện tại
+                newPassword:
+                  type: string
+                  description: Mật khẩu mới (6-30 ký tự, chứa chữ hoa, chữ thường, số)
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid current password or new password format
         '401':
           description: Unauthorized
         '500':
@@ -683,6 +1392,278 @@ paths:
         '500':
           description: Server error
 
+  /api/users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get user profile (detailed)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      username:
+                        type: string
+                      phone:
+                        type: string
+                      avatar:
+                        type: string
+                      address:
+                        type: object
+                      role:
+                        type: string
+                      fullName:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  /api/users/addresses:
+    get:
+      tags:
+        - Users
+      summary: Get user addresses
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User addresses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        street:
+                          type: string
+                        city:
+                          type: string
+                        state:
+                          type: string
+                        zipCode:
+                          type: string
+                        country:
+                          type: string
+                        isDefault:
+                          type: boolean
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Users
+      summary: Add new address
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - street
+                - city
+                - state
+                - zipCode
+                - country
+              properties:
+                street:
+                  type: string
+                  example: "123 Đường ABC"
+                city:
+                  type: string
+                  example: "Hồ Chí Minh"
+                state:
+                  type: string
+                  example: "Quận 1"
+                zipCode:
+                  type: string
+                  example: "70000"
+                country:
+                  type: string
+                  example: "Vietnam"
+                isDefault:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: Address added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      street:
+                        type: string
+                      city:
+                        type: string
+                      state:
+                        type: string
+                      zipCode:
+                        type: string
+                      country:
+                        type: string
+                      isDefault:
+                        type: boolean
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+
+  /api/users/addresses/{addressId}:
+    put:
+      tags:
+        - Users
+      summary: Update address
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Address ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                street:
+                  type: string
+                  example: "123 Đường ABC"
+                city:
+                  type: string
+                  example: "Hồ Chí Minh"
+                state:
+                  type: string
+                  example: "Quận 1"
+                zipCode:
+                  type: string
+                  example: "70000"
+                country:
+                  type: string
+                  example: "Vietnam"
+                isDefault:
+                  type: boolean
+                  example: false
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      street:
+                        type: string
+                      city:
+                        type: string
+                      state:
+                        type: string
+                      zipCode:
+                        type: string
+                      country:
+                        type: string
+                      isDefault:
+                        type: boolean
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Address not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Users
+      summary: Delete address
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Address ID
+      responses:
+        '200':
+          description: Address deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Address not found
+        '500':
+          description: Server error
+
   /api/products:
     get:
       tags:
@@ -747,23 +1728,66 @@ paths:
                 - name
                 - categoryId
                 - price
+                - slug
+                - productCode
               properties:
                 name:
                   type: string
+                  example: "Áo thun cotton"
+                title:
+                  type: string
+                  example: "Áo thun cotton cao cấp"
                 description:
                   type: string
+                  example: "Áo thun cotton 100% chất lượng cao"
                 price:
                   type: number
+                  example: 299000
                 stock:
+                  type: string
+                  example: "Còn hàng"
+                quantity:
                   type: integer
+                  example: 100
+                category:
+                  type: string
+                  example: "Áo thun"
+                slug:
+                  type: string
+                  example: "ao-thun-cotton-cao-cap"
+                productCode:
+                  type: string
+                  example: "AT001"
+                images:
+                  type: array
+                  items:
+                    type: string
+                  example: ["image1.jpg", "image2.jpg"]
+                selectedColor:
+                  type: string
+                  example: "Đỏ"
+                selectedSize:
+                  type: string
+                  example: "M"
                 categoryId:
                   type: string
+                  example: "60d5ecb74b24a1234567890a"
                 variants:
                   type: array
                   items:
                     type: object
+                    properties:
+                      variantId:
+                        type: string
+                      color:
+                        type: string
+                      imageUrl:
+                        type: string
+                      stock:
+                        type: integer
                 isFeatured:
                   type: boolean
+                  example: false
       responses:
         '201':
           description: Product created successfully
@@ -878,6 +1902,25 @@ paths:
         '500':
           description: Server error
 
+  /api/products/slug/{slug}:
+    get:
+      tags:
+        - Products
+      summary: Get product by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product retrieved successfully
+        '404':
+          description: Product not found
+        '500':
+          description: Server error
+
   /api/products/{id}:
     get:
       tags:
@@ -917,20 +1960,61 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Áo thun cotton"
+                title:
+                  type: string
+                  example: "Áo thun cotton cao cấp"
                 description:
                   type: string
+                  example: "Áo thun cotton 100% chất lượng cao"
                 price:
                   type: number
+                  example: 299000
                 stock:
+                  type: string
+                  example: "Còn hàng"
+                quantity:
                   type: integer
+                  example: 100
+                category:
+                  type: string
+                  example: "Áo thun"
+                slug:
+                  type: string
+                  example: "ao-thun-cotton-cao-cap"
+                productCode:
+                  type: string
+                  example: "AT001"
+                images:
+                  type: array
+                  items:
+                    type: string
+                  example: ["image1.jpg", "image2.jpg"]
+                selectedColor:
+                  type: string
+                  example: "Đỏ"
+                selectedSize:
+                  type: string
+                  example: "M"
                 categoryId:
                   type: string
+                  example: "60d5ecb74b24a1234567890a"
                 variants:
                   type: array
                   items:
                     type: object
+                    properties:
+                      variantId:
+                        type: string
+                      color:
+                        type: string
+                      imageUrl:
+                        type: string
+                      stock:
+                        type: integer
                 isFeatured:
                   type: boolean
+                  example: false
       responses:
         '200':
           description: Product updated successfully
@@ -961,6 +2045,175 @@ paths:
           description: Unauthorized
         '404':
           description: Product not found
+        '500':
+          description: Server error
+
+  /api/wishlists/{userId}:
+    get:
+      tags:
+        - Wishlist
+      summary: Get user wishlist
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        '200':
+          description: Wishlist retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        userId:
+                          type: string
+                        productId:
+                          $ref: '#/components/schemas/Product'
+                        color:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Wishlist
+      summary: Add product to wishlist
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+              properties:
+                productId:
+                  type: string
+                  description: Product ID to add to wishlist
+                color:
+                  type: string
+                  description: Optional color preference
+      responses:
+        '201':
+          description: Product added to wishlist successfully
+        '400':
+          description: Product already in wishlist
+        '401':
+          description: Unauthorized
+        '404':
+          description: Product or user not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Wishlist
+      summary: Clear entire wishlist
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wishlist cleared successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  /api/wishlists/{userId}/{itemId}:
+    delete:
+      tags:
+        - Wishlist
+      summary: Remove item from wishlist
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item removed from wishlist successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Item or user not found
+        '500':
+          description: Server error
+
+  /api/wishlists/{userId}/check/{productId}:
+    get:
+      tags:
+        - Wishlist
+      summary: Check if product is in wishlist
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inWishlist:
+                    type: boolean
+                  itemId:
+                    type: string
+        '401':
+          description: Unauthorized
         '500':
           description: Server error
 
@@ -1490,9 +2743,324 @@ paths:
           description: Unauthorized
         '404':
           description: Review not found
+                '500':
+          description: Server error
+
+  /api/categories:
+    get:
+      tags:
+        - Categories
+      summary: Get all categories
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Search by name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
         '500':
           description: Server error
-  
+    post:
+      tags:
+        - Categories
+      summary: Create new category
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Áo thun"
+                description:
+                  type: string
+                  example: "Danh mục áo thun các loại"
+                imageUrl:
+                  type: string
+                  example: "category-image.jpg"
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+
+  /api/categories/search:
+    get:
+      tags:
+        - Categories
+      summary: Search categories
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 10
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: Sort order (asc or desc)
+          schema:
+            type: string
+            default: desc
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '500':
+          description: Server error
+
+  /api/categories/{id}:
+    get:
+      tags:
+        - Categories
+      summary: Get category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found
+        '500':
+          description: Server error
+    put:
+      tags:
+        - Categories
+      summary: Update category
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Áo thun"
+                description:
+                  type: string
+                  example: "Danh mục áo thun các loại"
+                imageUrl:
+                  type: string
+                  example: "category-image.jpg"
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '400':
+          description: Invalid input
+        '404':
+          description: Category not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Categories
+      summary: Delete category
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+        '409':
+          description: Cannot delete category with existing products
+        '500':
+          description: Server error
+
+  /api/categories/{id}/products:
+    get:
+      tags:
+        - Categories
+      summary: Get products by category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Products in category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  category:
+                    $ref: '#/components/schemas/Category'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '404':
+          description: Category not found
+        '500':
+          description: Server error
+
   /api/stripe/create-payment-intent:
     post:
       tags:
@@ -1653,5 +3221,1624 @@ paths:
                     properties:
                       message:
                         type: string
+        '500':
+          description: Server error
+
+  # ==================== CART APIs ====================
+  /api/carts/{userId}:
+    get:
+      tags:
+        - Cart
+      summary: Lấy giỏ hàng của người dùng
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+      responses:
+        '200':
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '404':
+          description: Cart not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Cart
+      summary: Xóa toàn bộ giỏ hàng
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+      responses:
+        '200':
+          description: Cart cleared successfully
+        '404':
+          description: Cart not found
+        '500':
+          description: Server error
+
+  /api/carts/{userId}/items:
+    post:
+      tags:
+        - Cart
+      summary: Thêm sản phẩm vào giỏ hàng
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  description: ID của sản phẩm
+                variantId:
+                  type: string
+                  description: ID của variant (optional)
+                color:
+                  type: string
+                  description: Màu sắc được chọn
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Số lượng sản phẩm
+      responses:
+        '200':
+          description: Product added to cart successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Invalid input
+        '404':
+          description: Product not found
+        '500':
+          description: Server error
+
+  /api/carts/{userId}/items/{itemId}:
+    put:
+      tags:
+        - Cart
+      summary: Cập nhật số lượng sản phẩm trong giỏ hàng
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của item trong giỏ hàng
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Số lượng mới
+      responses:
+        '200':
+          description: Cart item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Invalid input
+        '404':
+          description: Cart item not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Cart
+      summary: Xóa sản phẩm khỏi giỏ hàng
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của item trong giỏ hàng
+      responses:
+        '200':
+          description: Cart item removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '404':
+          description: Cart item not found
+        '500':
+          description: Server error
+
+  # ==================== PROMOTION APIs ====================
+  /api/promotions:
+    get:
+      tags:
+        - Promotion
+      summary: Lấy tất cả khuyến mãi
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, expired]
+      responses:
+        '200':
+          description: Promotions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  promotions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Promotion'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Promotion
+      summary: Tạo khuyến mãi mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - type
+                - value
+                - startDate
+                - endDate
+              properties:
+                code:
+                  type: string
+                  description: Mã khuyến mãi (unique)
+                type:
+                  type: string
+                  enum: [percentage, fixed]
+                  description: Loại khuyến mãi
+                value:
+                  type: number
+                  description: Giá trị khuyến mãi
+                description:
+                  type: string
+                  description: Mô tả khuyến mãi
+                startDate:
+                  type: string
+                  format: date-time
+                  description: Ngày bắt đầu
+                endDate:
+                  type: string
+                  format: date-time
+                  description: Ngày kết thúc
+                usageLimit:
+                  type: integer
+                  description: Giới hạn số lần sử dụng
+                minOrderAmount:
+                  type: number
+                  description: Giá trị đơn hàng tối thiểu
+                isActive:
+                  type: boolean
+                  default: true
+      responses:
+        '201':
+          description: Promotion created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          description: Invalid input
+        '409':
+          description: Promotion code already exists
+        '500':
+          description: Server error
+
+  /api/promotions/active:
+    get:
+      tags:
+        - Promotion
+      summary: Lấy khuyến mãi đang hoạt động
+      responses:
+        '200':
+          description: Active promotions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Promotion'
+        '500':
+          description: Server error
+
+  /api/promotions/code/{code}:
+    get:
+      tags:
+        - Promotion
+      summary: Lấy chi tiết khuyến mãi theo mã
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Mã khuyến mãi
+      responses:
+        '200':
+          description: Promotion retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '404':
+          description: Promotion not found
+        '500':
+          description: Server error
+
+  /api/promotions/validate:
+    post:
+      tags:
+        - Promotion
+      summary: Kiểm tra mã khuyến mãi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - orderAmount
+              properties:
+                code:
+                  type: string
+                  description: Mã khuyến mãi
+                orderAmount:
+                  type: number
+                  description: Giá trị đơn hàng
+      responses:
+        '200':
+          description: Promotion is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  promotion:
+                    $ref: '#/components/schemas/Promotion'
+                  discountAmount:
+                    type: number
+        '400':
+          description: Promotion is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Promotion not found
+        '500':
+          description: Server error
+
+  /api/promotions/{id}:
+    put:
+      tags:
+        - Promotion
+      summary: Cập nhật khuyến mãi
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của khuyến mãi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                type:
+                  type: string
+                  enum: [percentage, fixed]
+                value:
+                  type: number
+                description:
+                  type: string
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+                usageLimit:
+                  type: integer
+                minOrderAmount:
+                  type: number
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: Promotion updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          description: Invalid input
+        '404':
+          description: Promotion not found
+        '409':
+          description: Promotion code already exists
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Promotion
+      summary: Xóa khuyến mãi
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của khuyến mãi
+      responses:
+        '200':
+          description: Promotion deleted successfully
+        '404':
+          description: Promotion not found
+        '500':
+          description: Server error
+
+  # ==================== PAYMENT APIs ====================
+  /api/payments:
+    get:
+      tags:
+        - Payment
+      summary: Lấy tất cả thanh toán (cho admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, failed, cancelled]
+      responses:
+        '200':
+          description: Payments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Payment
+      summary: Tạo thanh toán mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderId
+                - amount
+                - paymentMethod
+              properties:
+                orderId:
+                  type: string
+                  description: ID của đơn hàng
+                amount:
+                  type: number
+                  description: Số tiền thanh toán
+                paymentMethod:
+                  type: string
+                  enum: [stripe, paypal, cash]
+                  description: Phương thức thanh toán
+      responses:
+        '201':
+          description: Payment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          description: Invalid input
+        '404':
+          description: Order not found
+        '500':
+          description: Server error
+
+  /api/payments/{id}:
+    get:
+      tags:
+        - Payment
+      summary: Lấy chi tiết thanh toán
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của thanh toán
+      responses:
+        '200':
+          description: Payment retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          description: Payment not found
+        '500':
+          description: Server error
+
+  /api/payments/{id}/status:
+    put:
+      tags:
+        - Payment
+      summary: Cập nhật trạng thái thanh toán
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của thanh toán
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [pending, completed, failed, cancelled]
+                  description: Trạng thái mới
+                transactionId:
+                  type: string
+                  description: ID giao dịch từ payment gateway
+      responses:
+        '200':
+          description: Payment status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          description: Invalid input
+        '404':
+          description: Payment not found
+        '500':
+          description: Server error
+
+  # ==================== NOTIFICATION APIs ====================
+  /api/notifications/user/{userId}:
+    get:
+      tags:
+        - Notification
+      summary: Lấy thông báo của người dùng
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: isRead
+          in: query
+          schema:
+            type: boolean
+          description: Lọc theo trạng thái đã đọc
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+                  unreadCount:
+                    type: integer
+        '500':
+          description: Server error
+
+  /api/notifications/{id}/read:
+    put:
+      tags:
+        - Notification
+      summary: Đánh dấu thông báo đã đọc
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của thông báo
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          description: Notification not found
+        '500':
+          description: Server error
+
+  /api/notifications/user/{userId}/read-all:
+    put:
+      tags:
+        - Notification
+      summary: Đánh dấu tất cả thông báo đã đọc
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của người dùng
+      responses:
+        '200':
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  modifiedCount:
+                    type: integer
+        '500':
+          description: Server error
+
+  /api/notifications:
+    post:
+      tags:
+        - Notification
+      summary: Tạo thông báo mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - title
+                - message
+                - type
+              properties:
+                userId:
+                  type: string
+                  description: ID của người dùng nhận thông báo
+                title:
+                  type: string
+                  description: Tiêu đề thông báo
+                message:
+                  type: string
+                  description: Nội dung thông báo
+                type:
+                  type: string
+                  enum: [order, promotion, system, general]
+                  description: Loại thông báo
+                relatedId:
+                  type: string
+                  description: ID liên quan (order ID, promotion ID, etc.)
+      responses:
+        '201':
+          description: Notification created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /api/notifications/{id}:
+    delete:
+      tags:
+        - Notification
+      summary: Xóa thông báo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của thông báo
+      responses:
+        '200':
+          description: Notification deleted successfully
+        '404':
+          description: Notification not found
+        '500':
+          description: Server error
+
+  # ==================== MESSAGE APIs ====================
+  /api/messages:
+    get:
+      tags:
+        - Message
+      summary: Lấy tất cả tin nhắn
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Message
+      summary: Tạo tin nhắn mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - subject
+                - message
+              properties:
+                name:
+                  type: string
+                  description: Tên người gửi
+                email:
+                  type: string
+                  format: email
+                  description: Email người gửi
+                phone:
+                  type: string
+                  description: Số điện thoại
+                subject:
+                  type: string
+                  description: Chủ đề tin nhắn
+                message:
+                  type: string
+                  description: Nội dung tin nhắn
+      responses:
+        '201':
+          description: Message created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /api/messages/{id}:
+    get:
+      tags:
+        - Message
+      summary: Lấy chi tiết tin nhắn
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của tin nhắn
+      responses:
+        '200':
+          description: Message retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Message not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Message
+      summary: Xóa tin nhắn
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của tin nhắn
+      responses:
+        '200':
+          description: Message deleted successfully
+        '404':
+          description: Message not found
+        '500':
+          description: Server error
+
+  # ==================== SETTING APIs ====================
+  /api/settings/public:
+    get:
+      tags:
+        - Setting
+      summary: Lấy cài đặt công khai
+      responses:
+        '200':
+          description: Public settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Setting'
+        '500':
+          description: Server error
+
+  /api/settings:
+    get:
+      tags:
+        - Setting
+      summary: Lấy tất cả cài đặt (admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Lọc theo danh mục
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Setting'
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Setting
+      summary: Tạo cài đặt mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - key
+                - value
+                - type
+                - category
+              properties:
+                key:
+                  type: string
+                  description: Khóa cài đặt (unique)
+                value:
+                  type: string
+                  description: Giá trị cài đặt
+                type:
+                  type: string
+                  enum: [string, number, boolean, json]
+                  description: Loại dữ liệu
+                category:
+                  type: string
+                  description: Danh mục cài đặt
+                description:
+                  type: string
+                  description: Mô tả cài đặt
+                isPublic:
+                  type: boolean
+                  default: false
+                  description: Có thể truy cập công khai
+      responses:
+        '201':
+          description: Setting created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Setting'
+        '400':
+          description: Invalid input
+        '409':
+          description: Setting key already exists
+        '500':
+          description: Server error
+
+  /api/settings/categories:
+    get:
+      tags:
+        - Setting
+      summary: Lấy danh sách danh mục cài đặt
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Setting categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '500':
+          description: Server error
+
+  /api/settings/{key}:
+    get:
+      tags:
+        - Setting
+      summary: Lấy cài đặt theo khóa
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Khóa cài đặt
+      responses:
+        '200':
+          description: Setting retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Setting'
+        '404':
+          description: Setting not found
+        '500':
+          description: Server error
+    put:
+      tags:
+        - Setting
+      summary: Cập nhật cài đặt
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Khóa cài đặt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: string
+                  description: Giá trị mới
+                type:
+                  type: string
+                  enum: [string, number, boolean, json]
+                category:
+                  type: string
+                description:
+                  type: string
+                isPublic:
+                  type: boolean
+      responses:
+        '200':
+          description: Setting updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Setting'
+        '400':
+          description: Invalid input
+        '404':
+          description: Setting not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Setting
+      summary: Xóa cài đặt
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Khóa cài đặt
+      responses:
+        '200':
+          description: Setting deleted successfully
+        '404':
+          description: Setting not found
+        '500':
+          description: Server error
+
+  # ==================== VISITOR LOG APIs ====================
+  /api/visitor-logs:
+    get:
+      tags:
+        - VisitorLog
+      summary: Lấy tất cả log truy cập (admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Visitor logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VisitorLog'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '500':
+          description: Server error
+    post:
+      tags:
+        - VisitorLog
+      summary: Tạo log truy cập mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ipAddress
+                - userAgent
+                - page
+              properties:
+                ipAddress:
+                  type: string
+                  description: Địa chỉ IP
+                userAgent:
+                  type: string
+                  description: User agent string
+                page:
+                  type: string
+                  description: Trang được truy cập
+                referrer:
+                  type: string
+                  description: Trang giới thiệu
+                userId:
+                  type: string
+                  description: ID người dùng (nếu đã đăng nhập)
+      responses:
+        '201':
+          description: Visitor log created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorLog'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /api/visitor-logs/stats:
+    get:
+      tags:
+        - VisitorLog
+      summary: Lấy thống kê truy cập
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: week
+          description: Khoảng thời gian thống kê
+      responses:
+        '200':
+          description: Visitor statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalVisits:
+                    type: integer
+                  uniqueVisitors:
+                    type: integer
+                  topPages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        page:
+                          type: string
+                        count:
+                          type: integer
+                  dailyStats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        visits:
+                          type: integer
+                        uniqueVisitors:
+                          type: integer
+        '500':
+          description: Server error
+
+  /api/visitor-logs/cleanup:
+    delete:
+      tags:
+        - VisitorLog
+      summary: Dọn dẹp log cũ
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 90
+          description: Xóa log cũ hơn số ngày này
+      responses:
+        '200':
+          description: Old logs cleaned up successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  deletedCount:
+                    type: integer
+        '500':
+          description: Server error
+
+  # ==================== UPLOAD APIs ====================
+  /api/upload/image:
+    post:
+      tags:
+        - Upload
+      summary: Upload hình ảnh
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File hình ảnh cần upload
+                folder:
+                  type: string
+                  default: general
+                  description: Thư mục lưu trữ trên Cloudinary
+                width:
+                  type: integer
+                  description: Chiều rộng mong muốn (px)
+                height:
+                  type: integer
+                  description: Chiều cao mong muốn (px)
+                quality:
+                  type: string
+                  default: auto
+                  description: Chất lượng hình ảnh
+                format:
+                  type: string
+                  default: webp
+                  description: Định dạng output
+      responses:
+        '200':
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      public_id:
+                        type: string
+                      secure_url:
+                        type: string
+                      url:
+                        type: string
+                      width:
+                        type: integer
+                      height:
+                        type: integer
+                      format:
+                        type: string
+                      bytes:
+                        type: integer
+                      folder:
+                        type: string
+        '400':
+          description: Invalid file or missing file
+        '401':
+          description: Unauthorized
+        '500':
+          description: Upload failed
+
+  /api/upload/avatar:
+    post:
+      tags:
+        - Upload
+      summary: Upload avatar
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File avatar cần upload (max 5MB)
+      responses:
+        '200':
+          description: Avatar upload successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      public_id:
+                        type: string
+                      secure_url:
+                        type: string
+                      url:
+                        type: string
+                      width:
+                        type: integer
+                      height:
+                        type: integer
+                      format:
+                        type: string
+                      bytes:
+                        type: integer
+                      folder:
+                        type: string
+        '400':
+          description: Invalid file or missing file
+        '401':
+          description: Unauthorized
+        '500':
+          description: Upload failed
+
+  /api/upload/product-image:
+    post:
+      tags:
+        - Upload
+      summary: Upload hình ảnh sản phẩm
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File hình ảnh sản phẩm cần upload (max 8MB)
+      responses:
+        '200':
+          description: Product image upload successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      public_id:
+                        type: string
+                      secure_url:
+                        type: string
+                      url:
+                        type: string
+                      width:
+                        type: integer
+                      height:
+                        type: integer
+                      format:
+                        type: string
+                      bytes:
+                        type: integer
+                      folder:
+                        type: string
+        '400':
+          description: Invalid file or missing file
+        '401':
+          description: Unauthorized
+        '500':
+          description: Upload failed
+
+  /api/upload/multiple-images:
+    post:
+      tags:
+        - Upload
+      summary: Upload nhiều hình ảnh
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - files
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Danh sách file hình ảnh (max 10 files)
+                folder:
+                  type: string
+                  default: general
+                  description: Thư mục lưu trữ trên Cloudinary
+                width:
+                  type: integer
+                  description: Chiều rộng mong muốn (px)
+                height:
+                  type: integer
+                  description: Chiều cao mong muốn (px)
+                quality:
+                  type: string
+                  default: auto
+                  description: Chất lượng hình ảnh
+                format:
+                  type: string
+                  default: webp
+                  description: Định dạng output
+      responses:
+        '200':
+          description: Multiple images upload result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      successful:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            public_id:
+                              type: string
+                            secure_url:
+                              type: string
+                            url:
+                              type: string
+                            width:
+                              type: integer
+                            height:
+                              type: integer
+                            format:
+                              type: string
+                            bytes:
+                              type: integer
+                            folder:
+                              type: string
+                      failed:
+                        type: array
+                        items:
+                          type: string
+                      total:
+                        type: integer
+                      successCount:
+                        type: integer
+                      failCount:
+                        type: integer
+        '400':
+          description: Invalid files or missing files
+        '401':
+          description: Unauthorized
+        '500':
+          description: Upload failed
+
+  /api/upload/delete-image:
+    delete:
+      tags:
+        - Upload
+      summary: Xóa hình ảnh từ Cloudinary
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - publicId
+              properties:
+                publicId:
+                  type: string
+                  description: Public ID của hình ảnh trên Cloudinary
+      responses:
+        '200':
+          description: Image deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid public ID or deletion failed
+        '401':
+          description: Unauthorized
         '500':
           description: Server error

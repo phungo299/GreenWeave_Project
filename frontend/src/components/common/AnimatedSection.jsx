@@ -22,15 +22,15 @@ const animationVariants = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
-      transition: { duration: 0.6, ease: "easeOut" } 
+      transition: { duration: 0.4, ease: "easeOut" } 
     }
   },
   slideUp: {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" } 
+      transition: { duration: 0.4, ease: "easeOut" } 
     }
   },
   slideRight: {
@@ -120,6 +120,7 @@ const AnimatedSection = ({
   const [ref, inView] = useInView({
     triggerOnce: once,
     threshold: 0.1,
+    rootMargin: '0px 0px -10% 0px',
   });
 
   useEffect(() => {

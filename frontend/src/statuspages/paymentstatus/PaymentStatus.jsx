@@ -25,13 +25,13 @@ const PaymentStatus = () => {
                     <div className="payment-status-message">
                         {isSuccess ? (
                             <>
-                                <h3>Thank you for shopping</h3>
-                                <p>Your order has been successfully placed and is now being processed.</p>
+                                <h3>Cảm ơn bạn đã mua sắm</h3>
+                                <p>Đơn hàng của bạn đã được đặt thành công và hiện đang được xử lý.</p>
                             </>
                         ) : (
                             <>
-                                <h3>Oops! There was an issue</h3>
-                                <p>Oops! There was a problem processing your order.<br />Please review the details and try again.</p>
+                                <h3>Oops! Có vấn đề xảy ra</h3>
+                                <p>Có lỗi xảy ra khi xử lý đơn hàng của bạn.<br />Vui lòng kiểm tra lại thông tin và thử lại.</p>
                             </>
                         )}
                     </div>                   

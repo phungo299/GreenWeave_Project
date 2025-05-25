@@ -25,7 +25,6 @@ const StripeCardForm = ({ orderTotal, shippingInfo, selectedCountry, onPaymentSu
     const [paymentError, setPaymentError] = useState('');
     const [clientSecret, setClientSecret] = useState('');
     const [paymentId, setPaymentId] = useState('');
-    const { cartItems } = useCart();
     
     // Create payment intent when component mounts
     useEffect(() => {
@@ -197,7 +196,7 @@ const PaymentPage = () => {
     const [checkValidation, setCheckValidation] = useState(false);
     const [saveShippingInfo, setSaveShippingInfo] = useState(false);
     const [itemsTotal, setItemsTotal] = useState(0);
-    const [shipping, setShipping] = useState(40000);
+    const [shipping] = useState(40000);
     const [orderTotal, setOrderTotal] = useState(0);
     const countryListRef = useRef(null);
     const dropdownRef = useRef(null);

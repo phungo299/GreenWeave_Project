@@ -89,11 +89,11 @@ export const createOrder = async (req: Request, res: Response) => {
       }
       
       // Kiểm tra tồn kho
-      if (product.stock < item.quantity) {
+      if (product.quantity < item.quantity) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          message: `Sản phẩm "${product.name}" chỉ còn ${product.stock} sản phẩm trong kho` 
+          message: `Sản phẩm "${product.name}" chỉ còn ${product.quantity} sản phẩm trong kho` 
         });
       }
       
@@ -112,7 +112,7 @@ export const createOrder = async (req: Request, res: Response) => {
       // Giảm số lượng tồn kho
       await Product.findByIdAndUpdate(
         item.productId,
-        { $inc: { stock: -item.quantity } },
+        { $inc: { quantity: -item.quantity } },
         { session }
       );
     }
@@ -201,7 +201,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       for (const item of order.items) {
         await Product.findByIdAndUpdate(
           item.productId,
-          { $inc: { stock: item.quantity } }
+          { $inc: { quantity: item.quantity } }
         );
       }
     }

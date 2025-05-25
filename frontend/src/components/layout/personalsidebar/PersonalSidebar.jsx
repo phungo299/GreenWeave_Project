@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaShoppingBag, FaHeart, FaMapMarkerAlt, FaLock, FaUser, FaCog } from 'react-icons/fa';
+import { FaShoppingBag, FaHeart, FaMapMarkerAlt, FaLock, FaUser } from 'react-icons/fa';
 import './PersonalSidebar.css';
 
 const PersonalSidebar = () => {
@@ -40,12 +40,7 @@ const PersonalSidebar = () => {
                         Thông tin cá nhân
                     </Link>
                 </li>
-                <li className="personal-sidebar-item">
-                    <Link to="/logout" className="personal-sidebar-link">
-                        <FaCog className="personal-sidebar-icon" />
-                        Cài đặt cá nhân
-                    </Link>
-                </li>
+              
             </ul>
         </div>
     );

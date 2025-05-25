@@ -1,105 +1,187 @@
 Table Users {
-  _id ObjectId [pk]
-  username String [unique]
-  email String [unique]
-  passwordHash String
-  phone String
-  role String // "user", "admin", "staff"
-  address String
-  rewardPoints Number
-  avatar String // URL ảnh đại diện
-  createdAt DateTime
-  updatedAt DateTime
+  _id ObjectId [pk]
+  username String [unique]
+  email String [unique]
+  passwordHash String
+  phone String
+  role String // "user", "admin", "staff"
+  address Mixed // Có thể là string, object hoặc array
+  rewardPoints Number
+  avatar String // URL ảnh đại diện
+  fullName String // Tên đầy đủ
+  isVerified Boolean // Trạng thái xác thực email
+  isDisabled Boolean // Trạng thái tài khoản bị vô hiệu hóa
+  resetPasswordToken String // Token đặt lại mật khẩu
+  resetPasswordExpires DateTime // Thời gian hết hạn token
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Categories {
-  _id ObjectId [pk]
-  name String
-  description String
-  imageUrl String // Hình ảnh minh họa cho danh mục
-  createdAt DateTime
+  _id ObjectId [pk]
+  name String
+  description String
+  imageUrl String // Hình ảnh minh họa cho danh mục
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Products {
-  _id ObjectId [pk]
-  categoryId ObjectId [ref: > Categories._id]
-  name String
-  description String
-  price Number
-  stock Number
-  variants embedded_document
-  isFeatured Boolean // Đánh dấu sản phẩm nổi bật
-  rating Number // Điểm đánh giá trung bình (1-5)
-  reviewCount Number // Số lượng đánh giá
-  priceHistory embedded_document // Lịch sử giá
-  createdAt DateTime
-  updatedAt DateTime
+  _id ObjectId [pk]
+  categoryId ObjectId [ref: > Categories._id]
+  name String
+  title String // Tiêu đề sản phẩm
+  description String
+  price Number
+  stock String // Trạng thái kho (string thay vì number)
+  quantity Number // Số lượng trong kho
+  category String // Tên danh mục
+  slug String [unique] // URL slug
+  productCode String [unique] // Mã sản phẩm
+  images Array // Mảng URL hình ảnh
+  selectedColor String // Màu được chọn
+  selectedSize String // Size được chọn
+  variants embedded_document
+  isFeatured Boolean // Đánh dấu sản phẩm nổi bật
+  rating Number // Điểm đánh giá trung bình (1-5)
+  reviewCount Number // Số lượng đánh giá
+  priceHistory embedded_document // Lịch sử giá
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Cart {
-  _id ObjectId [pk]
-  userId ObjectId [ref: > Users._id]
-  items embedded_document
-  createdAt DateTime
-  updatedAt DateTime
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  items embedded_document
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Wishlist {
-  _id ObjectId [pk]
-  userId ObjectId [ref: > Users._id]
-  productId ObjectId [ref: > Products._id]
-  color String // Optional: màu sắc người dùng quan tâm
-  createdAt DateTime
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  productId ObjectId [ref: > Products._id]
+  color String // Optional: màu sắc người dùng quan tâm
+  createdAt DateTime
 }
 Table Orders {
-  _id ObjectId [pk]
-  userId ObjectId [ref: > Users._id]
-  items embedded_document
-  totalAmount Number
-  status String // "pending", "shipped", "delivered", "cancelled"
-  shippingAddress String
-  paymentId ObjectId [ref: > Payments._id]
-  createdAt DateTime
-  updatedAt DateTime
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  items embedded_document
+  totalAmount Number
+  status String // "pending", "shipped", "delivered", "cancelled"
+  shippingAddress embedded_document // Object chứa thông tin địa chỉ
+  paymentId ObjectId [ref: > Payments._id]
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Payments {
-  _id ObjectId [pk]
-  orderId ObjectId [ref: > Orders._id]
-  amount Number
-  paymentMethod String // "credit_card", "paypal", "bank_transfer"
-  status String // "pending", "completed", "failed"
-  createdAt DateTime
+  _id ObjectId [pk]
+  orderId ObjectId [ref: > Orders._id]
+  amount Number
+  paymentMethod String // "stripe", "paypal", "cash", "credit_card"
+  status String // "pending", "completed", "failed", "cancelled"
+  transactionId String // ID giao dịch từ payment gateway
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Notifications {
-  _id ObjectId [pk]
-  userId ObjectId [ref: > Users._id]
-  orderId ObjectId [ref: > Orders._id, null]
-  type String // "order_update", "promotion"
-  message String
-  status String // "unread", "read"
-  createdAt DateTime
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  title String // Tiêu đề thông báo
+  message String
+  type String // "order", "promotion", "system", "general"
+  relatedId String // ID liên quan (order ID, promotion ID, etc.)
+  isRead Boolean // Trạng thái đã đọc
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Reviews {
-  _id ObjectId [pk]
-  userId ObjectId [ref: > Users._id]
-  productId ObjectId [ref: > Products._id]
-  rating Number // 1-5
-  comment String
-  createdAt DateTime
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id]
+  productId ObjectId [ref: > Products._id]
+  rating Number // 1-5
+  comment String
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Promotions {
-  _id ObjectId [pk]
-  code String [unique]
-  discount Number // Phần trăm hoặc số tiền giảm
-  startDate DateTime
-  endDate DateTime
-  createdAt DateTime
+  _id ObjectId [pk]
+  code String [unique]
+  type String // "percentage", "fixed"
+  value Number // Giá trị khuyến mãi
+  description String // Mô tả khuyến mãi
+  startDate DateTime
+  endDate DateTime
+  usageLimit Number // Giới hạn số lần sử dụng
+  usageCount Number // Số lần đã sử dụng
+  minOrderAmount Number // Giá trị đơn hàng tối thiểu
+  isActive Boolean // Trạng thái hoạt động
+  createdAt DateTime
+  updatedAt DateTime
 }
 Table Messages {
-  _id ObjectId [pk]
-  name String
-  email String
-  message String
-  createdAt DateTime
+  _id ObjectId [pk]
+  name String
+  email String
+  phone String // Số điện thoại
+  subject String // Chủ đề tin nhắn
+  message String
+  isRead Boolean // Trạng thái đã đọc
+  createdAt DateTime
+  updatedAt DateTime
+}
+Table Settings {
+  _id ObjectId [pk]
+  key String [unique] // Khóa cài đặt
+  value Mixed // Giá trị cài đặt (có thể là string, number, boolean, object, array)
+  type String // "string", "number", "boolean", "object", "array"
+  description String // Mô tả cài đặt
+  category String // Danh mục cài đặt
+  isPublic Boolean // Có thể truy cập công khai
+  createdAt DateTime
+  updatedAt DateTime
+}
+Table VisitorLogs {
+  _id ObjectId [pk]
+  ipAddress String // Địa chỉ IP
+  userAgent String // User agent string
+  referer String // Trang giới thiệu
+  path String // Đường dẫn được truy cập
+  method String // HTTP method (GET, POST, PUT, DELETE, PATCH)
+  userId ObjectId [ref: > Users._id] // ID người dùng (nếu đã đăng nhập)
+  sessionId String // ID phiên làm việc
+  country String // Quốc gia
+  city String // Thành phố
+  device String // Thiết bị
+  browser String // Trình duyệt
+  os String // Hệ điều hành
+  visitedAt DateTime // Thời gian truy cập
+  createdAt DateTime
+  updatedAt DateTime
 }
 
+// Relationships
+Ref: Products.categoryId > Categories._id
+Ref: Cart.userId > Users._id
+Ref: Wishlist.userId > Users._id
+Ref: Wishlist.productId > Products._id
+Ref: Orders.userId > Users._id
+Ref: Orders.paymentId > Payments._id
+Ref: Payments.orderId > Orders._id
+Ref: Notifications.userId > Users._id
+Ref: Reviews.userId > Users._id
+Ref: Reviews.productId > Products._id
+Ref: VisitorLogs.userId > Users._id
+
+// Embedded Documents Structure Notes:
 Note: "Products.variants is an array of embedded documents with structure: { variantId: String, color: String, imageUrl: String, stock: Number }"
 Note: "Products.priceHistory is an array of embedded documents with structure: { price: Number, updatedAt: DateTime }"
-Note: "Cart.items is an array of embedded documents with structure: { productId: ObjectId [ref: > Products._id], variantId: String, color: String, quantity: Number }"
-Note: "Orders.items is an array of embedded documents with structure: { productId: ObjectId [ref: > Products._id], variantId: String, color: String, quantity: Number, unitPrice: Number }"
+Note: "Cart.items is an array of embedded documents with structure: { _id: ObjectId, productId: ObjectId [ref: > Products._id], variantId: String, color: String, quantity: Number }"
+Note: "Orders.items is an array of embedded documents with structure: { _id: ObjectId, productId: ObjectId [ref: > Products._id], quantity: Number, price: Number }"
+Note: "Orders.shippingAddress is an embedded document with structure: { street: String, city: String, state: String, zipCode: String, country: String }"
+Note: "Users.address can be string, object, or array depending on usage context"
+
+// Indexes Notes:
+Note: "Products has text search index on name, title, description fields"
+Note: "Products has unique indexes on slug and productCode"
+Note: "Users has indexes on username and email"
+Note: "Settings has indexes on key, category, and isPublic"
+Note: "VisitorLogs has indexes on ipAddress, userId, visitedAt, path, and country"

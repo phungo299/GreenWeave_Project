@@ -1,150 +1,313 @@
+/* ===== MODERN STATIC LABEL INPUT FIELD STYLES ===== */
+
 .input-field-container {
-    margin-bottom: 1rem;
     position: relative;
     width: 100%;
 }
 
-.input-label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
+/* Container cho message - chỉ chiếm space khi có message */
+.message-container {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 4px;
+    min-height: 0; /* Không chiếm space khi empty */
 }
 
+/* ===== STATIC LABEL SYSTEM ===== */
+.static-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.required-asterisk {
+    color: #DC2626;
+    margin-left: 4px;
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+/* ===== INPUT WRAPPER & MODERN EFFECTS ===== */
 .input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
     width: 100%;
+    border-radius: 12px;
+    background: #FFFFFF;
+    border: 2px solid #E5E7EB;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
-.input-icon {
-    position: absolute;
-    left: 12px;
-    color: #666;
-    font-size: 18px;
+.input-wrapper:hover {
+    border-color: #D1D5DB;
 }
 
+.input-field-container.focused .input-wrapper {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* ===== MAIN INPUT FIELD ===== */
 .input-field {
     width: 100%;
-    padding: 12px 16px;
+    padding: 14px 16px;
     font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    background-color: #fff;
+    font-weight: 500;
+    border: none;
+    background: transparent;
     outline: none;
+    color: #1F2937;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-family: inherit;
+    line-height: 1.5;
 }
 
-.input-field:focus {
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+.input-field::placeholder {
+    color: #9CA3AF;
+    font-weight: 400;
 }
 
 .has-icon {
-    padding-left: 40px;
+    padding-left: 48px;
 }
 
-.input-error {
-    border-color: #f44336;
-}
-
-.input-error:focus {
-    border-color: #f44336;
-    box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
-}
-
-.input-valid {
-    border-color: #4CAF50;
-}
-
-.input-valid:focus {
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-}
-
-.input-error-message {
-    color: #f44336;
-    font-size: 12px;
-    margin-top: 4px;
-    transition: all 0.3s ease;
-}
-
-.password-toggle-btn {
+/* ===== ICONS ===== */
+.input-icon {
     position: absolute;
-    right: 12px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #666;
-    font-size: 14px;
+    left: 16px;
+    color: #6B7280;
+    font-size: 18px;
+    z-index: 4;
+    transition: all 0.2s ease;
 }
 
-.password-toggle-btn:hover {
-    color: #333;
+.input-field-container.focused .input-icon {
+    color: #4CAF50;
 }
 
-/* Thêm mới: Hiệu ứng và trạng thái kiểm tra */
+/* ===== STATUS ICONS ===== */
 .status-icon {
     position: absolute;
-    right: 12px;
+    right: 16px;
     font-size: 16px;
+    z-index: 4;
+    transition: all 0.2s ease;
 }
 
 .checking {
-    color: #2196F3;
+    color: #3498db;
     animation: spin 1s linear infinite;
 }
 
 .valid {
-    color: #4CAF50;
+    color: #27ae60;
 }
 
 .invalid {
-    color: #f44336;
+    color: #e74c3c;
 }
 
-.input-wrapper.is-checking .input-field {
-    border-color: #2196F3;
-    background-color: rgba(33, 150, 243, 0.03);
+/* ===== PASSWORD TOGGLE BUTTON ===== */
+.password-toggle-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6B7280;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    z-index: 4;
 }
 
-/* Animation for spinner */
+.password-toggle-btn:hover {
+    background: #F3F4F6;
+    border-color: #D1D5DB;
+}
+
+.password-toggle-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* ===== STATE VARIATIONS ===== */
+
+/* Error State */
+.input-field-container.has-error .static-label {
+    color: #DC2626;
+}
+
+.input-field-container.has-error .input-wrapper {
+    border-color: #EF4444;
+    background: #FEF2F2;
+}
+
+.input-field-container.has-error .input-wrapper:focus-within {
+    border-color: #DC2626;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Valid State */
+.input-field-container.is-valid .static-label {
+    color: #059669;
+}
+
+.input-field-container.is-valid .input-wrapper {
+    border-color: #10B981;
+    background: #F0FDF4;
+}
+
+/* Checking State */
+.input-field-container.is-checking .input-wrapper {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+}
+
+/* Disabled State */
+.input-field-container.is-disabled .static-label {
+    color: #9CA3AF;
+}
+
+.input-field-container.is-disabled .input-wrapper {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #F9FAFB;
+    border-color: #E5E7EB;
+}
+
+.input-field-container.is-disabled .input-field {
+    cursor: not-allowed;
+    color: #9CA3AF;
+}
+
+/* ===== MESSAGE STYLES ===== */
+.input-error-message,
+.input-success-message {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin: 0;
+    width: 100%;
+}
+
+.input-error-message {
+    color: #DC2626;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+}
+
+.input-success-message {
+    color: #059669;
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+}
+
+.error-icon,
+.success-icon {
+    font-size: 12px;
+}
+
+/* ===== ANIMATIONS ===== */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-/* Hiệu ứng khi typing */
-.input-field {
-    transition: all 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .input-field {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .static-label {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+    
+    .has-icon {
+        padding-left: 42px;
+    }
+    
+    .input-icon {
+        left: 14px;
+        font-size: 16px;
+    }
+    
+    .input-wrapper {
+        border-radius: 10px;
+    }
 }
 
-.input-wrapper:not(.is-checking) .input-field:focus {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+    .input-field-container,
+    .input-wrapper,
+    .static-label,
+    .status-icon,
+    .password-toggle-btn {
+        transition: none;
+        animation: none;
+    }
 }
 
-/* Đảm bảo nút mật khẩu không chồng với icon trạng thái */
-.input-wrapper .password-toggle-btn {
-    right: 40px;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .static-label {
+        color: #000000;
+        font-weight: 700;
+    }
+    
+    .input-field {
+        color: #000000;
+    }
+    
+    .input-wrapper {
+        background: #FFFFFF;
+        border: 2px solid #000000;
+    }
+    
+    .input-field-container.focused .input-wrapper {
+        border: 3px solid #000000;
+    }
+    
+    .input-field-container.has-error .input-wrapper {
+        border: 2px solid #CC0000;
+        background: #FFFFFF;
+    }
 }
 
-/* Disable browser autocomplete background color */
+/* ===== BROWSER COMPATIBILITY ===== */
 .input-field:-webkit-autofill,
 .input-field:-webkit-autofill:hover, 
 .input-field:-webkit-autofill:focus,
 .input-field:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px transparent inset !important;
-    -webkit-text-fill-color: #333 !important;
+    -webkit-box-shadow: 0 0 0 30px #FFFFFF inset !important;
+    -webkit-text-fill-color: #1F2937 !important;
     transition: background-color 5000s ease-in-out 0s;
-    background-color: transparent !important;
 }
 
-/* For Firefox */
 .input-field:-moz-autofill,
 .input-field:-moz-autofill:focus {
-    box-shadow: 0 0 0 1000px transparent inset !important;
-    -moz-text-fill-color: #333 !important;
+    box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+    -moz-text-fill-color: #1F2937 !important;
 }

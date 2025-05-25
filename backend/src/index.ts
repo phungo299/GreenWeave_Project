@@ -22,6 +22,7 @@ import {
   reviewRoutes,
   settingRoutes,
   stripeRoutes,
+  uploadRoutes,
   userRoutes,
   visitorLogRoutes,
   wishlistRoutes
@@ -36,37 +37,15 @@ const swaggerDocument = YAML.load(swaggerPath);
 // Update swagger server URL from env
 swaggerDocument.servers[0].url = process.env.API_URL || "http://localhost:5000";
 
-const allowedOrigins = [
-  "http://localhost:3000", // Frontend development server
-  "http://127.0.0.1:3000",
-  "http://localhost:5000", // Backend development server
-  "http://127.0.0.1:5000",
-  process.env.STAGING_URL,
-  process.env.API_URL,
-  process.env.CLIENT_URL,
-  process.env.PRODUCTION_URL,
-  process.env.BACKEND_URL,
-].filter(Boolean); // Remove undefined values
-
-console.log("Allowed Origins:", allowedOrigins);
+// Allow all origins for development
+console.log("CORS: Allowing all origins for development");
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Cho phép truy cập không có origin (như từ Postman hoặc các công cụ API)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.indexOf(origin) === -1) {
-        console.log(`Origin ${origin} not allowed by CORS`);
-        var msg = "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
-      }
-      console.log(`Origin ${origin} allowed by CORS`);
-      return callback(null, true);
-    },
+    origin: true, // Allow all origins
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   })
 );
 
@@ -98,6 +77,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/visitor-logs", visitorLogRoutes);
 app.use("/api/stripe", stripeRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Export the app for testing purposes
 export { app };

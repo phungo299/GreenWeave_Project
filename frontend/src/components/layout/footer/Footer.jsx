@@ -29,9 +29,9 @@ const Footer = () => {
                         <h3>Liên kết nhanh</h3>
                         <ul>
                             <li><Link to="/">Trang chủ</Link></li>
-                            <li><Link to="/about">About us</Link></li>
-                            <li><Link to="/individual">Cá nhân</Link></li>
-                            <li><Link to="/collection">Bộ sưu tập</Link></li>
+                            <li><Link to="/about-us">Về chúng tôi</Link></li>
+                            <li><Link to="/products">Sản phẩm</Link></li>
+                            <li><Link to="/contact">Liên hệ</Link></li>
                         </ul>
                     </div>
                     <div className="footer-section">
@@ -63,7 +63,7 @@ const Footer = () => {
                 </div>
             </div>
             <div className="footer-bottom">
-                <p>©2024 Greenweave. All right reserved.</p>
+                <p>©2024 Greenweave. Tất cả quyền được bảo lưu.</p>
                 <div className="social-links">
                     <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
                         <img src={FacebookIcon} alt="Facebook" />

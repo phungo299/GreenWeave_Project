@@ -37,11 +37,11 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     // Login function
-    const login = async (credentials) => {
+    const login = async (username, password) => {
         try {
             const loginData = {
-                login: credentials.username,
-                password: credentials.password
+                login: username,
+                password: password
             };
             
             const response = await authService.login(loginData);
@@ -94,26 +94,29 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Registration function
-    const register = async (userData) => {
+    const register = async (username, email, password) => {
         try {
             const response = await authService.register({
-                username: userData.username,
-                email: userData.email,
-                password: userData.password
+                username: username,
+                email: email,
+                password: password
             });
             
             // Nếu đăng ký thành công, lưu email đang chờ xác thực
-            if (response.data) {
+            if (response && response.data) {
                 setVerificationPending(true);
-                setPendingEmail(userData.email);
-                return { success: true, data: response.data };
+                setPendingEmail(email);
+                return { success: true, data: response.data, message: response.message };
             } else {
-                return { success: false, message: response.message || 'Đăng ký không thành công' };
+                return { success: false, error: response.message || 'Đăng ký không thành công' };
             }
         } catch (error) {
             console.error('Registration error:', error);
-            // Chuyển tiếp lỗi để component có thể xử lý
-            throw error;
+            // Trả về error object thay vì throw
+            return { 
+                success: false, 
+                error: error.message || error.data?.message || 'Đã xảy ra lỗi kết nối' 
+            };
         }
     };
 
@@ -126,20 +129,26 @@ export const AuthProvider = ({ children }) => {
             return { success: true, message: response.message };
         } catch (error) {
             console.error('Email verification error:', error);
-            // Chuyển tiếp lỗi để component có thể xử lý
-            throw error;
+            // Trả về error object thay vì throw
+            return { 
+                success: false, 
+                error: error.message || error.data?.message || 'Đã xảy ra lỗi xác thực' 
+            };
         }
     };
 
     // Resend verification email
-    const resendVerification = async (email) => {
+    const resendVerification = async (email, username) => {
         try {
-            const response = await authService.sendNewVerifyEmail(email || pendingEmail);
+            const response = await authService.sendNewVerifyEmail(email || pendingEmail, username);
             return { success: true, message: response.message };
         } catch (error) {
             console.error('Resend verification error:', error);
-            // Chuyển tiếp lỗi để component có thể xử lý
-            throw error;
+            // Trả về error object thay vì throw
+            return { 
+                success: false, 
+                error: error.message || error.data?.message || 'Đã xảy ra lỗi gửi lại mã' 
+            };
         }
     };
 

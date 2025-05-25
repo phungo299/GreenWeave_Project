@@ -8,6 +8,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { useScrollToSection } from '../../hooks/useScrollToSection';
+import imageUtils from '../../../utils/imageUtils';
 import './Header.css';
 
 const Header = () => {
@@ -17,11 +18,34 @@ const Header = () => {
     const { getCartCount } = useCart();
     const { isAuthenticated, user, logout } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const dropdownRef = useRef(null);
     
     // Check if the current URL is a products page
     const isProductsPage = location.pathname === '/products';
     const isAboutUsPage = location.pathname === '/about-us';
+    const isPersonalPage = location.pathname.startsWith('/personal');
+    
+
+    
+    // Scroll effect for header with throttling
+    useEffect(() => {
+        let ticking = false;
+        
+        const handleScroll = () => {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    const scrollTop = window.scrollY;
+                    setIsScrolled(scrollTop > 30);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
     
     // Logout handling
     const handleLogout = () => {
@@ -48,7 +72,7 @@ const Header = () => {
     };
     
     return (
-        <header className="header">
+        <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
             <div className="header-container">
                 <div className="logo">
                     <Link to="/">
@@ -57,46 +81,36 @@ const Header = () => {
                 </div>
                 <nav className="nav-menu">
                     <ul>
-                        {isAboutUsPage || isProductsPage ? (
-                            // Menu when on About Us page or Products page
+                        {isAboutUsPage || isProductsPage || isPersonalPage ? (
+                            // Menu when on About Us page, Products page, or Personal page
                             <>
-                                <li className={isAboutUsPage ? "active" : ""}>
-                                    <Link to="/about-us">About Us</Link>
+                                <li>
+                                    <Link to="/">Trang chủ</Link>
                                 </li>
                                 <li className={isProductsPage ? "active" : ""}>
-                                    <Link to="/products">Collection</Link>
+                                    <Link to="/products">Sản phẩm</Link>
+                                </li>
+                                <li className={isAboutUsPage ? "active" : ""}>
+                                    <Link to="/about-us">Về chúng tôi</Link>
+                                </li>
+                                <li>
+                                    <Link to="/#contact">Liên hệ</Link>
                                 </li>
                             </>
                         ) : (
-                            // Menu when on other pages
+                            // Menu when on landing page
                             <>
                                 <li className={(!isProductsPage && activeSection === 'home') ? 'active' : ''}>
-                                    {isProductsPage ? (
-                                        <Link to="/#home">Home</Link>
-                                    ) : (
-                                        <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>Home</a>
-                                    )}
+                                    <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>Trang chủ</a>
                                 </li>
                                 <li className={isProductsPage || (!isProductsPage && activeSection === 'products') ? 'active' : ''}>
-                                    {isProductsPage ? (
-                                        <Link to="/#products">Product</Link>
-                                    ) : (
-                                        <a href="#products" onClick={(e) => scrollToSection(e, 'products')}>Product</a>
-                                    )}
+                                    <Link to="/products">Sản phẩm</Link>
                                 </li>
                                 <li className={(!isProductsPage && activeSection === 'about') ? 'active' : ''}>
-                                    {isProductsPage ? (
-                                        <Link to="/#about">About Us</Link>
-                                    ) : (
-                                        <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>About Us</a>
-                                    )}
+                                    <Link to="/about-us">Về chúng tôi</Link>
                                 </li>
                                 <li className={(!isProductsPage && activeSection === 'contact') ? 'active' : ''}>
-                                    {isProductsPage ? (
-                                        <Link to="/#contact">Contact</Link>
-                                    ) : (
-                                        <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Contact</a>
-                                    )}
+                                    <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Liên hệ</a>
                                 </li>
                             </>
                         )}
@@ -113,7 +127,15 @@ const Header = () => {
                             </Link>
                             <div className="user-dropdown" ref={dropdownRef}>
                                 <button className="user-icon-button" onClick={toggleDropdown}>
-                                    <img src={userIcon} alt="User" className="user-icon" />
+                                    <img 
+                                        src={
+                                            user?.avatar ? 
+                                                imageUtils.getAvatarUrl(user.avatar, 32) : 
+                                                userIcon
+                                        } 
+                                        alt="User" 
+                                        className={`user-icon ${user?.avatar ? 'user-avatar' : ''}`} 
+                                    />
                                 </button>
                                 {isDropdownOpen && (
                                     <div className="dropdown-menu">
@@ -121,7 +143,7 @@ const Header = () => {
                                             <span className="dropdown-username">{user?.username}</span>
                                         </div>
                                         <Link to="/personal" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                                            <span>Personal</span>
+                                            <span>Tài khoản cá nhân</span>
                                         </Link>
                                         <button onClick={handleLogout} className="dropdown-item logout-item">
                                             <img src={exitIcon} alt="Logout" className="dropdown-icon" />
@@ -133,8 +155,8 @@ const Header = () => {
                         </>
                     ) : (
                         <>
-                            <Link to="/login" className="login-btn">Login</Link>
-                            <Link to="/register" className="signup-btn">Sign up</Link>
+                            <Link to="/login" className="login-btn">Đăng nhập</Link>
+                            <Link to="/register" className="signup-btn">Đăng ký</Link>
                         </>
                     )}
                 </div>
@@ -142,4 +164,5 @@ const Header = () => {
         </header>
     );
 };
+
 export default Header;

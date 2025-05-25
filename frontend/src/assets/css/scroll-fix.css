@@ -1,0 +1,79 @@
+/* Scroll Performance Fixes */
+
+/* Smooth scrolling for the entire page */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+}
+
+/* Prevent scroll issues with animations */
+* {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* Fix for sticky/stuck sections during scroll */
+body {
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Ensure sections don't get stuck */
+section {
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
+}
+
+/* Fix for featured products section specifically */
+#products {
+    position: relative;
+    z-index: 2;
+    transform: none !important;
+    will-change: auto;
+}
+
+/* Optimize animation performance */
+.featured-product-section,
+.featured-product-container,
+.featured-product-cards {
+    contain: layout style paint;
+    transform: translateZ(0);
+}
+
+/* Prevent layout shifts */
+.product-card-wrapper {
+    contain: layout style;
+}
+
+/* Smooth transitions without sticky behavior */
+.main-content > section {
+    transition: opacity 0.3s ease;
+    transform: none;
+}
+
+/* Mobile scroll fixes */
+@media (max-width: 768px) {
+    html {
+        scroll-padding-top: 80px;
+    }
+    
+    /* Prevent momentum scrolling issues on iOS */
+    body {
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    html {
+        scroll-behavior: auto;
+    }
+} 

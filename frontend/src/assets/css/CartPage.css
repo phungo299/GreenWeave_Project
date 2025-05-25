@@ -1,7 +1,7 @@
 .cart-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 80px 20px 40px;
+    padding: 120px 20px 40px;
     font-family: Arial, sans-serif;
 }
 
@@ -269,7 +269,7 @@
 
 @media (max-width: 768px) {
     .cart-container {
-        padding: 60px 15px 30px;
+        padding: 80px 15px 30px;
     }
     
     .cart-title {

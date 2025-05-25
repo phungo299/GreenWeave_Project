@@ -63,6 +63,30 @@
     object-fit: cover;
 }
 
+.personal-information-avatar-uploading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #134d35;
+    font-size: 12px;
+}
+
+.personal-information-avatar-uploading .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #134d35;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .personal-information-avatar-upload {
     display: flex;
     flex-direction: column;
@@ -86,6 +110,16 @@
 .personal-information-upload-btn:hover {
     background-color: #e8f5f0;
     border-color: #134d35;
+}
+
+.personal-information-upload-btn.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.personal-information-upload-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .personal-information-upload-icon {
@@ -139,6 +173,31 @@
     background-color: #0d3a27;
 }
 
+.personal-information-save-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.personal-information-save-btn.loading {
+    position: relative;
+    color: transparent;
+}
+
+.personal-information-save-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 /* Override some of the default InputField styles to match the design */
 .personal-information-container .input-field-container {
     width: 100%;
@@ -150,6 +209,57 @@
     color: #134d35;
     margin-bottom: 8px;
     display: block;
+}
+
+/* Readonly fields styling */
+.personal-information-input.readonly {
+    background-color: #f5f5f5 !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+
+.personal-information-readonly-note {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Reward points styling */
+.personal-information-reward-points {
+    margin-bottom: 20px;
+}
+
+.personal-information-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #134d35;
+    margin-bottom: 8px;
+}
+
+.personal-information-points-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 12px 16px;
+    background-color: #e8f5f0;
+    border: 1px solid #d3eae0;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.points-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #134d35;
+}
+
+.points-unit {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
 }
 
 /* Responsive styles */
@@ -175,5 +285,9 @@
     .personal-information-save-btn {
         width: 100%;
         align-self: center;
+    }
+    
+    .personal-information-points-display {
+        justify-content: center;
     }
 }

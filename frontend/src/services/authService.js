@@ -16,14 +16,19 @@ const authService = {
         return axiosClient.post('/auth/logout');
     },
 
-    // Forgot password
+    // Forgot password - Send OTP
     forgotPassword: (email) => {
         return axiosClient.post('/auth/forgot-password', { email });
     },
 
-    // Reset password
-    resetPassword: (token, newPassword) => {
-        return axiosClient.post('/auth/reset-password', { token, newPassword });
+    // Verify reset OTP
+    verifyResetOTP: (email, otp) => {
+        return axiosClient.post('/auth/verify-reset-otp', { email, otp });
+    },
+
+    // Reset password with OTP
+    resetPassword: (email, otp, newPassword) => {
+        return axiosClient.post('/auth/reset-password', { email, otp, newPassword });
     },
 
     // Change password

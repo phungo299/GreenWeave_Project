@@ -78,6 +78,12 @@ export const register = async (req: Request, res: Response) => {
       100000 + Math.random() * 900000
     ).toString();
 
+    // Set verification token and expiry time
+    const verificationTokenExpiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    newUser.resetPasswordToken = verificationToken;
+    newUser.resetPasswordExpires = new Date(verificationTokenExpiresAt);
+    await newUser.save();
+
     // Generate token
     const token = await signToken({
       _id: newUser._id,
@@ -86,11 +92,18 @@ export const register = async (req: Request, res: Response) => {
       role: newUser.role,
     });
 
-    await sendVerificationEmail(
-      newUser.email,
-      newUser.username,
-      verificationToken
-    );
+    // Thử gửi email xác thực
+    try {
+      await sendVerificationEmail(
+        newUser.email,
+        newUser.username,
+        verificationToken
+      );
+    } catch (emailError: any) {
+      console.error('Email sending failed:', emailError);
+      // Không throw error, chỉ log để user vẫn có thể đăng ký
+      // Có thể thêm thông báo cho user biết email không gửi được
+    }
 
     return res.status(201).json({
       message: "Đăng ký thành công!",
@@ -104,6 +117,7 @@ export const register = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    console.error('Registration error:', error);
     if (error instanceof ValidationError) {
       return res.status(400).json(error.errors);
     }
@@ -311,11 +325,17 @@ export const login = async (req: Request, res: Response) => {
 
     const errors: any = {};
 
+    // Kiểm tra xem login và password có tồn tại không trước khi trim
+    if (!login || !password) {
+      errors.message = "Vui lòng điền đầy đủ các trường!";
+      throw new ValidationError(errors);
+    }
+
     const formatLogin = login.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
     if (!formatLogin || !trimmedPassword) {
-      errors.message = "Vui lòng điền đẩy đủ các trường!";
+      errors.message = "Vui lòng điền đầy đủ các trường!";
       throw new ValidationError(errors);
     }
 
@@ -449,7 +469,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
     const trimmedPassword = password.trim();
 
     if (!formatLogin || !trimmedPassword) {
-      errors.message = "Vui lòng điền đẩy đủ các trường!";
+      errors.message = "Vui lòng điền đầy đủ các trường!";
       throw new ValidationError(errors);
     }
 
@@ -513,11 +533,211 @@ export const loginAdmin = async (req: Request, res: Response) => {
 };
 
 export const checkUsername = async (req: Request, res: Response) => {
-  // Implement username checking
-  res.status(200).json({ available: true });
+  const { username } = req.body;
+  const user = await User.findOne({ username });
+  res.json({ available: !user });
 };
 
 export const checkEmail = async (req: Request, res: Response) => {
-  // Implement email checking
-  res.status(200).json({ available: true });
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  res.json({ available: !user });
+};
+
+// Forgot Password - Send OTP
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        message: "Vui lòng nhập email",
+        success: false 
+      });
+    }
+
+    const formatEmail = email.trim().toLowerCase();
+
+    // Check email format
+    if (!/^[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}$/.test(formatEmail)) {
+      return res.status(400).json({ 
+        message: "Định dạng email không hợp lệ",
+        success: false 
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email: formatEmail });
+    if (!user) {
+      return res.status(404).json({ 
+        message: "Không tìm thấy tài khoản với email này",
+        success: false 
+      });
+    }
+
+    // Generate 6-digit OTP
+    const resetOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save OTP to user
+    user.resetPasswordToken = resetOTP;
+    user.resetPasswordExpires = resetExpires;
+    await user.save();
+
+    // Send OTP email
+    await sendVerificationEmail(user.email, user.username, resetOTP);
+
+    return res.status(200).json({
+      message: "Mã OTP đã được gửi đến email của bạn",
+      success: true
+    });
+
+  } catch (error: any) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ 
+      message: "Đã xảy ra lỗi server",
+      success: false 
+    });
+  }
+};
+
+// Verify Reset OTP
+export const verifyResetOTP = async (req: Request, res: Response) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ 
+        message: "Vui lòng nhập email và mã OTP",
+        success: false 
+      });
+    }
+
+    const formatEmail = email.trim().toLowerCase();
+    const trimmedOTP = otp.toString().trim();
+
+    // Validate OTP format
+    if (!/^\d{6}$/.test(trimmedOTP)) {
+      return res.status(400).json({ 
+        message: "Mã OTP phải là 6 chữ số",
+        success: false 
+      });
+    }
+
+    // Find user with valid OTP
+    const user = await User.findOne({
+      email: formatEmail,
+      resetPasswordToken: trimmedOTP,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        message: "Mã OTP không hợp lệ hoặc đã hết hạn",
+        success: false 
+      });
+    }
+
+    return res.status(200).json({
+      message: "Xác thực OTP thành công",
+      success: true
+    });
+
+  } catch (error: any) {
+    console.error('Verify reset OTP error:', error);
+    return res.status(500).json({ 
+      message: "Đã xảy ra lỗi server",
+      success: false 
+    });
+  }
+};
+
+// Reset Password
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ 
+        message: "Vui lòng điền đầy đủ thông tin",
+        success: false 
+      });
+    }
+
+    const formatEmail = email.trim().toLowerCase();
+    const trimmedOTP = otp.toString().trim();
+    const formatPassword = newPassword.trim();
+
+    // Validate OTP format
+    if (!/^\d{6}$/.test(trimmedOTP)) {
+      return res.status(400).json({ 
+        message: "Mã OTP không hợp lệ",
+        success: false 
+      });
+    }
+
+    // Validate password strength
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{6,30}$/.test(formatPassword)) {
+      return res.status(400).json({ 
+        message: "Mật khẩu phải chứa chữ thường, in hoa, số, ký tự đặc biệt và từ 6 đến 30 ký tự",
+        success: false 
+      });
+    }
+
+    // Find user with valid OTP
+    const user = await User.findOne({
+      email: formatEmail,
+      resetPasswordToken: trimmedOTP,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        message: "Mã OTP không hợp lệ hoặc đã hết hạn",
+        success: false 
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(formatPassword, salt);
+
+    // Update user password and clear reset tokens
+    user.passwordHash = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Đặt lại mật khẩu thành công",
+      success: true
+    });
+
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ 
+      message: "Đã xảy ra lỗi server",
+      success: false 
+    });
+  }
+};
+
+// Logout
+export const logout = async (req: Request, res: Response) => {
+  try {
+    // For JWT-based authentication, logout is typically handled client-side
+    // by removing the token from localStorage/sessionStorage
+    // Here we just return a success response
+    
+    return res.status(200).json({
+      message: "Đăng xuất thành công",
+      success: true
+    });
+  } catch (error: any) {
+    console.error('Logout error:', error);
+    return res.status(500).json({ 
+      message: "Đã xảy ra lỗi khi đăng xuất",
+      success: false 
+    });
+  }
 };

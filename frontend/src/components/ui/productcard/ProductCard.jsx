@@ -1,5 +1,6 @@
 import React, { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
+import imageUtils from '../../../utils/imageUtils';
 import './ProductCard.css';
 
 /**
@@ -49,7 +50,10 @@ const ProductCard = ({
                         <div className="product-image-error">Không thể tải hình ảnh</div>
                     ) : (
                         <img 
-                            src={image} 
+                            src={
+                                imageUtils.getProductImageUrl(image, 'medium') || 
+                                imageUtils.getPlaceholder('product', { width: 400, height: 400 })
+                            } 
                             alt={name} 
                             className={`product-image ${imageClass} ${imageLoaded ? 'loaded' : 'loading'}`}
                             loading="lazy"

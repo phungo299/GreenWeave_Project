@@ -8,9 +8,23 @@ import AdminRoute from './components/AdminRoute';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import Personal from './pages/Personal';
+import NotificationContainer from './components/ui/notification/NotificationContainer';
+import ToastManager from './components/ui/toast/ToastManager';
+import overrideAlert from './utils/overrideAlert';
 import './App.css';
+import './assets/css/light-mode-only.css';
 
 function App() {
+    // Override alert function with toast on app start
+    React.useEffect(() => {
+        // Wait a bit for toast system to be ready
+        const timer = setTimeout(() => {
+            overrideAlert();
+        }, 100);
+        
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <AuthProvider>
             <CartProvider>
@@ -66,6 +80,8 @@ function App() {
                                 </Route>
                             </Route>
                         </Routes>
+                        <NotificationContainer />
+                        <ToastManager />
                     </div>
                 </Router>
             </CartProvider>
