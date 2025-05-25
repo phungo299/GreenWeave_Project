@@ -11,6 +11,7 @@ import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 
 const AdminProductList = () => {
     const navigate = useNavigate();
+    const [categories, setCategories] = useState([]);
     const [search, setSearch] = useState('');
     const [sortField, setSortField] = useState('');
     const [sortOrder, setSortOrder] = useState('none'); // 'asc', 'desc', 'none'
@@ -26,25 +27,48 @@ const AdminProductList = () => {
         category: '',
     });
 
-    const filterConfig = [
-        {
-            label: 'Trạng thái',
-            field: 'status',
-            options: [
-                { label: 'Còn hàng', value: 'in-stock' },
-                { label: 'Hết hàng', value: 'out-of-stock' },
-            ],
-        },
-        {
-            label: 'Thể loại',
-            field: 'category',
-            options: [
-                { label: 'Mũ', value: 'hat' },
-                { label: 'Túi', value: 'bag' },
-                { label: 'Quần áo', value: 'clothing' },
-            ],
-        },
-    ];
+    // Fetch categories on component mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await productService.getCategories();
+                if (response && response.categories) {
+                    setCategories(response.categories);
+                }
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+            }
+        };
+        
+        fetchCategories();
+    }, []);
+
+    // Dynamically build filter config based on fetched categories
+    const getFilterConfig = () => {
+        const categoryOptions = [
+            { label: 'Tất cả', value: '' },
+            ...categories.map(category => ({
+                label: category.name,
+                value: category._id
+            }))
+        ];
+        return [
+            {
+                label: 'Trạng thái',
+                field: 'status',
+                options: [
+                    { label: 'Tất cả', value: '' },
+                    { label: 'Còn hàng', value: 'in-stock' },
+                    { label: 'Hết hàng', value: 'out-of-stock' },
+                ],
+            },
+            {
+                label: 'Thể loại',
+                field: 'category',
+                options: categoryOptions,
+            },
+        ];
+    };
 
     // Fetch products on component mount and when filters/pagination change
     useEffect(() => {
@@ -200,7 +224,7 @@ const AdminProductList = () => {
             </div>
             <div className="admin-product-list-controls">
                 <FilterBar
-                    filters={filterConfig}
+                    filters={getFilterConfig()}
                     values={filterValues}
                     onChange={handleFilterChange}
                 />
