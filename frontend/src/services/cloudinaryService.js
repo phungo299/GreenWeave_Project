@@ -3,9 +3,8 @@ import axiosClient from '../api/axiosClient';
 
 // Parse Cloudinary URL from environment
 const parseCloudinaryUrl = () => {
-    const cloudinaryUrl = process.env.REACT_APP_CLOUDINARY_URL || '';
-    
-        // Fallback values từ docsNGHIÊM CẤM FALLBACK VÌ BỊ LEAK API KEY
+    const cloudinaryUrl = process.env.REACT_APP_CLOUDINARY_URL || '';   
+    // Fallback values từ docsNGHIÊM CẤM FALLBACK VÌ BỊ LEAK API KEY
     const fallbackConfig = {
         cloudName: '',
         apiKey: '',

@@ -3,7 +3,7 @@ import { useParams, useNavigate  } from 'react-router-dom';
 import './AdminProductDetails.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import { FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
-import axiosClient from '../../api/axiosClient';
+import productService from '../../services/productService';
 
 const AdminProductDetails = () => {
     const { id } = useParams();
@@ -35,12 +35,10 @@ const AdminProductDetails = () => {
         const fetchCategories = async () => {
             try {
                 setLoading(true);
-                const response = await axiosClient.get('/categories', {
-                    params: {
-                        page: 1,
-                        limit: 100 // Get a large number to avoid pagination
-                    }
-                });              
+                const response = await productService.getCategories({
+                    page: 1,
+                    limit: 100 // Get a large number to avoid pagination
+                });             
                 if (response && response.categories) {
                     setCategories(response.categories);
                 } else {
@@ -53,10 +51,48 @@ const AdminProductDetails = () => {
             } finally {
                 setLoading(false);
             }
-        };
-    
+        };  
         fetchCategories();
     }, []);
+
+    // Add useEffect to get product information when component mounts in edit case
+    useEffect(() => {
+        // Only fetch data when in edit mode (with id)
+        if (isEdit && id) {
+            const fetchProductDetails = async () => {
+                try {
+                    setLoading(true);
+                    const response = await productService.getById(id);   
+                    //console.log("Product details response:", response);            
+                    if (response && response.data) {
+                        const product = response.data;                  
+                        // Update state with product data
+                        setProductData({
+                            title: product.title || product.name || '',
+                            price: product.price?.toString() || '',
+                            stock: product.stock || 'Còn hàng',
+                            quantity: product.quantity?.toString() || '',
+                            category: product.categoryId?._id || '',
+                            slug: product.slug || '',
+                            productCode: product.productCode || '',
+                            description: product.description || '',
+                            images: product.images || [],
+                            selectedColor: product.selectedColor || '',
+                            selectedSize: product.selectedSize || ''
+                        });
+                    } else {
+                        setError('Không thể tải thông tin sản phẩm');
+                    }
+                } catch (err) {
+                    console.error('Error fetching product details:', err);
+                    setError('Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchProductDetails();
+        }
+    }, [id, isEdit]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -106,10 +142,72 @@ const AdminProductDetails = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Handle form submission
-        console.log(productData);
+    const handleSubmit = async (e) => {
+        e.preventDefault();    
+        try {
+            // Check required data
+            if (!productData.title || !productData.category || !productData.price || !productData.slug || !productData.productCode) {
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc: Tên sản phẩm, danh mục, giá, slug và mã sản phẩm');
+                return;
+            }
+            //console.log("Selected category ID:", productData.category);
+            //console.log("Available categories:", categories);
+            // Prepare data to send to API
+            const formattedData = {
+                name: productData.title,
+                title: productData.title,
+                description: productData.description || "",
+                price: Number(productData.price),
+                stock: productData.stock,
+                quantity: productData.stock === 'Hết hàng' ? 0 : Number(productData.quantity),
+                category: categories.find(cat => cat._id === productData.category)?.name || "",
+                categoryId: productData.category,
+                slug: productData.slug,
+                productCode: productData.productCode,
+                images: productData.images.length > 0 
+                    ? productData.images.map(img => img.toString()) 
+                    : [],
+                selectedColor: productData.selectedColor,
+                selectedSize: productData.selectedSize,
+                variants: [
+                    {
+                        variantId: "string",
+                        color: "string",
+                        imageUrl: "string",
+                        stock: 0
+                    }
+                ],
+                isFeature: false
+            }; 
+            setLoading(true);
+            let response;          
+            // Call appropriate API based on isEdit state
+            if (isEdit) {
+                // PUT to update product
+                response = await productService.update(id, formattedData);
+                if (response && response.success) {
+                    alert('Cập nhật sản phẩm thành công!');
+                    navigate('/admin/products');
+                } else {
+                    alert('Cập nhật sản phẩm thất bại: ' + (response?.message || 'Lỗi không xác định'));
+                }
+            } else {
+                // POST to create new product
+                response = await productService.create(formattedData);
+                if (response && response.success) {
+                    alert('Thêm sản phẩm thành công!');
+                    navigate('/admin/products');
+                } else {
+                    alert('Thêm sản phẩm thất bại: ' + (response?.message || 'Lỗi không xác định'));
+                }
+            }
+        } catch (err) {
+            console.error(`Error ${isEdit ? 'updating' : 'creating'} product:`, err);
+            alert(`Không thể ${isEdit ? 'cập nhật' : 'tạo'} sản phẩm. Vui lòng thử lại sau: ` + 
+                (err.response?.data?.message || err.message));
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCancel = () => {
@@ -132,6 +230,7 @@ const AdminProductDetails = () => {
                                 name="title"
                                 value={productData.title}
                                 onChange={handleInputChange}
+                                required
                             />
                         </div>
                         <div className="admin-product-details-field">
@@ -141,6 +240,8 @@ const AdminProductDetails = () => {
                                 name="price"
                                 value={productData.price}
                                 onChange={handleInputChange}
+                                required
+                                min="0"
                             />
                         </div>
                         <div className="admin-product-details-field">
@@ -155,7 +256,7 @@ const AdminProductDetails = () => {
                             >
                                 {!productData.category && <option value="" hidden>-- Chọn danh mục --</option>}
                                 {categories.map(category => (
-                                    <option key={category.id} value={category.id}>
+                                    <option key={category._id} value={category._id}>
                                         {category.name}
                                     </option>
                                 ))}
@@ -212,6 +313,8 @@ const AdminProductDetails = () => {
                                 onChange={handleInputChange}
                                 disabled={productData.stock === 'Hết hàng'}
                                 className={productData.stock === 'Hết hàng' ? 'disabled' : ''}
+                                required={productData.stock !== 'Hết hàng'}
+                                min="0"
                             />
                         </div>
                         <div className="admin-product-details-field">
@@ -287,11 +390,16 @@ const AdminProductDetails = () => {
                         type="button" 
                         className="admin-product-details-cancel"
                         onClick={handleCancel}
+                        disabled={loading}
                     >
                         Hủy
                     </button>
-                    <button type="submit" className="admin-product-details-submit">
-                        Lưu Sản Phẩm
+                    <button 
+                        type="submit" 
+                        className="admin-product-details-submit"
+                        disabled={loading}
+                    >
+                        {loading ? 'Đang lưu...' : 'Lưu Sản Phẩm'}
                     </button>
                 </div>
             </form>

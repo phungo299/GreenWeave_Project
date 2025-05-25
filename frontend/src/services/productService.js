@@ -11,6 +11,11 @@ const productService = {
         return axiosClient.get(`/products/${id}`);
     },
 
+    // Get product by slug
+    getBySlug: (slug) => {
+        return axiosClient.get(`/products/slug/${slug}`);
+    },
+
     // Create new product (admin only)
     create: (data) => {
         return axiosClient.post('/products', data);
@@ -26,9 +31,9 @@ const productService = {
         return axiosClient.delete(`/products/${id}`);
     },
 
-    // Get product categories
-    getCategories: () => {
-        return axiosClient.get('/products/categories');
+    // Get all categories
+    getCategories: (params) => {
+        return axiosClient.get('/categories', { params });
     },
 
     // Get products by category

@@ -7,6 +7,7 @@ import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
 import productService from '../../services/productService';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 
 const AdminProductList = () => {
     const navigate = useNavigate();
@@ -67,21 +68,27 @@ const AdminProductList = () => {
                 if (search) {
                     params.q = search;
                 }                
-                console.log('Fetching products with params:', params);             
+                //console.log('Fetching products with params:', params);             
                 const response = await productService.getAll(params);
-                console.log('API Response:', response);               
+                //console.log('API Response:', response);               
                 if (response && response.products) {
                     // Transform product data to match our table structure
                     const formattedProducts = response.products.map(product => ({
-                        id: product.id,
-                        image: product.imageUrl || '/path/to/default-image.jpg',
+                        id: product._id || '',
+                        image: (product.imageUrl && product.imageUrl.startsWith('http')) 
+                            ? product.imageUrl 
+                            : (product.images && product.images.length > 0) 
+                                ? product.images[0] 
+                                : null,
                         name: product.name,
-                        orderCode: product.id, // Using ID as orderCode
+                        productCode: product.productCode || product._id,
                         price: `${product.price.toLocaleString()} đ`,
                         stock: product.stock > 0 ? 'Còn hàng' : 'Hết hàng',
-                        category: product.categoryId,
+                        category: product.categoryId && typeof product.categoryId === 'object' 
+                            ? product.categoryId.name 
+                            : (product.category || 'Chưa phân loại'),
                         note: product.description || '...'
-                    }));                   
+                    }));                 
                     setProducts(formattedProducts);                   
                     // Update pagination info
                     if (response.pagination) {
@@ -141,7 +148,42 @@ const AdminProductList = () => {
     };
 
     const handleUpdateProduct = (productId) => {
-        navigate(`/admin/products/edit/${productId}`);
+        if (productId) {
+            //console.log('Edit product:', productId);
+            navigate(`/admin/products/edit/${productId}`);
+        } else {
+            alert('Không thể chỉnh sửa sản phẩm này. ID không hợp lệ');
+        }
+    };
+
+    const handleDeleteProduct = (productId) => {
+        if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
+            try {
+                setLoading(true);
+                productService.delete(productId)
+                    .then(response => {
+                        if (response && response.success) {
+                            alert('Xóa sản phẩm thành công');
+                            // Refresh the product list
+                            const updatedProducts = products.filter(product => product.id !== productId);
+                            setProducts(updatedProducts);
+                        } else {
+                            alert('Xóa sản phẩm thất bại: ' + (response?.message || 'Lỗi không xác định'));
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error deleting product:', err);
+                        alert('Không thể xóa sản phẩm: ' + (err.message || 'Lỗi không xác định'));
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            } catch (err) {
+                console.error('Error deleting product:', err);
+                alert('Không thể xóa sản phẩm: ' + (err.message || 'Lỗi không xác định'));
+                setLoading(false);
+            }
+        }
     };
 
     return (
@@ -210,18 +252,23 @@ const AdminProductList = () => {
                                 </tr>
                             ) : (
                                 sortedProducts.map((product, index) => (
-                                    <tr key={product.id}>
+                                    <tr key={`product-${product.id || index}`}>
                                         <td>{(currentPage - 1) * pageSize + index + 1}</td>
                                         <td className="admin-product-list-name-cell">
-                                            <img 
-                                                src={product.image} 
-                                                alt={product.name}
-                                                className="admin-product-list-product-image"
-                                                onError={(e) => {e.target.src = '/placeholder.jpg'}}
-                                            />
+                                            <div className="admin-product-list-product-image-container">
+                                                <img 
+                                                    src={product.image} 
+                                                    alt={product.name}
+                                                    className="admin-product-list-product-image"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null; 
+                                                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNDOUQ4Q0QiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzEyNTEzRCI+SU1HPC90ZXh0Pjwvc3ZnPg==';
+                                                    }}
+                                                />
+                                            </div>
                                             {product.name}
                                         </td>
-                                        <td>{product.orderCode}</td>
+                                        <td>{product.productCode}</td>
                                         <td>{product.price}</td>
                                         <td>{product.stock}</td>
                                         <td>{product.category}</td>
@@ -229,13 +276,18 @@ const AdminProductList = () => {
                                         <td>
                                             <div className="admin-product-list-actions">
                                                 <button 
-                                                    className="admin-product-list-action-button update"
+                                                    className="admin-product-list-icon-btn edit"
                                                     onClick={() => handleUpdateProduct(product.id)}
+                                                    title="Chỉnh sửa thông tin"
                                                 >
-                                                    Cập nhật
+                                                    <FaEdit />
                                                 </button>
-                                                <button className="admin-product-list-action-button delete">
-                                                    Xóa
+                                                <button 
+                                                    className="admin-product-list-icon-btn delete"
+                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                    title="Xóa sản phẩm"
+                                                >
+                                                    <FaTrashAlt />
                                                 </button>
                                             </div>
                                         </td>
