@@ -1,79 +1,176 @@
-/* Scroll Performance Fixes */
+/* Scroll Performance Fixes - Enhanced Version */
 
-/* Smooth scrolling for the entire page */
+/* Smooth scrolling for the entire page with optimizations */
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 100px;
+    /* Enable hardware acceleration for scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
 }
 
-/* Prevent scroll issues with animations */
+/* Prevent scroll issues with animations and force GPU acceleration */
 * {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
 }
 
 /* Fix for sticky/stuck sections during scroll */
 body {
     overflow-x: hidden;
     position: relative;
+    /* Optimize rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
 }
 
-/* Ensure sections don't get stuck */
+/* Ensure sections don't get stuck with enhanced isolation */
 section {
     position: relative;
     z-index: 1;
     isolation: isolate;
+
+    contain: layout style;
 }
 
-/* Fix for featured products section specifically */
+/* Enhanced fixes for featured products section specifically */
 #products {
     position: relative;
     z-index: 2;
-    transform: none !important;
+    transform: translate3d(0, 0, 0) !important;
     will-change: auto;
+    /* Optimize paint and layout */
+    contain: layout style paint;
 }
 
-/* Optimize animation performance */
+/* Optimize animation performance with enhanced containment */
 .featured-product-section,
 .featured-product-container,
 .featured-product-cards {
     contain: layout style paint;
-    transform: translateZ(0);
+    transform: translate3d(0, 0, 0);
+    /* Optimize compositing */
+    will-change: auto;
 }
 
-/* Prevent layout shifts */
+/* Prevent layout shifts with enhanced containment */
 .product-card-wrapper {
     contain: layout style;
+    transform: translate3d(0, 0, 0);
+    /* Optimize individual card rendering */
+    backface-visibility: hidden;
 }
 
-/* Smooth transitions without sticky behavior */
+/* Smooth transitions without sticky behavior - Enhanced */
 .main-content > section {
-    transition: opacity 0.3s ease;
-    transform: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translate3d(0, 0, 0);
+    /* Prevent unnecessary repaints */
+    will-change: auto;
 }
 
-/* Mobile scroll fixes */
+/* Enhanced scroll performance for animated elements */
+.animated-section,
+[class*="animated"] {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* Optimize animation performance */
+    will-change: auto;
+}
+
+/* Optimize intersection observer performance */
+.intersection-observer-target {
+    contain: layout style;
+    transform: translate3d(0, 0, 0);
+}
+
+/* Enhanced mobile scroll fixes */
 @media (max-width: 768px) {
     html {
         scroll-padding-top: 80px;
-    }
-    
-    /* Prevent momentum scrolling issues on iOS */
-    body {
+        /* Enhanced mobile scrolling */
         -webkit-overflow-scrolling: touch;
         overflow-scrolling: touch;
     }
+    
+    /* Prevent momentum scrolling issues on iOS - Enhanced */
+    body {
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+        /* Optimize mobile rendering */
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+    
+    /* Reduce animation complexity on mobile */
+    .featured-product-section {
+        contain: layout style;
+    }
+    
+    /* Optimize mobile product cards */
+    .product-card-wrapper {
+        will-change: auto;
+        transform: translate3d(0, 0, 0);
+    }
 }
 
-/* Reduce motion for users who prefer it */
+/* Enhanced performance for low-end devices */
+@media (max-width: 576px) {
+    /* Simplify animations on small screens */
+    .featured-product-cards .product-card {
+        will-change: auto;
+    }
+    
+    /* Reduce paint complexity */
+    .featured-product-cards .product-image {
+        will-change: auto;
+    }
+}
+
+/* Reduce motion for users who prefer it - Enhanced */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
     
     html {
         scroll-behavior: auto;
+    }
+    
+    /* Disable all transforms for reduced motion */
+    .featured-product-section,
+    .featured-product-container,
+    .product-card-wrapper {
+        transform: none !important;
+        will-change: auto !important;
+    }
+}
+
+/* Performance optimizations for high refresh rate displays */
+@media (min-resolution: 120dpi) {
+    .featured-product-section {
+        /* Optimize for high DPI displays */
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Optimize for users with slow connections */
+@media (prefers-reduced-data: reduce) {
+    /* Disable non-essential animations */
+    .product-card-wrapper {
+        animation: none !important;
+        opacity: 1 !important;
+    }
+    
+    .featured-product-cards .product-card:hover {
+        transform: none !important;
     }
 } 

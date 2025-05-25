@@ -55,8 +55,9 @@ const Product = () => {
     return (
         <section id="products" className="featured-product-section">
             <div className="featured-product-container">
-                {/* Header with Animation */}
-                <AnimatedSection animation="slideUp" delay={0.1}>
+                {/* Single AnimatedSection wrapper for entire content */}
+                <AnimatedSection animation="fadeIn" delay={0.1} duration={0.6}>
+                    {/* Header */}
                     <div className="featured-product-header">
                         <div className="featured-product-title-wrapper">
                             <div className="featured-product-title-container">
@@ -69,15 +70,21 @@ const Product = () => {
                             </div>
                         </div>
                     </div>
-                </AnimatedSection>
 
-                {/* Product Cards with Staggered Animation */}
-                <AnimatedSection animation="slideUp" delay={0.3}>
+                    {/* Product Cards with CSS-based staggered animation */}
                     <div className="featured-product-slider">
                         <div className="featured-product-cards">
                             {products.map((product, index) => (
-                                <div key={product.id} className="product-card-wrapper">
-                                    <ProductCard 
+                                <div 
+                                    key={product.id} 
+                                    className="product-card-wrapper"
+                                    style={{ 
+                                        animationDelay: `${0.2 + index * 0.1}s`,
+                                        opacity: 0,
+                                        animation: 'slideUpFade 0.6s ease-out forwards'
+                                    }}
+                                >
+                                    <ProductCard
                                         id={product.id}
                                         name={product.name}
                                         description={product.description}
@@ -89,25 +96,21 @@ const Product = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
-                </AnimatedSection>
 
-                {/* Dots with Animation */}
-                <AnimatedSection animation="fadeIn" delay={0.5}>
-                    <div className="featured-product-slider-dots">
-                        {products.map((_, index) => (
-                            <button 
-                                key={index}
-                                className={`featured-product-slider-dot ${activeSlide === index ? 'active' : ''}`}
-                                onClick={() => goToSlide(index)}
-                                aria-label={`Go to slide ${index + 1}`}
-                            />
-                        ))}
+                        {/* Slider Dots */}
+                        <div className="featured-product-slider-dots">
+                            {products.map((_, index) => (
+                                <button
+                                    key={index}
+                                    className={`featured-product-slider-dot ${activeSlide === index ? 'active' : ''}`}
+                                    onClick={() => goToSlide(index)}
+                                    aria-label={`Go to slide ${index + 1}`}
+                                />
+                            ))}
+                        </div>
                     </div>
-                </AnimatedSection>
 
-                {/* View All Button with Animation */}
-                <AnimatedSection animation="slideUp" delay={0.6}>
+                    {/* View All Button */}
                     <div className="featured-product-view-all-container">
                         <button 
                             className="featured-product-view-all-button"
@@ -121,4 +124,5 @@ const Product = () => {
         </section>
     );
 };
+
 export default Product;
