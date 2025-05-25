@@ -1,0 +1,124 @@
+.admin-login-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.admin-login-modal {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.admin-login-modal .close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.admin-login-modal .close-button:hover {
+    color: #dc3545;
+}
+
+.admin-login-modal h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.admin-login-modal p {
+    color: #666;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.admin-login-modal .error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.admin-login-modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-login-modal .login-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.admin-login-modal .login-button:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.admin-login-modal .login-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.admin-login-modal .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-login-modal {
+        width: 95%;
+        padding: 20px;
+    }
+}

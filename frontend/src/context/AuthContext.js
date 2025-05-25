@@ -64,13 +64,17 @@ export const AuthProvider = ({ children }) => {
                     role: data.role
                 });
                 setIsAuthenticated(true);
-                return { success: true, message };
+                return { 
+                    success: true, 
+                    message,
+                    isAdmin: data.role === 'admin' // Add flag to let Login component know this is admin
+                };
             } else {
                 return { success: false, message: message || 'Đăng nhập không thành công' };
             }
         } catch (error) {
             console.error('Login error:', error);
-            // Chuyển tiếp lỗi để component có thể xử lý
+            // Forward the error so the component can handle it
             throw error;
         }
     };

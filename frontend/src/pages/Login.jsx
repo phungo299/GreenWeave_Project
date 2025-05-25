@@ -126,7 +126,7 @@ const Login = () => {
                 console.error('Login error:', error);
                 // Check email authentication errors
                 if (error.status === 400 && error.message && error.message.includes('chưa được xác thực')) {
-                    // Lấy email từ thông báo lỗi hoặc từ input nếu là email
+                    // Get email from error message or from input if it is email
                     const userEmail = credentials.username.includes('@') ? credentials.username : '';
                     setUserEmail(userEmail);
                     setShowVerifyModal(true);
