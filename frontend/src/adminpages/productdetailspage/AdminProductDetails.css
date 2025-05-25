@@ -74,6 +74,14 @@
     border-color: #2B3674;
 }
 
+.admin-product-details-select.placeholder {
+    color: #757575;
+}
+
+.admin-product-details-select.placeholder option {
+    color: #2B3674;
+}
+
 .admin-product-details-upload-button {
     display: block;
     padding: 10px 16px;
@@ -221,6 +229,12 @@
 
 .admin-product-details-submit:hover {
     background-color: #0d3c2d;
+}
+
+.admin-product-details-error {
+    color: #FF6B72;
+    font-size: 12px;
+    margin-top: 4px;
 }
 
 /* Responsive Styles */

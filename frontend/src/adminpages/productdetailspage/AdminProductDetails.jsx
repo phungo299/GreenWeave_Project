@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate  } from 'react-router-dom';
 import './AdminProductDetails.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import { FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
+import axiosClient from '../../api/axiosClient';
 
 const AdminProductDetails = () => {
     const { id } = useParams();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const [productData, setProductData] = useState({
         title: '',
@@ -25,6 +29,34 @@ const AdminProductDetails = () => {
 
     const availableColors = ['#E5E7EB', '#FDE68A', '#A7F3D0', '#93C5FD'];
     const availableSizes = ['S', 'M', 'X', 'XL', 'XXL'];
+
+    // Fetch categories
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                setLoading(true);
+                const response = await axiosClient.get('/categories', {
+                    params: {
+                        page: 1,
+                        limit: 100 // Get a large number to avoid pagination
+                    }
+                });              
+                if (response && response.categories) {
+                    setCategories(response.categories);
+                } else {
+                    console.error('Invalid response format:', response);
+                    setError('Không thể tải danh mục sản phẩm');
+                }
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+                setError('Không thể tải danh mục sản phẩm');
+            } finally {
+                setLoading(false);
+            }
+        };
+    
+        fetchCategories();
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -113,12 +145,22 @@ const AdminProductDetails = () => {
                         </div>
                         <div className="admin-product-details-field">
                             <label>Loại</label>
-                            <input
-                                type="text"
+                            <select
                                 name="category"
                                 value={productData.category}
                                 onChange={handleInputChange}
-                            />
+                                className={`admin-product-details-select ${!productData.category ? 'placeholder' : ''}`}
+                                disabled={loading}
+                                required
+                            >
+                                {!productData.category && <option value="" hidden>-- Chọn danh mục --</option>}
+                                {categories.map(category => (
+                                    <option key={category.id} value={category.id}>
+                                        {category.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {error && <div className="admin-product-details-error">{error}</div>}
                         </div>
                         <div className="admin-product-details-field">
                             <label>Slug</label>
