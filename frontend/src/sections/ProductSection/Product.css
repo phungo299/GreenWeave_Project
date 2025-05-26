@@ -21,6 +21,34 @@
     contain: layout style;
 }
 
+.loading-container, 
+.error-message,
+.no-products-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    width: 100%;
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(10, 75, 62, 0.1);
+    border-radius: 50%;
+    border-top-color: #0A4B3E;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+.error-message p,
+.no-products-message p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
 /* CSS Keyframes for smooth animations */
 @keyframes slideUpFade {
     from {
@@ -42,6 +70,10 @@
         opacity: 1;
         transform: translate3d(0, 0, 0) scale(1);
     }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .featured-product-header {

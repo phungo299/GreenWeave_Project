@@ -7,19 +7,8 @@ import ProductSection from '../sections/ProductSection/Product';
 import AnimatedSection from '../components/common/AnimatedSection';
 import '../assets/css/ProductOverviewPage.css';
 import '../assets/css/scroll-fix.css';
+import productService from '../services/productService';
 
-import toteBag1 from '../assets/images/recycled-tote-bag-1.jpg';
-import toteBag2 from '../assets/images/recycled-tote-bag-2.jpg';
-import toteBag3 from '../assets/images/recycled-tote-bag-3.jpg';
-import cap1 from '../assets/images/cap-1.JPG';
-import cap2 from '../assets/images/SP4.jpg';
-import cap3 from '../assets/images/cap-3.jpg';
-import tshirt from '../assets/images/T-shirt products.jpg';
-import tshirt2 from '../assets/images/IMG_8402.JPG';
-import tshirt3 from '../assets/images/SP8.jpg';
-import backpack from '../assets/images/SP9.jpg';
-import bucketHat from '../assets/images/SP1.jpg';
-import tShirtNew from '../assets/images/SP3.jpg';
 import Logo from '../assets/images/logo-no-background.png';
 
 const PRODUCTS_PER_PAGE = 6;
@@ -30,129 +19,106 @@ const ProductOverviewPage = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     
     // State to track active slide for upcoming product
     const [activeComingSlide, setActiveComingSlide] = useState(0);
-
-    const allProducts = useMemo(() => [
-        {
-            id: 1,
-            name: 'Túi tote tái chế',
-            description: 'Thân thiện với môi trường',
-            price: '280.000 đ',
-            image: toteBag1,
-            category: 'tote'
-        },
-        {
-            id: 2,
-            name: 'Túi tote tái chế',
-            description: 'Chất liệu bền vững',
-            price: '280.000 đ',
-            image: toteBag2,
-            category: 'tote'
-        },
-        {
-            id: 3,
-            name: 'Túi tote tái chế',
-            description: 'Thiết kế hiện đại',
-            price: '280.000 đ',
-            image: toteBag3,
-            category: 'tote'
-        },
-        {
-            id: 4,
-            name: 'Mũ lưỡi trai',
-            description: 'Phong cách trẻ trung',
-            price: '280.000 đ',
-            image: cap1,
-            category: 'cap',
-            imageClass: 'hat-image'
-        },
-        {
-            id: 5,
-            name: 'Mũ Bucket',
-            description: 'Xu hướng thời trang',
-            price: '280.000 đ',
-            image: cap2,
-            category: 'cap',
-            imageClass: 'hat-image'
-        },
-        {
-            id: 6,
-            name: 'Mũ lưỡi trai',
-            description: 'Chất lượng cao cấp',
-            price: '280.000 đ',
-            image: cap3,
-            category: 'cap',
-            imageClass: 'hat-image'
-        },
-        {
-            id: 7,
-            name: 'Áo phông',
-            description: 'Thoải mái mọi hoạt động',
-            price: '280.000 đ',
-            image: tshirt,
-            category: 'tshirt'
-        },
-        {
-            id: 8,
-            name: 'Áo phông họa tiết',
-            description: 'Độc đáo và sáng tạo',
-            price: '300.000 đ',
-            image: tshirt2,
-            category: 'tshirt'
-        },
-        {
-            id: 9,
-            name: 'Áo phông trơn',
-            description: 'Đơn giản nhưng tinh tế',
-            price: '280.000 đ',
-            image: tshirt3,
-            category: 'tshirt'
-        }
-    ], []);
     
-    // Upcoming products
-    const comingSoonProducts = useMemo(() => [
-        {
-            id: 'coming1',
-            name: 'Balo',
-            description: 'Tiện dụng cho mọi chuyến đi',
-            price: '280.000 đ',
-            image: backpack
-        },
-        {
-            id: 'coming2',
-            name: 'Mũ bucket',
-            description: 'Phong cách năng động',
-            price: '220.000 đ',
-            image: bucketHat,
-            imageClass: 'hat-image'
-        },
-        {
-            id: 'coming3',
-            name: 'Áo phông',
-            description: 'Thiết kế mới nhất',
-            price: '300.000 đ',
-            image: tShirtNew
-        }
-    ], []);
+    // State for products and categories from API
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [comingSoonProducts, setComingSoonProducts] = useState([]);
 
-    // List of categories
-    const categories = useMemo(() => [
-        { id: 'all', name: 'Tất cả' },
-        { id: 'tshirt', name: 'Áo phông' },
-        { id: 'tote', name: 'Túi tote' },
-        { id: 'cap', name: 'Mũ nón' },
-        { id: 'balo', name: 'Balo' }
-    ], []);
+    // Fetch categories and products from API
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);               
+                // Fetch categories
+                const categoryResponse = await productService.getCategories();
+                if (categoryResponse && categoryResponse.categories) {
+                    const fetchedCategories = categoryResponse.categories.map(cat => ({
+                        id: cat._id,
+                        name: cat.name
+                    }));                   
+                    // Add "All" category at the beginning
+                    setCategories([
+                        { id: 'all', name: 'Tất cả' },
+                        ...fetchedCategories
+                    ]);
+                }               
+                // Fetch all products
+                const productResponse = await productService.getAll({ limit: 100 });
+                //console.log('Product response: ', productResponse)
+                if (productResponse && productResponse.products) {
+                    const formattedProducts = productResponse.products.map(product => {
+                        // Determine image URL from images array
+                        let imageUrl = null;     
+                        if (product.images && product.images.length > 0) {
+                            // Use blob URL directly from images array
+                            imageUrl = product.images[0];
+                        } else if (product.imageUrl) {
+                            imageUrl = product.imageUrl;
+                        }
+                        const stockStatus = product.stock === "Hết hàng" || product.quantity <= 0 ? 'Hết hàng' : 'Còn hàng';
+                        // Log for debugging
+                        console.log('Product image data:', {
+                            imageUrl: product.imageUrl,
+                            images: product.images
+                        });      
+                        return {
+                            id: product._id,
+                            name: product.name || product.title,
+                            description: product.description || 'Sản phẩm bền vững',
+                            price: `${product.price?.toLocaleString() || 0} đ`,
+                            image: imageUrl,
+                            category: product.categoryId?._id || 'uncategorized',
+                            categoryName: product.categoryId?.name || 'Chưa phân loại',
+                            imageClass: product.categoryId?.name?.toLowerCase().includes('mũ') ? 'hat-image' : '',
+                            stockStatus: stockStatus,
+                        };
+                    });
+                    setProducts(formattedProducts);   
+                    // Get the first 3 products as "coming soon" products (default)
+                    // When no out of stock products are found
+                    setComingSoonProducts(formattedProducts.slice(0, 3));                  
+                    // Find products with "Hết hàng" status to set in Coming Soon slider
+                    const outOfStockProducts = formattedProducts.filter(product => 
+                        product.stockStatus === 'Hết hàng'
+                    ); 
+                    //console.log('Out of stock products:', outOfStockProducts);
+                    // If there is at least 1 out of stock product, use them for the slider
+                    if (outOfStockProducts.length > 0) {
+                        if (outOfStockProducts.length >= 3) {
+                            // If there are at least 3 out of stock products, use them for the slider
+                            setComingSoonProducts(outOfStockProducts.slice(0, 3));
+                        } else {
+                            // Combine out of stock products with some in stock products to have at least 3
+                            const remainingNeeded = 3 - outOfStockProducts.length;
+                            const inStockProducts = formattedProducts
+                                .filter(product => product.stockStatus === 'Còn hàng')
+                                .slice(0, remainingNeeded);
+                            setComingSoonProducts([...outOfStockProducts, ...inStockProducts]);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError('Không thể tải dữ liệu sản phẩm. Vui lòng thử lại sau.');
+            } finally {
+                setLoading(false);
+            }
+        };     
+        fetchData();
+    }, []);
 
     // Filter products by category
     const filteredProducts = useMemo(() => {
         return activeCategory === 'all' 
-            ? allProducts 
-            : allProducts.filter(product => product.category === activeCategory);
-    }, [activeCategory, allProducts]);
+            ? products 
+            : products.filter(product => product.category === activeCategory);
+    }, [activeCategory, products]);
 
     // Number of products currently displayed
     const visibleProducts = useMemo(() => {
@@ -179,17 +145,14 @@ const ProductOverviewPage = () => {
     // Handle when scrolling down to the bottom of the page
     useEffect(() => {
         const handleScroll = () => {
-            if (isLoadingMore || !hasMoreProducts) return;
-            
+            if (isLoadingMore || !hasMoreProducts) return;            
             const scrollHeight = document.documentElement.scrollHeight;
             const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-            const clientHeight = document.documentElement.clientHeight;
-            
+            const clientHeight = document.documentElement.clientHeight;          
             if (scrollTop + clientHeight >= scrollHeight - 300) {
                 loadMoreProducts();
             }
-        };
-        
+        };       
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, [isLoadingMore, hasMoreProducts, loadMoreProducts]);
@@ -228,15 +191,14 @@ const ProductOverviewPage = () => {
                                     Khám phá các sản phẩm thời trang được làm từ vật liệu tái chế,
                                     thân thiện với môi trường và phong cách hiện đại
                                 </p>
-                            </AnimatedSection>
-                            
+                            </AnimatedSection>                            
                             <AnimatedSection animation="slideLeft" delay={0.5} className="hero-stats">
                                 <div className="stat-item">
                                     <span className="stat-number">100%</span>
                                     <span className="stat-label">Vật liệu tái chế</span>
                                 </div>
                                 <div className="stat-item">
-                                    <span className="stat-number">50+</span>
+                                    <span className="stat-number">{products.length}+</span>
                                     <span className="stat-label">Sản phẩm</span>
                                 </div>
                                 <div className="stat-item">
@@ -247,12 +209,10 @@ const ProductOverviewPage = () => {
                         </div>
                     </section>
                 </AnimatedSection>
-
                 {/* Featured Products Section */}
                 <AnimatedSection animation="fadeIn" delay={0.2}>
                     <ProductSection />
-                </AnimatedSection>
-                
+                </AnimatedSection>               
                 {/* Category Filter with Animation */}
                 <AnimatedSection animation="slideUp" delay={0.3}>
                     <div className="product-categories">
@@ -278,135 +238,155 @@ const ProductOverviewPage = () => {
                             ))}
                         </div>
                     </div>
-                </AnimatedSection>
-                
+                </AnimatedSection>                
                 {/* Product Grid with Staggered Animation */}
                 <AnimatedSection animation="fadeIn" delay={0.4}>
                     <div className="product-listing">
-                        <div className="product-grid">
-                            {visibleProducts.map((product, index) => (
-                                <AnimatedSection 
-                                    key={product.id}
-                                    animation="slideUp" 
-                                    delay={0.1 * (index % 6)}
-                                    hoverEffect="zoom"
-                                >
-                                    <ProductCard
-                                        id={product.id}
-                                        name={product.name}
-                                        description={product.description}
-                                        price={product.price}
-                                        image={product.image}
-                                        imageClass={product.imageClass || ''}
-                                        onClick={handleProductClick}
-                                    />
-                                </AnimatedSection>
-                            ))}
-                        </div>
-                        {hasMoreProducts && (
-                            <AnimatedSection animation="fadeIn" delay={0.2}>
-                                <div className="load-more-container">
-                                    <button 
-                                        className="load-more-button"
-                                        onClick={loadMoreProducts}
-                                        disabled={isLoadingMore}
-                                    >
-                                        {isLoadingMore ? 'Đang tải...' : 'Xem thêm sản phẩm'}
-                                    </button>
+                        {loading ? (
+                            <div className="loading-container">
+                                <div className="loading-spinner"></div>
+                                <p>Đang tải sản phẩm...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="error-container">
+                                <p>{error}</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="product-grid">
+                                    {visibleProducts.length === 0 ? (
+                                        <div className="no-products-message">
+                                            <p>Không có sản phẩm nào trong danh mục này.</p>
+                                        </div>
+                                    ) : (
+                                        visibleProducts.map((product, index) => (
+                                            <AnimatedSection 
+                                                key={product.id}
+                                                animation="slideUp" 
+                                                delay={0.1 * (index % 6)}
+                                                hoverEffect="zoom"
+                                            >
+                                                <ProductCard
+                                                    id={product.id}
+                                                    name={product.name}
+                                                    description={product.description}
+                                                    price={product.price}
+                                                    image={product.image}
+                                                    imageClass={product.imageClass || ''}
+                                                    onClick={handleProductClick}
+                                                />
+                                            </AnimatedSection>
+                                        ))
+                                    )}
                                 </div>
-                            </AnimatedSection>
+                                {hasMoreProducts && (
+                                    <AnimatedSection animation="fadeIn" delay={0.2}>
+                                        <div className="load-more-container">
+                                            <button 
+                                                className="load-more-button"
+                                                onClick={loadMoreProducts}
+                                                disabled={isLoadingMore}
+                                            >
+                                                {isLoadingMore ? 'Đang tải...' : 'Xem thêm sản phẩm'}
+                                            </button>
+                                        </div>
+                                    </AnimatedSection>
+                                )}
+                            </>
                         )}
                     </div>
-                </AnimatedSection>
-                
+                </AnimatedSection>               
                 {/* Coming Soon Section with Enhanced Animation */}
-                <AnimatedSection animation="fadeIn" delay={0.5}>
-                    <div className="coming-soon-section">
-                        <AnimatedSection animation="slideUp" delay={0.2}>
-                            <div className="coming-soon-header">
-                                <div className="coming-soon-title-container">
-                                    <h2 className="coming-soon-title-main">Sản phẩm</h2>
-                                    <h2 className="coming-soon-title-sub">sắp ra mắt</h2>
-                                </div>
-                                <p className="coming-soon-description">
-                                    Những sản phẩm mới nhất sẽ sớm có mặt trong bộ sưu tập của chúng tôi
-                                </p>
-                            </div>
-                        </AnimatedSection>
-                        
-                        <div className="coming-soon-products">
-                            {comingSoonProducts.map((product, index) => (
-                                <AnimatedSection 
-                                    key={product.id}
-                                    animation="slideRight" 
-                                    delay={0.2 * index}
-                                    hoverEffect="glow"
-                                >
-                                    <div 
-                                        className={`coming-soon-product ${index === activeComingSlide ? 'active' : ''}`}
-                                    >
-                                        <div className="coming-soon-image-container">
-                                            <div className="product-image-placeholder"></div>
-                                            <img 
-                                                src={product.image} 
-                                                alt={product.name} 
-                                                className={`coming-soon-image ${product.imageClass || ''}`}
-                                                loading="lazy"
-                                                onLoad={(e) => {
-                                                    e.target.classList.add('loaded');
-                                                    const placeholder = e.target.previousSibling;
-                                                    if (placeholder && placeholder.classList.contains('product-image-placeholder')) {
-                                                        placeholder.style.display = 'none';
-                                                    }
-                                                }}
-                                                onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                    const placeholder = e.target.previousSibling;
-                                                    if (placeholder) {
-                                                        placeholder.innerHTML = '<div class="product-image-error">Không thể tải hình ảnh</div>';
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="coming-soon-info">
-                                            <h3 className="coming-soon-name">{product.name}</h3>
-                                            <p className="coming-soon-description">{product.description}</p>
-                                            <p className="coming-soon-price">{product.price}</p>
-                                        </div>
-                                        <button className="coming-soon-button">
-                                            <svg 
-                                                xmlns="http://www.w3.org/2000/svg" 
-                                                width="24" 
-                                                height="24" 
-                                                viewBox="0 0 24 24" 
-                                                fill="none" 
-                                                stroke="currentColor" 
-                                                strokeWidth="2" 
-                                                strokeLinecap="round" 
-                                                strokeLinejoin="round"
-                                            >
-                                                <path d="M9 18l6-6-6-6"/>
-                                            </svg>
-                                        </button>
+                {comingSoonProducts.length > 0 && (
+                    <AnimatedSection animation="fadeIn" delay={0.5}>
+                        <div className="coming-soon-section">
+                            <AnimatedSection animation="slideUp" delay={0.2}>
+                                <div className="coming-soon-header">
+                                    <div className="coming-soon-title-container">
+                                        <h2 className="coming-soon-title-main">Sản phẩm</h2>
+                                        <h2 className="coming-soon-title-sub">sắp ra mắt</h2>
                                     </div>
-                                </AnimatedSection>
-                            ))}
-                        </div>
-                        
-                        <AnimatedSection animation="fadeIn" delay={0.8}>
-                            <div className="coming-soon-dots">
-                                {comingSoonProducts.map((_, index) => (
-                                    <button 
-                                        key={index} 
-                                        className={`coming-soon-dot ${activeComingSlide === index ? 'active' : ''}`}
-                                        onClick={() => goToComingSoonSlide(index)}
-                                        aria-label={`Go to coming soon slide ${index + 1}`}
-                                    />
+                                    <p className="coming-soon-description">
+                                        Những sản phẩm sắp ra mắt trong bộ sưu tập của chúng tôi
+                                    </p>
+                                </div>
+                            </AnimatedSection>                            
+                            <div className="coming-soon-products">
+                                {comingSoonProducts.map((product, index) => (
+                                    <AnimatedSection 
+                                        key={product.id}
+                                        animation="slideRight" 
+                                        delay={0.2 * index}
+                                        hoverEffect="glow"
+                                    >
+                                        <div 
+                                            className={`coming-soon-product ${index === activeComingSlide ? 'active' : ''}`}
+                                        >
+                                            <div className="coming-soon-image-container">
+                                                <div className="product-image-placeholder"></div>
+                                                <img 
+                                                    src={product.image} 
+                                                    alt={product.name} 
+                                                    className={`coming-soon-image ${product.imageClass || ''}`}
+                                                    loading="lazy"
+                                                    onLoad={(e) => {
+                                                        e.target.classList.add('loaded');
+                                                        const placeholder = e.target.previousSibling;
+                                                        if (placeholder && placeholder.classList.contains('product-image-placeholder')) {
+                                                            placeholder.style.display = 'none';
+                                                        }
+                                                    }}
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        const placeholder = e.target.previousSibling;
+                                                        if (placeholder) {
+                                                            placeholder.innerHTML = '<div class="product-image-error">Không thể tải hình ảnh</div>';
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="coming-soon-info">
+                                                <h3 className="coming-soon-name">{product.name}</h3>
+                                                <p className="coming-soon-description">{product.description}</p>
+                                                <p className="coming-soon-price">{product.price}</p>
+                                            </div>
+                                            <button 
+                                                className="coming-soon-button"
+                                                onClick={() => handleProductClick(product.id)}
+                                            >
+                                                <svg 
+                                                    xmlns="http://www.w3.org/2000/svg" 
+                                                    width="24" 
+                                                    height="24" 
+                                                    viewBox="0 0 24 24" 
+                                                    fill="none" 
+                                                    stroke="currentColor" 
+                                                    strokeWidth="2" 
+                                                    strokeLinecap="round" 
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M9 18l6-6-6-6"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </AnimatedSection>
                                 ))}
-                            </div>
-                        </AnimatedSection>
-                    </div>
-                </AnimatedSection>
+                            </div>                           
+                            <AnimatedSection animation="fadeIn" delay={0.8}>
+                                <div className="coming-soon-dots">
+                                    {comingSoonProducts.map((_, index) => (
+                                        <button 
+                                            key={index} 
+                                            className={`coming-soon-dot ${activeComingSlide === index ? 'active' : ''}`}
+                                            onClick={() => goToComingSoonSlide(index)}
+                                            aria-label={`Go to coming soon slide ${index + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            </AnimatedSection>
+                        </div>
+                    </AnimatedSection>
+                )}
             </main>            
             <Footer />
         </div>

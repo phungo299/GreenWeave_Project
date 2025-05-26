@@ -2,33 +2,33 @@ import axiosClient from '../api/axiosClient';
 
 const cartService = {
     // Get cart items
-    getCart: () => {
-        return axiosClient.get('/cart');
+    getCart: (userId) => {
+        return axiosClient.get(`/carts/${userId}`);
     },
 
     // Add item to cart
-    addItem: (productId, quantity) => {
-        return axiosClient.post('/cart/items', { productId, quantity });
+    addToCart: (userId, cartData) => {
+        return axiosClient.post(`/carts/${userId}/items`, cartData);
     },
 
     // Update cart item quantity
-    updateQuantity: (itemId, quantity) => {
-        return axiosClient.put(`/cart/items/${itemId}`, { quantity });
+    updateQuantity: (userId, itemId, quantity) => {
+        return axiosClient.put(`/carts/${userId}/items/${itemId}`, { quantity });
     },
 
     // Remove item from cart
-    removeItem: (itemId) => {
-        return axiosClient.delete(`/cart/items/${itemId}`);
+    removeItem: (userId, itemId) => {
+        return axiosClient.delete(`/carts/${userId}/items/${itemId}`);
     },
 
     // Clear cart
-    clearCart: () => {
-        return axiosClient.delete('/cart');
+    clearCart: (userId) => {
+        return axiosClient.delete(`/carts/${userId}`);
     },
 
     // Get cart total
-    getTotal: () => {
-        return axiosClient.get('/cart/total');
+    getTotal: (userId) => {
+        return axiosClient.get(`/carts/${userId}/total`);
     },
 
     // Apply coupon

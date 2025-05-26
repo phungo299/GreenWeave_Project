@@ -238,13 +238,36 @@ components:
               _id:
                 type: string
               productId:
-                type: string
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  name:
+                    type: string
+                  title:
+                    type: string
+                  price:
+                    type: number
+                  images:
+                    type: array
+                    items:
+                      type: string
+                  selectedSize:
+                    type: string
+                  selectedColor:
+                    type: string
+                  stock:
+                    type: string
+                  quantity:
+                    type: integer
+                    description: Số lượng sản phẩm trong kho
               variantId:
                 type: string
               color:
                 type: string
               quantity:
                 type: integer
+                description: Số lượng sản phẩm trong giỏ hàng
         createdAt:
           type: string
           format: date-time
@@ -3248,6 +3271,7 @@ paths:
           description: Cart not found
         '500':
           description: Server error
+          
     delete:
       tags:
         - Cart

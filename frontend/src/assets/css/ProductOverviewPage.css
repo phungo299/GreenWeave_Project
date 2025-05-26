@@ -285,6 +285,7 @@
 }
 
 .coming-soon-products {
+    padding: 0 40px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 30px;
@@ -506,6 +507,7 @@
     .coming-soon-products {
         grid-template-columns: 1fr;
         gap: 20px;
+        padding: 0 20px;
     }
     
     .coming-soon-title-main,
@@ -551,6 +553,10 @@
         margin: 60px calc(-50vw + 50%) 0 calc(-50vw + 50%);
         width: 100vw;
         padding: 40px 15px;
+    }
+
+    .coming-soon-products {
+        padding: 0 15px;
     }
     
     .coming-soon-image-container {
