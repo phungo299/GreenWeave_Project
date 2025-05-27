@@ -7,6 +7,7 @@ import {
     createUser,
     forgotPassword,
     getAllUsers,
+    getAllUsersIncludingAdmin,
     getUser,
     getUserProfile,
     getUserAddresses,
@@ -38,6 +39,7 @@ router.patch("/addresses/:addressId/default", authMiddleware, setDefaultAddress)
 
 // Admin routes
 router.get("/all", authMiddleware, getAllUsers);
+router.get("/all-with-admin", authMiddleware, getAllUsersIncludingAdmin);
 router.get("/search", authMiddleware, searchUsers);
 
 // Utility routes

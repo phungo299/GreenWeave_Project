@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminBreadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
 import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
-import axiosClient from '../../api/axiosClient';
+import userService from '../../services/userService';
 import './UserList.css';
-import { FaEdit, FaToggleOn, FaToggleOff, FaUserPlus } from 'react-icons/fa';
+import { FaEdit, FaToggleOn, FaEye, FaToggleOff, FaUserPlus } from 'react-icons/fa';
 
 const STATUS_MAP = {
     false: { label: 'Đang hoạt động', className: 'active' },
@@ -16,6 +17,7 @@ const STATUS_MAP = {
 const PAGE_SIZE = 10;
 
 const UserList = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -31,7 +33,7 @@ const UserList = () => {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                const response = await axiosClient.get('/users/all');
+                const response = await userService.getAllIncludingAdmin();
                 console.log('API Response:', response);
                 console.log('API Response type:', typeof response);
                 console.log('API Response has data property:', response.hasOwnProperty('data'));
@@ -116,7 +118,7 @@ const UserList = () => {
     // Handle user state on/off
     const toggleUserStatus = async (userId) => {
         try {
-            await axiosClient.patch(`/users/toggle-status/${userId}`);
+            await userService.toggleStatus(userId);
             setUsers(prevUsers => {
                 return {
                     ...prevUsers,
@@ -190,6 +192,10 @@ const UserList = () => {
         console.log('Add new user');
         // Implement add user functionality
         alert('Chức năng thêm người dùng sẽ được phát triển sau.');
+    };
+
+    const handleViewUser = (userId) => {
+        navigate(`/admin/users/detail/${userId}`);
     };
 
     const handleEditUser = (userId) => {
@@ -306,20 +312,32 @@ const UserList = () => {
                                         </td>
                                         <td>
                                             <div className="admin-user-list-actions">
-                                                <button 
-                                                    className="admin-user-list-icon-btn edit"
-                                                    onClick={() => handleEditUser(user.id)}
-                                                    title="Chỉnh sửa thông tin"
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                                <button 
-                                                    className="admin-user-list-icon-btn toggle"
-                                                    onClick={() => toggleUserStatus(user.id)}
-                                                    title={user.isDisabled ? 'Kích hoạt tài khoản' : 'Vô hiệu hóa tài khoản'}
-                                                >
-                                                    {user.isDisabled ? <FaToggleOff /> : <FaToggleOn />}
-                                                </button>
+                                                {user.role === 'admin' ? (
+                                                    <button 
+                                                        className="admin-user-list-icon-btn view"
+                                                        onClick={() => handleViewUser(user.id)}
+                                                        title="Xem chi tiết"
+                                                    >
+                                                        <FaEye />
+                                                    </button>
+                                                ) : (
+                                                    <>
+                                                        <button 
+                                                            className="admin-user-list-icon-btn edit"
+                                                            onClick={() => handleEditUser(user.id)}
+                                                            title="Chỉnh sửa thông tin"
+                                                        >
+                                                            <FaEdit />
+                                                        </button>
+                                                        <button 
+                                                            className="admin-user-list-icon-btn toggle"
+                                                            onClick={() => toggleUserStatus(user.id)}
+                                                            title={user.isDisabled ? 'Kích hoạt tài khoản' : 'Vô hiệu hóa tài khoản'}
+                                                        >
+                                                            {user.isDisabled ? <FaToggleOff /> : <FaToggleOn />}
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

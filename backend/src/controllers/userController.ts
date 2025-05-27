@@ -161,6 +161,34 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
+export const getAllUsersIncludingAdmin = async (req: Request, res: Response) => {
+  try {
+    const users = await User.find({});
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "Danh sách tài khoản trống" });
+    }
+
+    const formattedData = users.map((user) => ({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar || "",
+      phone: user.phone || "",
+      address: user.address || "",
+      role: user.role,
+      isDisabled: user.isDisabled,
+    }));
+
+    return res.status(200).json({ data: formattedData });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 export const toggleUserStatus = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;

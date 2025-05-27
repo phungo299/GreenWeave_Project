@@ -3,7 +3,17 @@ import axiosClient from '../api/axiosClient';
 const userService = {
     // Get all users (admin only)
     getAll: (params) => {
-        return axiosClient.get('/admin/users', { params });
+        return axiosClient.get('/users/all', { params });
+    },
+
+    // Get all users including admins (admin only)
+    getAllIncludingAdmin: (params) => {
+        return axiosClient.get('/users/all-with-admin', { params });
+    },
+
+    // Toggle user active status
+    toggleStatus: (userId) => {
+        return axiosClient.patch(`/users/toggle-status/${userId}`);
     },
 
     // Get user by ID (admin only)
@@ -38,7 +48,7 @@ const userService = {
 
     // Search users (admin only)
     search: (query) => {
-        return axiosClient.get('/admin/users/search', { params: { q: query } });
+        return axiosClient.get('/users/search', { params: query });
     },
 
     // Get user addresses
