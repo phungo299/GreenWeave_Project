@@ -6,6 +6,11 @@ const userService = {
         return axiosClient.get('/users/all', { params });
     },
 
+    // Get user by ID (admin only)
+    getById: (userId) => {
+        return axiosClient.get(`/users/${userId}`);
+    },
+
     // Get all users including admins (admin only)
     getAllIncludingAdmin: (params) => {
         return axiosClient.get('/users/all-with-admin', { params });
@@ -16,19 +21,14 @@ const userService = {
         return axiosClient.patch(`/users/toggle-status/${userId}`);
     },
 
-    // Get user by ID (admin only)
-    getById: (id) => {
-        return axiosClient.get(`/admin/users/${id}`);
-    },
-
     // Create new user (admin only)
     create: (userData) => {
-        return axiosClient.post('/admin/users', userData);
+        return axiosClient.post('/users/create', userData);
     },
 
     // Update user (admin only)
-    update: (id, userData) => {
-        return axiosClient.put(`/admin/users/${id}`, userData);
+    update: (userId, userData) => {
+        return axiosClient.put(`/users/${userId}`, userData);
     },
 
     // Delete user (admin only)

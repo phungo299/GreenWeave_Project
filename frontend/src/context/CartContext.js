@@ -17,7 +17,7 @@ export const CartProvider = ({ children }) => {
             if (isAuthenticated && user?.id) {
                 try {
                     const response = await cartService.getCart(user.id);
-                    console.log('Get cart from server: ', response);
+                    //console.log('Get cart from server: ', response);
                     if (response && response.items && Array.isArray(response.items)) {
                         // Transform API response to match CartContext format
                         const transformedItems = response.items.map(item => ({

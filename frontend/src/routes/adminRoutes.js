@@ -5,6 +5,7 @@ import AdminProductList from '../adminpages/productlistpage/AdminProductList';
 import AdminProductDetails from '../adminpages/productdetailspage/AdminProductDetails';
 import AdminOrderList from '../adminpages/orderlistpage/AdminOrderList';
 import UserList from '../adminpages/userlistpage/UserList';
+import UserDetails from '../adminpages/userdetailspage/UserDetails';
 import AdminReviewList from '../adminpages/reviewlistpage/AdminReviewList';
 import SystemSettingsPage from '../adminpages/systemsettinglistpage/SystemSettingList';
 import SystemSettingsDetails from '../adminpages/systemsettingdetails/SystemSettingDetails';
@@ -51,6 +52,18 @@ const adminRoutes = [
             {
                 path: 'users',
                 component: UserList
+            },
+            {
+                path: 'users/detail/:userId',
+                component: UserDetails
+            },
+            {
+                path: 'users/edit/:userId',
+                component: UserDetails
+            },
+            {
+                path: 'users/add',
+                component: UserDetails
             },
             {
                 path: 'reviews',

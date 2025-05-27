@@ -34,11 +34,10 @@ const UserList = () => {
             try {
                 setLoading(true);
                 const response = await userService.getAllIncludingAdmin();
-                console.log('API Response:', response);
-                console.log('API Response type:', typeof response);
-                console.log('API Response has data property:', response.hasOwnProperty('data'));
-                console.log('API Response data type:', typeof response.data);
-                
+                //console.log('API Response:', response);
+                //console.log('API Response type:', typeof response);
+                //console.log('API Response has data property:', response.hasOwnProperty('data'));
+                //console.log('API Response data type:', typeof response.data);       
                 if (response && response.data) {
                     //console.log('Setting users to:', response);
                     setUsers(response);
@@ -118,17 +117,21 @@ const UserList = () => {
     // Handle user state on/off
     const toggleUserStatus = async (userId) => {
         try {
-            await userService.toggleStatus(userId);
-            setUsers(prevUsers => {
-                return {
-                    ...prevUsers,
-                    data: prevUsers.data.map(user => 
-                        user.id === userId 
-                            ? { ...user, isDisabled: !user.isDisabled } 
-                            : user
-                    )
-                };
-            });
+            const response = await userService.toggleStatus(userId);
+            if (response && response.data) {
+                setUsers(prevUsers => {
+                    return {
+                        ...prevUsers,
+                        data: prevUsers.data.map(user => 
+                            user.id === userId 
+                                ? { ...user, isDisabled: response.data.isDisabled } 
+                                : user
+                        )
+                    };
+                });
+            } else {
+                throw new Error('No response data');
+            }
         } catch (err) {
             console.error('Error toggling user status:', err);
             alert('Không thể thay đổi trạng thái người dùng. Vui lòng thử lại sau.');
@@ -189,9 +192,7 @@ const UserList = () => {
     }
 
     const handleAddUser = () => {
-        console.log('Add new user');
-        // Implement add user functionality
-        alert('Chức năng thêm người dùng sẽ được phát triển sau.');
+        navigate('/admin/users/add');
     };
 
     const handleViewUser = (userId) => {
@@ -199,9 +200,7 @@ const UserList = () => {
     };
 
     const handleEditUser = (userId) => {
-        console.log('Edit user:', userId);
-        // Implement edit user functionality
-        // For example, navigate to edit page or open a modal
+        navigate(`/admin/users/edit/${userId}`);
     };
 
     return (

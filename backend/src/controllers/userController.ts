@@ -189,6 +189,265 @@ export const getAllUsersIncludingAdmin = async (req: Request, res: Response) => 
   }
 };
 
+// Get user by ID (admin only)
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    const userData = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar || "",
+      phone: user.phone || "",
+      address: user.address || "",
+      role: user.role,
+      fullName: user.fullName || "",
+      isDisabled: user.isDisabled,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+
+    return res.status(200).json({ data: userData });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      message: error.message || "Đã xảy ra lỗi khi lấy thông tin người dùng",
+    });
+  }
+};
+
+// Create user (admin only)
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { username, email, password, phone, role, address, fullName, isDisabled } = req.body;
+
+    // Validate required fields
+    if (!username || !email) {
+      return res.status(400).json({ 
+        message: "Username và email là bắt buộc" 
+      });
+    }
+
+    const formatUsername = username.trim().toLowerCase();
+    const formatEmail = email.trim().toLowerCase();
+    
+    // Generate a default password if none is provided
+    let formatPassword = password ? password.trim() : '';
+    if (!formatPassword) {
+      // Generate a random password with 8 characters
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      for (let i = 0; i < 8; i++) {
+        formatPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      // Add special character and number to ensure password complexity
+      formatPassword += '@1';
+    }
+
+    // Validate username format
+    if (formatUsername.length < 8 || formatUsername.length > 30) {
+      return res.status(400).json({ 
+        message: "Tên tài khoản phải có độ dài từ 8 đến 30 ký tự" 
+      });
+    }
+    if (!/^(?:[a-zA-Z0-9_]{8,30})$/.test(formatUsername)) {
+      return res.status(400).json({ 
+        message: "Tên tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới" 
+      });
+    }
+
+    // Validate email format
+    if (!/^[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}$/.test(formatEmail)) {
+      return res.status(400).json({ 
+        message: "Email không hợp lệ" 
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ username: formatUsername }, { email: formatEmail }],
+    });
+
+    if (existingUser) {
+      if (existingUser.username === formatUsername) {
+        return res.status(400).json({ 
+          message: "Tên tài khoản này đã được sử dụng" 
+        });
+      }
+      if (existingUser.email === formatEmail) {
+        return res.status(400).json({ 
+          message: "Email này đã được sử dụng" 
+        });
+      }
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(formatPassword, salt);
+
+    // Create new user
+    const newUser = new User({
+      username: formatUsername,
+      email: formatEmail,
+      passwordHash,
+      phone: phone || "",
+      role: role || "user",
+      address: address || "",
+      fullName: fullName || "",
+      isDisabled: isDisabled || false,
+      isVerified: true // Admin created users are auto-verified
+    });
+
+    const savedUser = await newUser.save();
+
+    const formattedUser = {
+      id: savedUser._id,
+      username: savedUser.username,
+      email: savedUser.email,
+      phone: savedUser.phone,
+      role: savedUser.role,
+      address: savedUser.address,
+      fullName: savedUser.fullName,
+      isVerified: savedUser.isVerified,
+      isDisabled: savedUser.isDisabled
+    };
+
+    // Add the generated password to the response if it was auto-generated
+    const response = {
+      message: "Tạo tài khoản thành công",
+      data: formattedUser
+    };
+
+    if (!password) {
+      response.message = `Tạo tài khoản thành công. Mật khẩu mặc định: ${formatPassword}`;
+    }
+
+    return res.status(201).json(response);
+  } catch (error: any) {
+    console.error("Create user error:", error);
+    return res.status(500).json({
+      message: "Đã xảy ra lỗi khi tạo tài khoản"
+    });
+  }
+};
+
+// Update user (admin only)
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { username, email, phone, role, address, fullName, isDisabled } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ 
+        message: "User ID là bắt buộc" 
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        message: "Không tìm thấy người dùng" 
+      });
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+
+    if (username) {
+      const formatUsername = username.trim().toLowerCase();
+      if (formatUsername.length < 8 || formatUsername.length > 30) {
+        return res.status(400).json({ 
+          message: "Tên tài khoản phải có độ dài từ 8 đến 30 ký tự" 
+        });
+      }
+      if (!/^(?:[a-zA-Z0-9_]{8,30})$/.test(formatUsername)) {
+        return res.status(400).json({ 
+          message: "Tên tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới" 
+        });
+      }
+      
+      // Check if username already exists (excluding current user)
+      const existingUsername = await User.findOne({ 
+        username: formatUsername, 
+        _id: { $ne: userId } 
+      });
+      if (existingUsername) {
+        return res.status(400).json({ 
+          message: "Tên tài khoản này đã được sử dụng" 
+        });
+      }
+      updateData.username = formatUsername;
+    }
+
+    if (email) {
+      const formatEmail = email.trim().toLowerCase();
+      if (!/^[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}$/.test(formatEmail)) {
+        return res.status(400).json({ 
+          message: "Email không hợp lệ" 
+        });
+      }
+      
+      // Check if email already exists (excluding current user)
+      const existingEmail = await User.findOne({ 
+        email: formatEmail, 
+        _id: { $ne: userId } 
+      });
+      if (existingEmail) {
+        return res.status(400).json({ 
+          message: "Email này đã được sử dụng" 
+        });
+      }
+      updateData.email = formatEmail;
+    }
+
+    if (phone !== undefined) updateData.phone = phone;
+    if (role && ["admin", "user", "staff"].includes(role)) updateData.role = role;
+    if (address !== undefined) updateData.address = address;
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (typeof isDisabled === 'boolean') updateData.isDisabled = isDisabled;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-passwordHash");
+
+    if (!updatedUser) {
+      return res.status(500).json({ 
+        message: "Có lỗi xảy ra khi cập nhật thông tin" 
+      });
+    }
+
+    const formattedUser = {
+      id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      role: updatedUser.role,
+      address: updatedUser.address,
+      fullName: updatedUser.fullName,
+      isVerified: updatedUser.isVerified,
+      isDisabled: updatedUser.isDisabled
+    };
+
+    return res.status(200).json({
+      message: "Cập nhật thông tin thành công",
+      data: formattedUser
+    });
+  } catch (error: any) {
+    console.error("Update user error:", error);
+    return res.status(500).json({
+      message: "Đã xảy ra lỗi khi cập nhật thông tin"
+    });
+  }
+};
+
 export const toggleUserStatus = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -389,208 +648,6 @@ export const searchUsers = async (req: Request, res: Response) => {
     console.log(error);
     return res.status(500).json({
       message: error.message || "Đã xảy ra lỗi khi tìm kiếm người dùng",
-    });
-  }
-};
-
-// Tạo user mới (Admin only)
-export const createUser = async (req: Request, res: Response) => {
-  try {
-    const { username, email, password, phone, role, address } = req.body;
-
-    // Validate required fields
-    if (!username || !email || !password) {
-      return res.status(400).json({ 
-        message: "Username, email và password là bắt buộc" 
-      });
-    }
-
-    const formatUsername = username.trim().toLowerCase();
-    const formatEmail = email.trim().toLowerCase();
-    const formatPassword = password.trim();
-
-    // Validate username format
-    if (formatUsername.length < 8 || formatUsername.length > 30) {
-      return res.status(400).json({ 
-        message: "Tên tài khoản phải có độ dài từ 8 đến 30 ký tự" 
-      });
-    }
-    if (!/^(?:[a-zA-Z0-9_]{8,30})$/.test(formatUsername)) {
-      return res.status(400).json({ 
-        message: "Tên tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới" 
-      });
-    }
-
-    // Validate email format
-    if (!/^[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}$/.test(formatEmail)) {
-      return res.status(400).json({ 
-        message: "Email không hợp lệ" 
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ username: formatUsername }, { email: formatEmail }],
-    });
-
-    if (existingUser) {
-      if (existingUser.username === formatUsername) {
-        return res.status(400).json({ 
-          message: "Tên tài khoản này đã được sử dụng" 
-        });
-      }
-      if (existingUser.email === formatEmail) {
-        return res.status(400).json({ 
-          message: "Email này đã được sử dụng" 
-        });
-      }
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(formatPassword, salt);
-
-    // Create new user
-    const newUser = new User({
-      username: formatUsername,
-      email: formatEmail,
-      passwordHash,
-      phone: phone || "",
-      role: role || "user",
-      address: address || "",
-      isVerified: true // Admin created users are auto-verified
-    });
-
-    const savedUser = await newUser.save();
-
-    const formattedUser = {
-      id: savedUser._id,
-      username: savedUser.username,
-      email: savedUser.email,
-      phone: savedUser.phone,
-      role: savedUser.role,
-      address: savedUser.address,
-      isVerified: savedUser.isVerified,
-      isDisabled: savedUser.isDisabled
-    };
-
-    return res.status(201).json({
-      message: "Tạo tài khoản thành công",
-      data: formattedUser
-    });
-  } catch (error: any) {
-    console.error("Create user error:", error);
-    return res.status(500).json({
-      message: "Đã xảy ra lỗi khi tạo tài khoản"
-    });
-  }
-};
-
-// Cập nhật thông tin user (Admin only)
-export const updateUser = async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
-    const { username, email, phone, role, address, isDisabled } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ 
-        message: "User ID là bắt buộc" 
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ 
-        message: "Không tìm thấy người dùng" 
-      });
-    }
-
-    // Prepare update data
-    const updateData: any = {};
-
-    if (username) {
-      const formatUsername = username.trim().toLowerCase();
-      if (formatUsername.length < 8 || formatUsername.length > 30) {
-        return res.status(400).json({ 
-          message: "Tên tài khoản phải có độ dài từ 8 đến 30 ký tự" 
-        });
-      }
-      if (!/^(?:[a-zA-Z0-9_]{8,30})$/.test(formatUsername)) {
-        return res.status(400).json({ 
-          message: "Tên tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới" 
-        });
-      }
-      
-      // Check if username already exists (excluding current user)
-      const existingUsername = await User.findOne({ 
-        username: formatUsername, 
-        _id: { $ne: userId } 
-      });
-      if (existingUsername) {
-        return res.status(400).json({ 
-          message: "Tên tài khoản này đã được sử dụng" 
-        });
-      }
-      updateData.username = formatUsername;
-    }
-
-    if (email) {
-      const formatEmail = email.trim().toLowerCase();
-      if (!/^[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}$/.test(formatEmail)) {
-        return res.status(400).json({ 
-          message: "Email không hợp lệ" 
-        });
-      }
-      
-      // Check if email already exists (excluding current user)
-      const existingEmail = await User.findOne({ 
-        email: formatEmail, 
-        _id: { $ne: userId } 
-      });
-      if (existingEmail) {
-        return res.status(400).json({ 
-          message: "Email này đã được sử dụng" 
-        });
-      }
-      updateData.email = formatEmail;
-    }
-
-    if (phone !== undefined) updateData.phone = phone;
-    if (role && ["admin", "user", "staff"].includes(role)) updateData.role = role;
-    if (address !== undefined) updateData.address = address;
-    if (typeof isDisabled === 'boolean') updateData.isDisabled = isDisabled;
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true, runValidators: true }
-    ).select("-passwordHash");
-
-    if (!updatedUser) {
-      return res.status(500).json({ 
-        message: "Có lỗi xảy ra khi cập nhật thông tin" 
-      });
-    }
-
-    const formattedUser = {
-      id: updatedUser._id,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      phone: updatedUser.phone,
-      role: updatedUser.role,
-      address: updatedUser.address,
-      isVerified: updatedUser.isVerified,
-      isDisabled: updatedUser.isDisabled
-    };
-
-    return res.status(200).json({
-      message: "Cập nhật thông tin thành công",
-      data: formattedUser
-    });
-  } catch (error: any) {
-    console.error("Update user error:", error);
-    return res.status(500).json({
-      message: "Đã xảy ra lỗi khi cập nhật thông tin"
     });
   }
 };

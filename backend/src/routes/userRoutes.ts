@@ -9,6 +9,7 @@ import {
     getAllUsers,
     getAllUsersIncludingAdmin,
     getUser,
+    getUserById,
     getUserProfile,
     getUserAddresses,
     addUserAddress,
@@ -41,6 +42,7 @@ router.patch("/addresses/:addressId/default", authMiddleware, setDefaultAddress)
 router.get("/all", authMiddleware, getAllUsers);
 router.get("/all-with-admin", authMiddleware, getAllUsersIncludingAdmin);
 router.get("/search", authMiddleware, searchUsers);
+router.get("/:userId", authMiddleware, getUserById);
 
 // Utility routes
 router.post("/check-phoneNumber", checkPhoneNumber);
