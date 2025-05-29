@@ -1,52 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AdminBreadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import InputField from '../../components/ui/inputfield/InputField';
 import './SystemSettingDetails.css';
+import settingService from '../../services/settingService';
 
 const TYPE_OPTIONS = [
-    { label: 'General', value: 'General' },
-    { label: 'Security', value: 'Security' },
+    { label: 'string', value: 'string' },
+    { label: 'number', value: 'number' },
+    { label: 'boolean', value: 'boolean' },
+    { label: 'object', value: 'object' },
+    { label: 'array', value: 'array' },
 ];
 
 const SystemSettingDetails = () => {
-    const { id } = useParams();
+    const { id: key } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const isAddMode = !id || location.pathname.includes('/add');
-    const [form, setForm] = useState(() => {
-        // If in add new mode, return empty form
-        if (isAddMode) {
-            return {
-                name: '',
-                type: '',
-                value: '',
-                priority: '',
-                status: 'active',
-                description: '',
-            };
-        }
-        
-        // Mock data - in reality you will fetch data from API
-        const MOCK_SETTINGS = [
-            { id: 1, name: 'Max Login Attempts', type: 'Security', value: '5', priority: 1, status: 'active', description: 'Số lần đăng nhập tối đa trước khi khóa tài khoản' },
-            { id: 2, name: 'Site Title', type: 'General', value: 'GreenWeave', priority: 2, status: 'active', description: 'Tên hiển thị trên website' },
-            { id: 3, name: 'Maintenance Mode', type: 'General', value: 'Off', priority: 3, status: 'inactive', description: 'Bật/tắt chế độ bảo trì website' },
-            { id: 4, name: 'Session Timeout', type: 'Security', value: '30m', priority: 4, status: 'active', description: 'Thời gian timeout của phiên đăng nhập' },
-        ];
-        
-        // Find setting with corresponding id
-        const existingSetting = MOCK_SETTINGS.find(setting => setting.id === parseInt(id)) || {
-            name: '',
-            type: '',
-            value: '',
-            priority: '',
-            status: 'active',
-            description: '',
-        };
-        
-        return existingSetting;
+    const isAddMode = !key || location.pathname.includes('/add');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [categories, setCategories] = useState([]);
+    
+    const [form, setForm] = useState({
+        key: '',
+        value: '',
+        type: 'string',
+        description: '',
+        category: 'general',
+        isPublic: true,
     });
+
+    // Fetch categories
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await settingService.getSettingCategories();
+                setCategories(response.categories || []);
+            } catch (error) {
+                console.error('Failed to fetch categories:', error);
+                setError('Không thể tải danh mục cài đặt');
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    // Fetch setting details if in edit mode
+    useEffect(() => {
+        if (!isAddMode) {
+            const fetchSettingDetails = async () => {
+                setLoading(true);
+                try {
+                    const setting = await settingService.getSettingByKey(key);
+                    setForm({
+                        key: setting.key,
+                        value: setting.value,
+                        type: setting.type,
+                        description: setting.description,
+                        category: setting.category,
+                        isPublic: setting.isPublic,
+                    });
+                } catch (error) {
+                    console.error('Failed to fetch setting details:', error);
+                    setError('Không thể tải thông tin cài đặt');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            fetchSettingDetails();
+        }
+    }, [isAddMode, key]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -59,20 +84,58 @@ const SystemSettingDetails = () => {
     const handleRadioChange = (e) => {
         setForm(prev => ({
             ...prev,
-            status: e.target.value,
+            isPublic: e.target.value === 'true',
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle data storage here
-        alert(`Đã ${isAddMode ? 'thêm' : 'cập nhật'} cài đặt!`);
-        navigate('/admin/settings');
+        setLoading(true);
+        
+        try {
+            // Convert value based on type
+            let processedValue = form.value;
+            if (form.type === 'number') {
+                processedValue = Number(form.value);
+            } else if (form.type === 'boolean') {
+                processedValue = form.value === 'true';
+            } else if (form.type === 'object' || form.type === 'array') {
+                try {
+                    processedValue = JSON.parse(form.value);
+                } catch (error) {
+                    setError('Giá trị không phải là JSON hợp lệ cho kiểu ' + form.type);
+                    setLoading(false);
+                    return;
+                }
+            }
+            
+            const settingData = {
+                ...form,
+                value: processedValue
+            };
+            
+            if (isAddMode) {
+                await settingService.createSetting(settingData);
+            } else {
+                await settingService.updateSetting(key, settingData);
+            }
+            
+            navigate('/admin/settings');
+        } catch (error) {
+            console.error('Failed to save setting:', error);
+            setError(`Không thể ${isAddMode ? 'tạo' : 'cập nhật'} cài đặt`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCancel = () => {
         navigate('/admin/settings');
     };
+
+    if (loading && isAddMode === false) {
+        return <div className="admin-loading">Đang tải...</div>;
+    }
 
     return (
         <div className="admin-system-setting-details-container">
@@ -81,15 +144,17 @@ const SystemSettingDetails = () => {
                 <h1 className="admin-system-setting-details-title">
                     {isAddMode ? 'Thêm Cài Đặt' : 'Chi Tiết Cài Đặt'}
                 </h1>
+                {error && <div className="admin-system-setting-details-error">{error}</div>}
                 <form className="admin-system-setting-details-form" onSubmit={handleSubmit}>
                     <div className="admin-system-setting-details-row">
                         <div className="admin-system-setting-details-col">
                             <InputField
-                                label="Tên"
-                                name="name"
-                                value={form.name}
+                                label="Key"
+                                name="key"
+                                value={form.key}
                                 onChange={handleChange}
                                 required
+                                disabled={!isAddMode}
                                 className="admin-system-setting-details-input"
                                 labelClassName="admin-system-setting-details-label-inline"
                             />
@@ -103,7 +168,6 @@ const SystemSettingDetails = () => {
                                 required
                                 className="admin-system-setting-details-select"
                             >
-                                <option value="">Chọn loại</option>
                                 {TYPE_OPTIONS.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
@@ -112,27 +176,49 @@ const SystemSettingDetails = () => {
                     </div>
                     <div className="admin-system-setting-details-row">
                         <div className="admin-system-setting-details-col">
-                            <InputField
-                                label="Giá Trị"
-                                name="value"
-                                value={form.value}
-                                onChange={handleChange}
-                                required
-                                className="admin-system-setting-details-input"
-                                labelClassName="admin-system-setting-details-label-inline"
-                            />
+                            {form.type === 'boolean' ? (
+                                <div className="admin-system-setting-details-field">
+                                    <label className="admin-system-setting-details-label-inline">Giá Trị</label>
+                                    <select
+                                        name="value"
+                                        value={form.value}
+                                        onChange={handleChange}
+                                        required
+                                        className="admin-system-setting-details-select"
+                                    >
+                                        <option value="true">True</option>
+                                        <option value="false">False</option>
+                                    </select>
+                                </div>
+                            ) : (
+                                <InputField
+                                    label="Giá Trị"
+                                    name="value"
+                                    value={form.value}
+                                    onChange={handleChange}
+                                    required
+                                    className="admin-system-setting-details-input"
+                                    labelClassName="admin-system-setting-details-label-inline"
+                                />
+                            )}
                         </div>
                         <div className="admin-system-setting-details-col">
-                            <InputField
-                                label="Độ Ưu Tiên"
-                                name="priority"
-                                type="number"
-                                value={form.priority}
+                            <label className="admin-system-setting-details-label-inline" style={{marginTop: '0px'}}>Danh mục</label>
+                            <select
+                                name="category"
+                                value={form.category}
                                 onChange={handleChange}
                                 required
-                                className="admin-system-setting-details-input"
-                                labelClassName="admin-system-setting-details-label-inline"
-                            />
+                                className="admin-system-setting-details-select"
+                            >
+                                {categories.length > 0 ? (
+                                    categories.map(category => (
+                                        <option key={category} value={category}>{category}</option>
+                                    ))
+                                ) : (
+                                    <option value="general">general</option>
+                                )}
+                            </select>
                         </div>
                         <div className="admin-system-setting-details-col admin-system-setting-details-col-status">
                             <label className="admin-system-setting-details-label-inline" style={{marginTop: '0px'}}>Trạng Thái</label>
@@ -141,9 +227,9 @@ const SystemSettingDetails = () => {
                                     <input
                                         type="radio"
                                         id="status-active"
-                                        name="status"
-                                        value="active"
-                                        checked={form.status === 'active'}
+                                        name="isPublic"
+                                        value="true"
+                                        checked={form.isPublic === true}
                                         onChange={handleRadioChange}
                                     />
                                     <label htmlFor="status-active">Hoạt động</label>
@@ -152,9 +238,9 @@ const SystemSettingDetails = () => {
                                     <input
                                         type="radio"
                                         id="status-inactive"
-                                        name="status"
-                                        value="inactive"
-                                        checked={form.status === 'inactive'}
+                                        name="isPublic"
+                                        value="false"
+                                        checked={form.isPublic === false}
                                         onChange={handleRadioChange}
                                     />
                                     <label htmlFor="status-inactive">Không hoạt động</label>
@@ -173,8 +259,14 @@ const SystemSettingDetails = () => {
                         />
                     </div>
                     <div className="admin-system-setting-details-actions">
-                    <button type="button" className="admin-system-setting-details-cancel-btn" onClick={handleCancel}>Hủy</button>
-                        <button type="submit" className="admin-system-setting-details-save-btn">Lưu</button>
+                        <button type="button" className="admin-system-setting-details-cancel-btn" onClick={handleCancel}>Hủy</button>
+                        <button 
+                            type="submit" 
+                            className="admin-system-setting-details-save-btn"
+                            disabled={loading}
+                        >
+                            {loading ? 'Đang lưu...' : 'Lưu'}
+                        </button>
                     </div>
                 </form>   
             </div>

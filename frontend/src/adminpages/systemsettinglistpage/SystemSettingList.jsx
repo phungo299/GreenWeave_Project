@@ -1,62 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminBreadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import SearchBar from '../../components/ui/searchbar/SearchBar';
 import FilterBar from '../../components/ui/filterbar/FilterBar';
 import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import Pagination from '../../components/ui/pagination/Pagination';
+import { FaEdit, FaTrashAlt, FaPlus, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import './SystemSettingList.css';
+import settingService from '../../services/settingService';
 
-// Mock data
-const MOCK_SETTINGS = [
-    { id: 1, name: 'Max Login Attempts', type: 'Security', value: '5', priority: 1, status: 'active' },
-    { id: 2, name: 'Site Title', type: 'General', value: 'GreenWeave', priority: 2, status: 'active' },
-    { id: 3, name: 'Maintenance Mode', type: 'General', value: 'Off', priority: 3, status: 'inactive' },
-    { id: 4, name: 'Session Timeout', type: 'Security', value: '30m', priority: 4, status: 'active' },
-];
+const Alert = ({ message, type, onClose }) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose();
+        }, 3000);
 
-const STATUS_MAP = {
-    active: { label: 'Hoạt động', className: 'active' },
-    inactive: { label: 'Không hoạt động', className: 'inactive' },
+        return () => clearTimeout(timer);
+    }, [onClose]);
+    return (
+        <div className={`alert alert-${type}`}>
+            <div className="alert-icon">
+                <FaCheckCircle />
+            </div>
+            <div className="alert-message">{message}</div>
+        </div>
+    );
 };
 
-const TYPE_OPTIONS = [
-    { label: 'Tất cả', value: '' },
-    { label: 'General', value: 'General' },
-    { label: 'Security', value: 'Security' },
-];
-
-const STATUS_OPTIONS = [
-    { label: 'Tất cả', value: '' },
-    { label: 'Hoạt động', value: 'active' },
-    { label: 'Không hoạt động', value: 'inactive' },
-];
+const STATUS_MAP = {
+    true: { label: 'Hoạt động', className: 'active' },
+    false: { label: 'Không hoạt động', className: 'inactive' },
+};
 
 const PAGE_SIZE = 10;
 
 const SystemSettingList = () => {
     const navigate = useNavigate();
+    const [settings, setSettings] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
     const [filterValues, setFilterValues] = useState({
-        type: '',
-        status: '',
+        category: '',
+        isPublic: '',
     });
     const [page, setPage] = useState(1);
-    const [sortField, setSortField] = useState('');
-    const [sortOrder, setSortOrder] = useState('none');
+    const [totalCount, setTotalCount] = useState(0);
+    const [sortField, setSortField] = useState('createdAt');
+    const [sortOrder, setSortOrder] = useState('desc');
+    const [deleteModal, setDeleteModal] = useState({
+        visible: false,
+        settingKey: null,
+        settingName: ''
+    });
+    const [alert, setAlert] = useState({
+        visible: false,
+        message: '',
+        type: 'success'
+    });
+    const shouldRefresh = useRef(false); // Control auto refresh
+
+    // Fetch categories for filter
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await settingService.getSettingCategories();
+                setCategories(response.categories || []);
+            } catch (error) {
+                console.error('Failed to fetch categories:', error);
+                setError('Không thể tải danh mục cài đặt');
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    // Generate category options for filter
+    const categoryOptions = [
+        { label: 'Tất cả', value: '' },
+        ...categories.map(category => ({ label: category, value: category }))
+    ];
+
+    const statusOptions = [
+        { label: 'Tất cả', value: '' },
+        { label: 'Hoạt động', value: 'true' },
+        { label: 'Không hoạt động', value: 'false' },
+    ];
 
     const filterConfig = [
         {
-            label: 'Loại',
-            field: 'type',
-            options: TYPE_OPTIONS,
+            label: 'Danh mục',
+            field: 'category',
+            options: categoryOptions,
         },
         {
             label: 'Trạng Thái',
-            field: 'status',
-            options: STATUS_OPTIONS,
+            field: 'isPublic',
+            options: statusOptions,
         },
     ];
+
+    // Fetch settings
+    const fetchSettings = useCallback(async () => {
+        setLoading(true);
+        try {
+            const params = {
+                page,
+                limit: PAGE_SIZE,
+                sortBy: sortField,
+                sortOrder: sortOrder,
+            };                
+            if (filterValues.category) {
+                params.category = filterValues.category;
+            }               
+            const response = await settingService.getAllSettings(params);
+            setSettings(response.settings || []);
+            setTotalCount(response.pagination?.total || 0);
+        } catch (error) {
+            console.error('Failed to fetch settings:', error);
+            setError('Không thể tải dữ liệu cài đặt');
+        } finally {
+            setLoading(false);
+        }
+    }, [page, filterValues.category, sortField, sortOrder]);
+
+    // Effect để fetch settings khi các dependency thay đổi
+    useEffect(() => {
+        fetchSettings();
+    }, [page, filterValues.category, sortField, sortOrder, fetchSettings]);
+
+    // Effect để refresh sau khi xóa
+    useEffect(() => {
+        if (shouldRefresh.current) {
+            fetchSettings();
+            shouldRefresh.current = false;
+        }
+    }, [fetchSettings]);
 
     const handleFilterChange = (field, value) => {
         setFilterValues(prev => ({
@@ -66,44 +145,83 @@ const SystemSettingList = () => {
         setPage(1);
     };
 
-    const sortFunctions = {
-        id: (a, b, order) => order === 'asc' ? a.id - b.id : b.id - a.id,
-        name: (a, b, order) => order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name),
-        priority: (a, b, order) => order === 'asc' ? a.priority - b.priority : b.priority - a.priority,
-    };
-
     const handleSort = (field) => {
         let nextOrder = 'asc';
         if (sortField === field && sortOrder === 'asc') nextOrder = 'desc';
-        else if (sortField === field && sortOrder === 'desc') nextOrder = 'none';
-        setSortField(nextOrder === 'none' ? '' : field);
+        else if (sortField === field && sortOrder === 'desc') nextOrder = 'asc';
+        setSortField(field);
         setSortOrder(nextOrder);
     };
 
-    // Filter
-    const filteredSettings = MOCK_SETTINGS.filter(setting => {
-        const matchSearch =
-            setting.name.toLowerCase().includes(search.toLowerCase()) ||
-            setting.value.toLowerCase().includes(search.toLowerCase());
-        const matchType = !filterValues.type || setting.type === filterValues.type;
-        const matchStatus = !filterValues.status || setting.status === filterValues.status;
-        return matchSearch && matchType && matchStatus;
-    });
-
-    // Sort
-    let sortedSettings = [...filteredSettings];
-    if (sortField && sortOrder !== 'none') {
-        sortedSettings.sort((a, b) => sortFunctions[sortField](a, b, sortOrder));
-    }
-
-    // Pagination
-    const paginatedSettings = sortedSettings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    const totalPages = Math.ceil(filteredSettings.length / PAGE_SIZE);
-
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
-        setPage(1);
     };
+
+    const handleDeleteSetting = async () => {
+        try {
+            await settingService.deleteSetting(deleteModal.settingKey);
+            handleCloseModal();
+            setAlert({
+                visible: true,
+                message: `Đã xóa cài đặt "${deleteModal.settingName}" thành công!`,
+                type: 'success'
+            });
+            // Reload the list
+            shouldRefresh.current = true;
+            fetchSettings();
+        } catch (error) {
+            console.error('Failed to delete setting:', error);
+            setError('Không thể xóa cài đặt');
+            setAlert({
+                visible: true,
+                message: 'Không thể xóa cài đặt. Vui lòng thử lại sau.',
+                type: 'error'
+            });
+        }
+    };
+
+    const showDeleteConfirm = (key, name) => {
+        setDeleteModal({
+            visible: true,
+            settingKey: key,
+            settingName: name
+        });
+    };
+
+    const handleCloseModal = () => {
+        setDeleteModal({
+            visible: false,
+            settingKey: null,
+            settingName: ''
+        });
+    };
+
+    const handleCloseAlert = () => {
+        setAlert({
+            ...alert,
+            visible: false
+        });
+    };
+
+    // Filter by search term locally
+    const filteredSettings = settings.filter(setting => {
+        if (!search) return true;
+        return (
+            setting.key.toLowerCase().includes(search.toLowerCase()) ||
+            setting.description.toLowerCase().includes(search.toLowerCase()) ||
+            String(setting.value).toLowerCase().includes(search.toLowerCase())
+        );
+    });
+
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+    if (loading && settings.length === 0) {
+        return <div className="admin-loading">Đang tải...</div>;
+    }
+
+    if (error) {
+        return <div className="admin-error">{error}</div>;
+    }
 
     return (
         <div className="admin-system-setting-container">
@@ -115,7 +233,7 @@ const SystemSettingList = () => {
                         className="admin-system-setting-add-btn"
                         onClick={() => navigate('/admin/settings/add')}
                     >
-                        Thêm Cài Đặt
+                        <FaPlus className="action-icon" /> Thêm Cài Đặt
                     </button>
                 </div>
                 <div className="admin-system-setting-controls">
@@ -136,56 +254,69 @@ const SystemSettingList = () => {
                     <table className="admin-system-setting-table">
                         <thead>
                             <tr>
+                                <th>Key</th>
                                 <th>
                                     <SortableHeader
-                                        label="ID"
-                                        sortState={sortField === 'id' ? sortOrder : 'none'}
-                                        onSort={() => handleSort('id')}
+                                        label="Loại"
+                                        sortState={sortField === 'type' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('type')}
                                     />
                                 </th>
-                                <th>
-                                    <SortableHeader
-                                        label="Tên"
-                                        sortState={sortField === 'name' ? sortOrder : 'none'}
-                                        onSort={() => handleSort('name')}
-                                    />
-                                </th>
-                                <th>Loại</th>
+                                <th>Danh mục</th>
                                 <th>Giá Trị</th>
+                                <th>Mô tả</th>
                                 <th>
                                     <SortableHeader
-                                        label="Độ Ưu Tiên"
-                                        sortState={sortField === 'priority' ? sortOrder : 'none'}
-                                        onSort={() => handleSort('priority')}
+                                        label="Trạng Thái"
+                                        sortState={sortField === 'isPublic' ? sortOrder : 'none'}
+                                        onSort={() => handleSort('isPublic')}
                                     />
                                 </th>
-                                <th>Trạng Thái</th>
-                                <th></th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedSettings.map(setting => (
-                                <tr key={setting.id} className="admin-system-setting-row">
-                                    <td>{setting.id}</td>
-                                    <td>{setting.name}</td>
-                                    <td>{setting.type}</td>
-                                    <td>{setting.value}</td>
-                                    <td>{setting.priority}</td>
-                                    <td>
-                                        <span className={`admin-system-setting-status admin-system-setting-status-${setting.status}`}>
-                                            {STATUS_MAP[setting.status]?.label}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button 
-                                            className="admin-system-setting-action-btn"
-                                            onClick={() => navigate(`/admin/settings/edit/${setting.id}`)}
-                                        >
-                                            Sửa
-                                        </button>
+                            {filteredSettings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="admin-system-setting-no-data">
+                                        Không có dữ liệu
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredSettings.map(setting => (
+                                    <tr key={setting._id} className="admin-system-setting-row">
+                                        <td>{setting.key}</td>
+                                        <td>{setting.type}</td>
+                                        <td>{setting.category}</td>
+                                        <td>{typeof setting.value === 'object' 
+                                            ? JSON.stringify(setting.value) 
+                                            : String(setting.value)}
+                                        </td>
+                                        <td>{setting.description}</td>
+                                        <td>
+                                            <span className={`admin-system-setting-status admin-system-setting-status-${setting.isPublic ? 'active' : 'inactive'}`}>
+                                                {STATUS_MAP[setting.isPublic]?.label}
+                                            </span>
+                                        </td>
+                                        <td className="admin-system-setting-actions">
+                                            <button 
+                                                className="admin-system-setting-edit-btn"
+                                                onClick={() => navigate(`/admin/settings/edit/${setting.key}`)}
+                                                title="Sửa"
+                                            >
+                                                <FaEdit />
+                                            </button>
+                                            <button 
+                                                className="admin-system-setting-delete-btn"
+                                                onClick={() => showDeleteConfirm(setting.key, setting.key)}
+                                                title="Xóa"
+                                            >
+                                                <FaTrashAlt />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -196,6 +327,48 @@ const SystemSettingList = () => {
                     className="admin-system-setting-pagination"
                 />
             </div>
+            {/* Delete Confirmation Modal */}
+            {deleteModal.visible && (
+                <div className="delete-modal-overlay">
+                    <div className="delete-modal">
+                        <div className="delete-modal-header">
+                            <h3>Xác nhận xóa</h3>
+                            <button 
+                                className="delete-modal-close" 
+                                onClick={handleCloseModal}
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="delete-modal-content">
+                            <p>Bạn có chắc chắn muốn xóa cài đặt <strong>"{deleteModal.settingName}"</strong>?</p>
+                            <p className="delete-modal-warning">Hành động này không thể hoàn tác!</p>
+                        </div>
+                        <div className="delete-modal-actions">
+                            <button 
+                                className="delete-modal-cancel" 
+                                onClick={handleCloseModal}
+                            >
+                                Hủy
+                            </button>
+                            <button 
+                                className="delete-modal-confirm" 
+                                onClick={handleDeleteSetting}
+                            >
+                                Xác nhận xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Alert Notification */}
+            {alert.visible && (
+                <Alert 
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={handleCloseAlert}
+                />
+            )}
         </div>
     );
 };
