@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import publicRoutes from './routes/publicRoutes';
 import privateRoutes from './routes/privateRoutes';
 import adminRoutes from './routes/adminRoutes';
@@ -11,8 +11,22 @@ import Personal from './pages/Personal';
 import NotificationContainer from './components/ui/notification/NotificationContainer';
 import ToastManager from './components/ui/toast/ToastManager';
 import overrideAlert from './utils/overrideAlert';
+import visitorLogService from './services/visitorLogService';
 import './App.css';
 import './assets/css/light-mode-only.css';
+
+function PageTracker() {
+    const location = useLocation();  
+    useEffect(() => {
+        // Log when path changes
+        const path = location.pathname + location.search;
+        visitorLogService.trackPageVisit(path);      
+        // Can also be used for Google Analytics or other tools
+        //console.log(`Page visited: ${path}`);
+    }, [location.pathname, location.search]);
+    
+    return null; // Component này không hiển thị gì
+}
 
 function App() {
     // Override alert function with toast on app start
@@ -20,8 +34,7 @@ function App() {
         // Wait a bit for toast system to be ready
         const timer = setTimeout(() => {
             overrideAlert();
-        }, 100);
-        
+        }, 100);     
         return () => clearTimeout(timer);
     }, []);
 
@@ -29,14 +42,14 @@ function App() {
         <AuthProvider>
             <CartProvider>
                 <Router>
+                    <PageTracker />
                     <div className="app">
                         <Routes>
                             {/* Public Routes */}
                             {publicRoutes.map((route, index) => {
                                 const Page = route.component;
                                 return <Route key={index} path={route.path} element={<Page />} />;
-                            })}
-                            
+                            })}                          
                             {/* Private Routes - login required */}
                             {privateRoutes.map((route, index) => {
                                 if (route.path !== '/personal/*') {

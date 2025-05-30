@@ -162,6 +162,22 @@ export const getVisitorStats = async (req: Request, res: Response) => {
       },
       { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
     ]);
+
+    // Device stats
+    const deviceStats = await VisitorLog.aggregate([
+      { $match: dateQuery },
+      { $group: { _id: "$device", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Browser stats
+    const browserStats = await VisitorLog.aggregate([
+      { $match: dateQuery },
+      { $group: { _id: "$browser", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
     
     return res.status(200).json({
       totalVisits,
@@ -169,6 +185,8 @@ export const getVisitorStats = async (req: Request, res: Response) => {
       topCountries,
       topPages,
       dailyVisits,
+      deviceStats,
+      browserStats,
       period: {
         startDate,
         endDate
