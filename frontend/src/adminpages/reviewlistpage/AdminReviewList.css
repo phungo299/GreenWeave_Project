@@ -8,7 +8,7 @@
     background: #fff;
     border-radius: 16px;
     margin: 40px auto 0 auto;
-    max-width: 1200px;
+    max-width: 1400px;
     padding: 40px 32px 32px 32px;
     box-shadow: 0 2px 16px rgba(0,0,0,0.04);
     display: flex;
@@ -20,6 +20,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 32px;
+    gap: 16px;
 }
   
 .admin-review-list-title {
@@ -27,17 +28,76 @@
     font-weight: 700;
     color: #234b2c;
     margin: 0;
+    flex-shrink: 0;
+}
+
+.admin-review-list-search-box {
+    width: 320px;
+    min-width: 220px;
+    flex-shrink: 0;
 }
   
+/* Error and Loading States */
+.admin-review-list-error {
+    background: #fff2f0;
+    border: 1px solid #ffccc7;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.admin-review-list-error p {
+    color: #ff4d4f;
+    margin: 0 0 10px 0;
+    font-weight: 500;
+}
+
+.admin-review-list-retry-btn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.admin-review-list-retry-btn:hover {
+    background: #d9363e;
+}
+
+.admin-review-list-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.admin-review-list-spinner {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.admin-review-list-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Table Styles */
 .admin-review-list-table-wrapper {
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #d6e7db;
     background: #f6f6f6;
+    overflow-x: auto;
 }
   
 .admin-review-list-table {
     width: 100%;
+    min-width: 800px;
     border-collapse: separate;
     border-spacing: 0;
     background: #f6f6f6;
@@ -48,17 +108,18 @@
 }
   
 .admin-review-list-table th, .admin-review-list-table td {
-    padding: 18px 16px;
+    padding: 16px 12px;
     text-align: left;
-    font-size: 1rem;
+    font-size: 0.95rem;
     border-bottom: 2px solid #c9d8cd;
-    vertical-align: middle;
+    vertical-align: top;
 }
   
 .admin-review-list-table th {
     color: #234b2c;
     font-weight: 700;
     border-bottom: 2px solid #c9d8cd;
+    white-space: nowrap;
 }
   
 .admin-review-list-row {
@@ -74,47 +135,107 @@
 .admin-review-list-row:hover {
     background: #eaf3ee;
 }
-  
-.admin-review-list-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    display: inline-block;
+
+/* User Info Styles */
+.admin-review-list-user-info {
+    min-width: 120px;
 }
-  
+
 .admin-review-list-name {
     font-weight: 600;
     color: #234b2c;
+    margin-bottom: 2px;
 }
-  
-.admin-review-list-email {
-    color: #234b2c;
-    font-size: 0.97rem;
-}
-  
-.admin-review-list-review {
-    color: #234b2c;
-    font-size: 1rem;
+
+.admin-review-list-fullname {
+    font-size: 0.85rem;
+    color: #666;
     font-style: italic;
-    display: inline;
+}
+
+/* Product Info Styles */
+.admin-review-list-product {
+    min-width: 150px;
+}
+
+.admin-review-list-product-name {
+    font-weight: 500;
+    color: #234b2c;
+    margin-bottom: 2px;
+}
+
+.admin-review-list-product-code {
+    font-size: 0.8rem;
+    color: #666;
+    font-family: monospace;
+}
+
+/* Comment Styles */
+.admin-review-list-comment {
+    color: #234b2c;
+    font-size: 0.9rem;
+    font-style: italic;
+    max-width: 350px;
+    min-width: 200px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* Date Styles */
+.admin-review-list-date {
+    color: #666;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+/* Action Buttons */
+.admin-review-list-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    min-width: 80px;
+}
+
+.admin-review-list-view-btn,
+.admin-review-list-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+}
+
+.admin-review-list-view-btn {
+    background-color: #f0f7ff;
+    color: #2271b1;
+    border-color: #ccdff5;
+}
+
+.admin-review-list-view-btn:hover:not(:disabled) {
+    background-color: #2271b1;
+    color: #fff;
 }
 
 .admin-review-list-delete-btn {
-    background: #ffe7d9;
-    color: #ff6b72;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 16px;
-    font-size: 0.97rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    margin-left: 8px;
+    background-color: #fff0f0;
+    color: #dc3545;
+    border-color: #ffd0d0;
 }
 
-.admin-review-list-delete-btn:hover {
-    background: #ff6b72;
+.admin-review-list-delete-btn:hover:not(:disabled) {
+    background-color: #dc3545;
     color: #fff;
+}
+
+.admin-review-list-view-btn:disabled,
+.admin-review-list-delete-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
   
 .admin-review-list-pagination {
@@ -126,61 +247,167 @@
 /* Responsive styles */
 @media (max-width: 900px) {
     .admin-review-list-content {
-        padding: 24px 8px 16px 8px;
+        padding: 16px 4px 12px 4px;
         max-width: 100%;
+        margin: 24px 0 0 0;
     }
+    
     .admin-review-list-title {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
+    
     .admin-review-list-header-row {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 16px;
     }
+
+    .admin-review-list-search-box {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    .admin-review-list-table {
+        min-width: 700px;
+    }
+    
     .admin-review-list-table th,
     .admin-review-list-table td {
-        padding: 12px 8px;
-        font-size: 0.95rem;
+        padding: 10px 6px;
+        font-size: 0.93rem;
+    }
+    
+    .admin-review-list-comment {
+        max-width: 250px;
+        min-width: 150px;
+    }
+
+    .admin-review-list-actions {
+        gap: 4px;
+        min-width: 70px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-review-list-view-btn,
+    .admin-review-list-delete-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .admin-review-list-table {
+        min-width: 650px;
+    }
+
+    .admin-review-list-comment {
+        max-width: 200px;
+        min-width: 120px;
     }
 }
   
 @media (max-width: 600px) {
     .admin-review-list-content {
-        margin: 16px 0 0 0;
-        padding: 8px 2px 8px 2px;
-        border-radius: 0;
+        margin: 8px 0 0 0;
+        padding: 6px 0 4px 0;
+        border-radius: 8px;
         box-shadow: none;
     }
+    
     .admin-review-list-title {
-        font-size: 1.1rem;
+        font-size: 1.4rem;
     }
+    
     .admin-review-list-table-wrapper {
         border-radius: 0;
         border: none;
         background: transparent;
-        overflow-x: auto;
     }
+    
     .admin-review-list-table {
         min-width: 600px;
         font-size: 0.9rem;
     }
+    
     .admin-review-list-table th,
     .admin-review-list-table td {
-        padding: 8px 4px;
+        padding: 7px 3px;
         font-size: 0.9rem;
     }
-    .admin-review-list-avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-    }
-    .admin-review-list-delete-btn {
-        padding: 4px 8px;
-        font-size: 0.85rem;
-        margin-left: 0;
-    }
+    
     .admin-review-list-pagination {
         justify-content: center;
         margin-top: 12px;
+    }
+    
+    .admin-review-list-comment {
+        max-width: 180px;
+        min-width: 100px;
+        font-size: 0.85rem;
+    }
+
+    .admin-review-list-user-info,
+    .admin-review-list-product {
+        min-width: 90px;
+    }
+
+    .admin-review-list-actions {
+        min-width: 60px;
+        gap: 3px;
+    }
+
+    .admin-review-list-date {
+        min-width: 100px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-review-list-view-btn,
+    .admin-review-list-delete-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+
+    .admin-review-list-table {
+        min-width: 550px;
+    }
+
+    .admin-review-list-table th,
+    .admin-review-list-table td {
+        padding: 5px 2px;
+        font-size: 0.85rem;
+    }
+
+    .admin-review-list-comment {
+        max-width: 150px;
+        min-width: 80px;
+        font-size: 0.8rem;
+    }
+
+    .admin-review-list-actions {
+        gap: 2px;
+        min-width: 50px;
+    }
+
+    .admin-review-list-user-info,
+    .admin-review-list-product {
+        min-width: 80px;
+    }
+
+    .admin-review-list-name,
+    .admin-review-list-product-name {
+        font-size: 0.85rem;
+    }
+
+    .admin-review-list-fullname,
+    .admin-review-list-product-code {
+        font-size: 0.75rem;
+    }
+
+    .admin-review-list-date {
+        min-width: 90px;
+        font-size: 0.75rem;
     }
 }

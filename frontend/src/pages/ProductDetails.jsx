@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
+import ProductReview from '../components/layout/productreview/ProductReview';
 import { useCart } from '../context/CartContext';
 import AnimatedSection from '../components/common/AnimatedSection';
 import productService from '../services/productService';
@@ -386,6 +387,7 @@ const ProductDetails = () => {
                         </AnimatedSection>
                     </div>
                 </AnimatedSection>
+                {/* Product description section */}
                 <AnimatedSection animation="slideUp" delay={0.3}>
                     <div className="product-details-description-container">
                         <div className="product-details-description-row">
@@ -404,7 +406,12 @@ const ProductDetails = () => {
                         </div>
                     </div>
                 </AnimatedSection>
-            </div>           
+                {/*Product Review component*/}
+                <AnimatedSection animation="fadeIn" delay={0.4}>
+                    {product && <ProductReview productId={product.id} />}
+                </AnimatedSection>
+            </div>
+            {/* Recommendations section */}         
             {recommendedProducts.length > 0 && (
                 <AnimatedSection animation="fadeIn" delay={0.2}>
                     <section className="product-recommendations">

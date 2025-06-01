@@ -15,18 +15,19 @@ export const getAllReviews = async (req: Request, res: Response) => {
     const sort: any = {};
     sort[sortBy] = sortOrder === "asc" ? 1 : -1;
     
-    // Lấy tất cả reviews với phân trang
+    // Lấy tất cả reviews với thông tin đầy đủ
     const reviews = await Review.find()
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .populate("userId", "username avatar email")
-      .populate("productId", "name price");
+      .populate("userId", "username email avatar fullName phone")
+      .populate("productId", "name title price imageUrl images productCode");
     
     // Đếm tổng số reviews
     const total = await Review.countDocuments();
     
     return res.status(200).json({
+      success: true,
       reviews,
       pagination: {
         total,
@@ -36,9 +37,46 @@ export const getAllReviews = async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    console.error("Get all reviews error:", error);
+    console.error("Get all review error:", error);
     return res.status(500).json({ 
+      success: false,
       message: "Đã xảy ra lỗi khi lấy danh sách đánh giá" 
+    });
+  }
+};
+
+// Lấy chi tiết đánh giá theo ID
+export const getReviewById = async (req: Request, res: Response) => {
+  try {
+    const reviewId = req.params.id;
+    
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "ID đánh giá không hợp lệ" 
+      });
+    }
+    
+    const review = await Review.findById(reviewId)
+      .populate("userId", "username email avatar fullName phone")
+      .populate("productId", "name title price imageUrl images productCode");
+    
+    if (!review) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Không tìm thấy đánh giá" 
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      review
+    });
+  } catch (error: any) {
+    console.error("Get review by ID error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Đã xảy ra lỗi khi lấy thông tin đánh giá" 
     });
   }
 };
@@ -195,57 +233,128 @@ export const searchReviews = async (req: Request, res: Response) => {
     const sortBy = req.query.sortBy as string || "createdAt";
     const sortOrder = req.query.sortOrder as string || "desc";
     
-    // Xây dựng query tìm kiếm
-    const searchQuery: any = {};
+    // Xây dựng pipeline aggregation để tìm kiếm mở rộng
+    const pipeline: any[] = [];
+    
+    // Stage 1: Populate user và product thông tin
+    pipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userId"
+        }
+      },
+      {
+        $unwind: "$userId"
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "productId",
+          foreignField: "_id",
+          as: "productId"
+        }
+      },
+      {
+        $unwind: "$productId"
+      }
+    );
+    
+    // Stage 2: Match conditions
+    const matchConditions: any = {};
     
     // Tìm theo ID sản phẩm
     if (productId && mongoose.Types.ObjectId.isValid(productId)) {
-      searchQuery.productId = new mongoose.Types.ObjectId(productId);
+      matchConditions["productId._id"] = new mongoose.Types.ObjectId(productId);
     }
     
     // Tìm theo ID người dùng
     if (userId && mongoose.Types.ObjectId.isValid(userId)) {
-      searchQuery.userId = new mongoose.Types.ObjectId(userId);
+      matchConditions["userId._id"] = new mongoose.Types.ObjectId(userId);
     }
     
     // Tìm theo khoảng đánh giá
     if (minRating !== undefined || maxRating !== undefined) {
-      searchQuery.rating = {};
-      if (minRating !== undefined) searchQuery.rating.$gte = minRating;
-      if (maxRating !== undefined) searchQuery.rating.$lte = maxRating;
-    }
-    
-    // Tìm theo từ khóa trong comment
-    if (keyword) {
-      searchQuery.comment = { $regex: keyword, $options: "i" };
+      matchConditions.rating = {};
+      if (minRating !== undefined) matchConditions.rating.$gte = minRating;
+      if (maxRating !== undefined) matchConditions.rating.$lte = maxRating;
     }
     
     // Tìm theo khoảng thời gian
     if (startDate !== undefined || endDate !== undefined) {
-      searchQuery.createdAt = {};
-      if (startDate !== undefined) searchQuery.createdAt.$gte = startDate;
+      matchConditions.createdAt = {};
+      if (startDate !== undefined) matchConditions.createdAt.$gte = startDate;
       if (endDate !== undefined) {
-        // Đặt thời gian kết thúc vào cuối ngày
         const endOfDay = new Date(endDate);
         endOfDay.setHours(23, 59, 59, 999);
-        searchQuery.createdAt.$lte = endOfDay;
+        matchConditions.createdAt.$lte = endOfDay;
       }
     }
     
-    // Xác định hướng sắp xếp
+    // Tìm theo từ khóa (mở rộng: comment, username, email, product name)
+    if (keyword) {
+      matchConditions.$or = [
+        { comment: { $regex: keyword, $options: "i" } },
+        { "userId.username": { $regex: keyword, $options: "i" } },
+        { "userId.email": { $regex: keyword, $options: "i" } },
+        { "productId.name": { $regex: keyword, $options: "i" } },
+        { "productId.title": { $regex: keyword, $options: "i" } }
+      ];
+    }
+    
+    if (Object.keys(matchConditions).length > 0) {
+      pipeline.push({ $match: matchConditions });
+    }
+    
+    // Stage 3: Sort
     const sort: any = {};
     sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+    pipeline.push({ $sort: sort });
     
-    // Thực hiện tìm kiếm với bộ lọc, sắp xếp và phân trang
-    const reviews = await Review.find(searchQuery)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .populate("userId", "username avatar")
-      .populate("productId", "name price");
+    // Stage 4: Facet để lấy data và count
+    pipeline.push({
+      $facet: {
+        data: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              _id: 1,
+              rating: 1,
+              comment: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              userId: {
+                _id: "$userId._id",
+                username: "$userId.username",
+                email: "$userId.email",
+                avatar: "$userId.avatar",
+                fullName: "$userId.fullName"
+              },
+              productId: {
+                _id: "$productId._id",
+                name: "$productId.name",
+                title: "$productId.title",
+                price: "$productId.price",
+                imageUrl: "$productId.imageUrl",
+                images: "$productId.images",
+                productCode: "$productId.productCode"
+              }
+            }
+          }
+        ],
+        totalCount: [
+          { $count: "count" }
+        ]
+      }
+    });
     
-    // Đếm tổng số kết quả
-    const total = await Review.countDocuments(searchQuery);
+    // Thực hiện aggregation
+    const result = await Review.aggregate(pipeline);
+    const reviews = result[0].data;
+    const total = result[0].totalCount[0]?.count || 0;
     
     // Thêm thông tin meta
     const filters = {
@@ -261,6 +370,7 @@ export const searchReviews = async (req: Request, res: Response) => {
     };
     
     return res.status(200).json({
+      success: true,
       reviews,
       filters,
       pagination: {
@@ -271,6 +381,10 @@ export const searchReviews = async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    return res.status(500).json({ message: error.message });
+    console.error("Search reviews error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Đã xảy ra lỗi khi tìm kiếm đánh giá" 
+    });
   }
 }; 

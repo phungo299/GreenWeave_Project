@@ -3,6 +3,7 @@ import {
     createReview,
     deleteReview,
     getAllReviews,
+    getReviewById,
     getProductReviews,
     getUserReviews,
     searchReviews,
@@ -12,7 +13,10 @@ import {
 const router = express.Router();
 
 // GET /api/reviews - Lấy tất cả đánh giá (Admin only)
-router.get("/", getAllReviews);
+router.get("/all", getAllReviews);
+
+// GET /api/reviews/:id - Lấy chi tiết đánh giá theo ID
+router.get("/:id", getReviewById);
 
 // GET /api/reviews/product/:productId - Lấy đánh giá cho một sản phẩm
 router.get("/product/:productId", getProductReviews);

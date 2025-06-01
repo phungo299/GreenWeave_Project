@@ -2813,148 +2813,708 @@ paths:
         '500':
           description: Server error
 
+  /api/reviews/all:
+    get:
+      tags:
+        - Reviews
+      summary: Lấy tất cả đánh giá (Admin only)
+      description: |
+        Lấy tất cả đánh giá với thông tin đầy đủ về người dùng và sản phẩm.
+        API này dành cho admin để quản lý tất cả đánh giá trong hệ thống.
+        
+        Thông tin user bao gồm: username, email, avatar, fullName, phone
+        Thông tin product bao gồm: name, title, price, imageUrl, images, productCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Số trang
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Số lượng kết quả mỗi trang
+          schema:
+            type: integer
+            default: 10
+        - name: sortBy
+          in: query
+          description: Trường để sắp xếp
+          schema:
+            type: string
+            default: createdAt
+            enum: [createdAt, rating, updatedAt]
+        - name: sortOrder
+          in: query
+          description: Thứ tự sắp xếp
+          schema:
+            type: string
+            default: desc
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Danh sách đánh giá được lấy thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  reviews:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        rating:
+                          type: integer
+                          minimum: 1
+                          maximum: 5
+                        comment:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                        userId:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                            username:
+                              type: string
+                            email:
+                              type: string
+                            avatar:
+                              type: string
+                            fullName:
+                              type: string
+                            phone:
+                              type: string
+                        productId:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                            name:
+                              type: string
+                            title:
+                              type: string
+                            price:
+                              type: number
+                            imageUrl:
+                              type: string
+                            images:
+                              type: array
+                              items:
+                                type: string
+                            productCode:
+                              type: string
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: Tổng số đánh giá
+                      page:
+                        type: integer
+                        description: Trang hiện tại
+                      limit:
+                        type: integer
+                        description: Số lượng mỗi trang
+                      totalPages:
+                        type: integer
+                        description: Tổng số trang
+        '401':
+          description: Unauthorized - Cần đăng nhập
+        '403':
+          description: Forbidden - Chỉ admin mới có quyền truy cập
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Đã xảy ra lỗi khi lấy danh sách đánh giá"
+  
+  /api/reviews/{id}:
+    get:
+      tags:
+        - Reviews
+      summary: Lấy chi tiết đánh giá theo ID
+      description: |
+        Lấy thông tin chi tiết của một đánh giá cụ thể bao gồm:
+        - Thông tin đầy đủ về người dùng đánh giá
+        - Thông tin đầy đủ về sản phẩm được đánh giá  
+        - Nội dung và mức đánh giá
+        - Thời gian tạo và cập nhật
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của đánh giá cần lấy thông tin
+          example: "60d5ecb74b24a1234567890a"
+      responses:
+        '200':
+          description: Lấy chi tiết đánh giá thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  review:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: "60d5ecb74b24a1234567890a"
+                      rating:
+                        type: integer
+                        minimum: 1
+                        maximum: 5
+                        example: 5
+                        description: Đánh giá từ 1 đến 5 sao
+                      comment:
+                        type: string
+                        example: "Sản phẩm chất lượng tốt, giao hàng nhanh"
+                        description: Nhận xét về sản phẩm
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T10:30:00.000Z"
+                        description: Thời gian tạo đánh giá
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T10:30:00.000Z"
+                        description: Thời gian cập nhật đánh giá
+                      userId:
+                        type: object
+                        description: Thông tin chi tiết người dùng đánh giá
+                        properties:
+                          _id:
+                            type: string
+                            example: "60d5ecb74b24a1234567890b"
+                          username:
+                            type: string
+                            example: "john_doe"
+                          email:
+                            type: string
+                            format: email
+                            example: "john@example.com"
+                          avatar:
+                            type: string
+                            example: "https://cloudinary.com/avatar.jpg"
+                          fullName:
+                            type: string
+                            example: "John Doe"
+                          phone:
+                            type: string
+                            example: "0901234567"
+                      productId:
+                        type: object
+                        description: Thông tin chi tiết sản phẩm được đánh giá
+                        properties:
+                          _id:
+                            type: string
+                            example: "60d5ecb74b24a1234567890c"
+                          name:
+                            type: string
+                            example: "Áo thun cotton cao cấp"
+                          title:
+                            type: string
+                            example: "Áo thun cotton 100% chất lượng"
+                          price:
+                            type: number
+                            example: 299000
+                          imageUrl:
+                            type: string
+                            example: "https://cloudinary.com/product.jpg"
+                            description: URL hình ảnh chính (deprecated, sử dụng images)
+                          images:
+                            type: array
+                            items:
+                              type: string
+                            example: ["https://cloudinary.com/product1.jpg", "https://cloudinary.com/product2.jpg"]
+                            description: Danh sách URL hình ảnh sản phẩm
+                          productCode:
+                            type: string
+                            example: "AT001"
+                            description: Mã sản phẩm
+        '400':
+          description: ID đánh giá không hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "ID đánh giá không hợp lệ"
+        '404':
+          description: Không tìm thấy đánh giá
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Không tìm thấy đánh giá"
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Đã xảy ra lỗi khi lấy thông tin đánh giá"
+    put:
+      tags:
+        - Reviews
+      summary: Cập nhật đánh giá
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của đánh giá cần cập nhật
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Đánh giá mới từ 1 đến 5 sao
+                comment:
+                  type: string
+                  description: Nhận xét mới về sản phẩm
+      responses:
+        '200':
+          description: Cập nhật đánh giá thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  rating:
+                    type: integer
+                  comment:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                  userId:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      username:
+                        type: string
+                      avatar:
+                        type: string
+                  productId:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      name:
+                        type: string
+                      price:
+                        type: number
+        '400':
+          description: |
+            Dữ liệu đầu vào không hợp lệ
+            - ID đánh giá không hợp lệ
+            - Đánh giá phải từ 1 đến 5 sao
+        '401':
+          description: Unauthorized - Cần đăng nhập
+        '404':
+          description: Không tìm thấy đánh giá
+        '500':
+          description: Lỗi server
+    delete:
+      tags:
+        - Reviews
+      summary: Xóa đánh giá
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID của đánh giá cần xóa
+      responses:
+        '200':
+          description: Xóa đánh giá thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đã xóa đánh giá thành công"
+        '400':
+          description: ID đánh giá không hợp lệ
+        '401':
+          description: Unauthorized - Cần đăng nhập
+        '404':
+          description: Không tìm thấy đánh giá
+        '500':
+          description: Lỗi server
+
   /api/reviews/product/{productId}:
     get:
       tags:
         - Reviews
-      summary: Get reviews by product ID
+      summary: Lấy đánh giá theo ID sản phẩm
       parameters:
         - name: productId
           in: path
           required: true
           schema:
             type: string
+          description: ID của sản phẩm
       responses:
         '200':
-          description: List of product reviews retrieved successfully
+          description: Danh sách đánh giá sản phẩm được lấy thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    rating:
+                      type: integer
+                    comment:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    userId:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        username:
+                          type: string
+                        avatar:
+                          type: string
+        '400':
+          description: ID sản phẩm không hợp lệ
         '404':
-          description: Product not found
+          description: Không tìm thấy sản phẩm
         '500':
-          description: Server error
+          description: Lỗi server
 
   /api/reviews/user/{userId}:
     get:
       tags:
         - Reviews
-      summary: Get reviews by user ID
+      summary: Lấy đánh giá theo ID người dùng
       parameters:
         - name: userId
           in: path
           required: true
           schema:
             type: string
+          description: ID của người dùng
       responses:
         '200':
-          description: List of user reviews retrieved successfully
+          description: Danh sách đánh giá người dùng được lấy thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    rating:
+                      type: integer
+                    comment:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    productId:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          type: number
+                        imageUrl:
+                          type: string
+        '400':
+          description: ID người dùng không hợp lệ
         '404':
-          description: User not found
+          description: Không tìm thấy người dùng
         '500':
-          description: Server error
+          description: Lỗi server
 
   /api/reviews/search:
     get:
       tags:
         - Reviews
-      summary: Search reviews
+      summary: Tìm kiếm đánh giá với bộ lọc mở rộng
+      description: |
+        Tìm kiếm đánh giá với nhiều bộ lọc và khả năng tìm kiếm mở rộng.
+        
+        **Keyword search hỗ trợ tìm kiếm trong:**
+        - Nội dung comment của đánh giá
+        - Username của người dùng
+        - Email của người dùng  
+        - Tên sản phẩm (name)
+        - Tiêu đề sản phẩm (title)
+        
+        Sử dụng MongoDB Aggregation Pipeline để tối ưu hiệu suất.
       parameters:
         - name: productId
           in: query
-          description: Product ID
+          description: Lọc theo ID sản phẩm
           schema:
             type: string
         - name: userId
           in: query
-          description: User ID
+          description: Lọc theo ID người dùng
           schema:
             type: string
         - name: minRating
           in: query
-          description: Minimum rating
+          description: Đánh giá tối thiểu (1-5)
           schema:
             type: integer
             minimum: 1
             maximum: 5
         - name: maxRating
           in: query
-          description: Maximum rating
+          description: Đánh giá tối đa (1-5)
           schema:
             type: integer
             minimum: 1
             maximum: 5
         - name: keyword
           in: query
-          description: Search keyword in comment
+          description: |
+            Từ khóa tìm kiếm trong:
+            - Comment của đánh giá
+            - Username của người dùng
+            - Email của người dùng
+            - Tên sản phẩm
+            - Tiêu đề sản phẩm
           schema:
             type: string
+            example: "sản phẩm tốt"
         - name: startDate
           in: query
-          description: Start date
+          description: Ngày bắt đầu (YYYY-MM-DD)
           schema:
             type: string
             format: date
+            example: "2024-01-01"
         - name: endDate
           in: query
-          description: End date
+          description: Ngày kết thúc (YYYY-MM-DD)
           schema:
             type: string
             format: date
+            example: "2024-12-31"
         - name: page
           in: query
-          description: Page number
+          description: Số trang
           schema:
             type: integer
             default: 1
         - name: limit
           in: query
-          description: Number of results per page
+          description: Số lượng kết quả mỗi trang
           schema:
             type: integer
             default: 10
         - name: sortBy
           in: query
-          description: Field to sort by
+          description: Trường để sắp xếp
           schema:
             type: string
             default: createdAt
+            enum: [createdAt, rating, updatedAt]
         - name: sortOrder
           in: query
-          description: Sort order (asc or desc)
+          description: Thứ tự sắp xếp
           schema:
             type: string
             default: desc
+            enum: [asc, desc]
       responses:
         '200':
-          description: Search results
+          description: Kết quả tìm kiếm
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                    example: true
                   reviews:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Review'
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        rating:
+                          type: integer
+                        comment:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                        userId:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                            username:
+                              type: string
+                            email:
+                              type: string
+                            avatar:
+                              type: string
+                            fullName:
+                              type: string
+                        productId:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                            name:
+                              type: string
+                            title:
+                              type: string
+                            price:
+                              type: number
+                            imageUrl:
+                              type: string
+                            images:
+                              type: array
+                              items:
+                                type: string
+                            productCode:
+                              type: string
                   filters:
                     type: object
+                    description: Các bộ lọc đã áp dụng
+                    properties:
+                      productId:
+                        type: string
+                      userId:
+                        type: string
+                      minRating:
+                        type: integer
+                      maxRating:
+                        type: integer
+                      keyword:
+                        type: string
+                      startDate:
+                        type: string
+                        format: date-time
+                      endDate:
+                        type: string
+                        format: date-time
+                      sortBy:
+                        type: string
+                      sortOrder:
+                        type: string
                   pagination:
                     type: object
                     properties:
                       total:
                         type: integer
+                        description: Tổng số kết quả
                       page:
                         type: integer
+                        description: Trang hiện tại
                       limit:
                         type: integer
+                        description: Số lượng mỗi trang
                       totalPages:
                         type: integer
+                        description: Tổng số trang
         '500':
-          description: Server error
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Đã xảy ra lỗi khi tìm kiếm đánh giá"
 
   /api/reviews:
     post:
       tags:
         - Reviews
-      summary: Create new review
+      summary: Tạo đánh giá mới
       security:
         - BearerAuth: []
       requestBody:
@@ -2970,29 +3530,70 @@ paths:
               properties:
                 userId:
                   type: string
+                  description: ID của người dùng
                 productId:
                   type: string
+                  description: ID của sản phẩm
                 rating:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: Đánh giá từ 1 đến 5 sao
                 comment:
                   type: string
+                  description: Nhận xét về sản phẩm
+                  example: "Sản phẩm chất lượng tốt, giao hàng nhanh"
       responses:
         '201':
-          description: Review created successfully
+          description: Tạo đánh giá thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  rating:
+                    type: integer
+                  comment:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  userId:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      username:
+                        type: string
+                      avatar:
+                        type: string
+                  productId:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      name:
+                        type: string
+                      price:
+                        type: number
         '400':
-          description: Invalid input or user already reviewed this product
+          description: |
+            Dữ liệu đầu vào không hợp lệ hoặc người dùng đã đánh giá sản phẩm này
+            - ID không hợp lệ
+            - Đánh giá phải từ 1 đến 5 sao
+            - Người dùng đã đánh giá sản phẩm này rồi
         '401':
-          description: Unauthorized
+          description: Unauthorized - Cần đăng nhập
         '500':
-          description: Server error
+          description: Lỗi server
 
   /api/reviews/{id}:
     put:
       tags:
         - Reviews
-      summary: Update review
+      summary: Cập nhật đánh giá
       security:
         - BearerAuth: []
       parameters:
@@ -3001,6 +3602,7 @@ paths:
           required: true
           schema:
             type: string
+          description: ID của đánh giá cần cập nhật
       requestBody:
         required: true
         content:
@@ -3012,23 +3614,63 @@ paths:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: Đánh giá mới từ 1 đến 5 sao
                 comment:
                   type: string
+                  description: Nhận xét mới về sản phẩm
       responses:
         '200':
-          description: Review updated successfully
+          description: Cập nhật đánh giá thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  rating:
+                    type: integer
+                  comment:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                  userId:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      username:
+                        type: string
+                      avatar:
+                        type: string
+                  productId:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      name:
+                        type: string
+                      price:
+                        type: number
         '400':
-          description: Invalid input
+          description: |
+            Dữ liệu đầu vào không hợp lệ
+            - ID đánh giá không hợp lệ
+            - Đánh giá phải từ 1 đến 5 sao
         '401':
-          description: Unauthorized
+          description: Unauthorized - Cần đăng nhập
         '404':
-          description: Review not found
+          description: Không tìm thấy đánh giá
         '500':
-          description: Server error
+          description: Lỗi server
     delete:
       tags:
         - Reviews
-      summary: Delete review
+      summary: Xóa đánh giá
       security:
         - BearerAuth: []
       parameters:
@@ -3037,15 +3679,26 @@ paths:
           required: true
           schema:
             type: string
+          description: ID của đánh giá cần xóa
       responses:
         '200':
-          description: Review deleted successfully
+          description: Xóa đánh giá thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đã xóa đánh giá thành công"
+        '400':
+          description: ID đánh giá không hợp lệ
         '401':
-          description: Unauthorized
+          description: Unauthorized - Cần đăng nhập
         '404':
-          description: Review not found
-                '500':
-          description: Server error
+          description: Không tìm thấy đánh giá
+        '500':
+          description: Lỗi server
 
   /api/categories:
     get:
