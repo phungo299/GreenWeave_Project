@@ -9,6 +9,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import countriesData from '../assets/data/countriesV1.json';
 import creditCardIcon from '../assets/icons/credit-card.png';
+import cashOnDeliveryIcon from '../assets/icons/cash-on-delivery.png'
 import vietqrIcon from '../assets/icons/vietqr.jpg';
 import '../assets/css/PaymentPage.css';
 import axios from 'axios';
@@ -86,10 +87,8 @@ const StripeCardForm = ({ orderTotal, shippingInfo, selectedCountry, onPaymentSu
                 }
             }
         });
-
         if (error) {
-            setPaymentError(error.message);
-            
+            setPaymentError(error.message);           
             // Send payment error message to server
             try {
                 await axios.post(
@@ -185,6 +184,7 @@ const StripeCardForm = ({ orderTotal, shippingInfo, selectedCountry, onPaymentSu
 const PaymentPage = () => {
     const navigate = useNavigate();
     const { cartItems, clearCart } = useCart();
+    const { token } = useAuth();
     const [countries, setCountries] = useState([]);
     const [selectedCountry, setSelectedCountry] = useState(null);
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -197,6 +197,7 @@ const PaymentPage = () => {
     const [itemsTotal, setItemsTotal] = useState(0);
     const [shipping] = useState(40000);
     const [orderTotal, setOrderTotal] = useState(0);
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const countryListRef = useRef(null);
     const dropdownRef = useRef(null);
 
@@ -345,6 +346,58 @@ const PaymentPage = () => {
         setShowPaymentDropdown(!showPaymentDropdown);
     };
 
+    const handleCODOrder = async () => {
+        if (!validateShippingInfo()) {
+            return;
+        }
+        setIsCreatingOrder(true);      
+        try {
+            // Create COD order
+            const orderData = {
+                shippingInfo: {
+                    ...shippingInfo,
+                    country: selectedCountry.name,
+                    countryCode: selectedCountry.alpha2Code
+                },
+                items: cartItems.map(item => ({
+                    productId: item.id,
+                    quantity: item.quantity,
+                    price: item.price,
+                    color: item.color,
+                    size: item.size
+                })),
+                paymentMethod: 'cash-on-delivery',
+                totalAmount: orderTotal,
+                itemsTotal: itemsTotal,
+                shippingCost: shipping
+            };
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/orders/create-cod-order`,
+                orderData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            if (response.data.success) {
+                clearCart();
+                navigate('/payment-status/success', { 
+                    state: { 
+                        orderType: 'cod',
+                        orderId: response.data.orderId 
+                    } 
+                });
+            }
+        } catch (error) {
+            console.error('Error creating COD order:', error);
+            alert('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    };
+
     const selectPaymentMethod = (method) => {
         setPaymentMethod(method);
         setShowPaymentDropdown(false);
@@ -400,12 +453,12 @@ const PaymentPage = () => {
 
     const handlePaymentSuccess = () => {
         clearCart();
-        // Điều hướng đến trang thanh toán thành công
+        // Navigate to successful payment page
         navigate('/payment-status/success');
     };
 
     const handlePaymentError = (errorMessage) => {
-        // Có thể hiển thị lỗi hoặc điều hướng đến trang lỗi thanh toán
+        // Can display errors or navigate to payment error page
         navigate('/payment-status/failed');
     };
 
@@ -544,15 +597,25 @@ const PaymentPage = () => {
                                 <div className="payment-dropdown-header" onClick={togglePaymentDropdown}>
                                     <div className="selected-payment-method">
                                         <img 
-                                            src={paymentMethod === 'credit-card' ? creditCardIcon : './assets/icons/qr-code.png'} 
-                                            alt={paymentMethod === 'credit-card' ? "Credit Card" : "VietQR"} 
+                                            src={
+                                                paymentMethod === 'credit-card' ? creditCardIcon : 
+                                                paymentMethod === 'vietqr' ? vietqrIcon :
+                                                creditCardIcon
+                                            } 
+                                            alt={
+                                                paymentMethod === 'credit-card' ? "Credit Card" : 
+                                                paymentMethod === 'vietqr' ? "VietQR" : "Cash on Delivery"
+                                            } 
                                             className="payment-method-icon" 
                                         />
-                                        <span>{paymentMethod === 'credit-card' ? 'Thẻ Tín Dụng/Ghi Nợ' : 'VietQR'}</span>
+                                        <span>
+                                            {paymentMethod === 'credit-card' ? 'Thẻ Tín Dụng/Ghi Nợ' : 
+                                             paymentMethod === 'vietqr' ? 'VietQR' : 
+                                             'Thanh toán khi nhận hàng'}
+                                        </span>
                                     </div>
                                     <span className={`dropdown-arrow ${showPaymentDropdown ? 'open' : ''}`}></span>
-                                </div>
-                                
+                                </div>                               
                                 {showPaymentDropdown && (
                                     <div className="payment-dropdown-list">
                                         <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('credit-card')}>
@@ -563,9 +626,13 @@ const PaymentPage = () => {
                                             <img src={vietqrIcon} alt="VietQR" className="payment-method-icon" />
                                             <span>VietQR</span>
                                         </div>
+                                        <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('cash-on-delivery')}>
+                                            <img src={cashOnDeliveryIcon} alt="Cash on Delivery" className="payment-method-icon" />
+                                            <span>Thanh toán khi nhận hàng</span>
+                                        </div>
                                     </div>
                                 )}
-                            </div>                           
+                            </div>
                             {/* Payment Methods */}
                             {isShippingInfoValid ? (
                                 paymentMethod === 'credit-card' ? (
@@ -578,13 +645,32 @@ const PaymentPage = () => {
                                             onPaymentError={handlePaymentError}
                                         />
                                     </Elements>
-                                ) : (
+                                ) : paymentMethod === 'vietqr' ? (
                                     <div className="vietqr-container">
                                         <p className="vietqr-text">Quét mã QR bên dưới để thanh toán</p>
                                         <div className="qr-placeholder">
                                             <p>Mã QR sẽ được hiển thị ở đây</p>
                                             <button className="place-order-btn">Xác nhận đã thanh toán</button>
                                         </div>
+                                    </div>
+                                ) : (
+                                    <div className="cod-container">
+                                        <div className="cod-info">
+                                            <h3>Thanh toán khi nhận hàng</h3>
+                                            <p>Bạn sẽ thanh toán trực tiếp cho người giao hàng khi nhận được sản phẩm.</p>
+                                            <ul className="cod-benefits">
+                                                <li>✓ Không cần thanh toán trước</li>
+                                                <li>✓ Kiểm tra hàng trước khi thanh toán</li>
+                                                <li>✓ An toàn và tiện lợi</li>
+                                            </ul>
+                                        </div>
+                                        <button 
+                                            onClick={handleCODOrder}
+                                            disabled={isCreatingOrder}
+                                            className="place-order-btn"
+                                        >
+                                            {isCreatingOrder ? 'Đang tạo đơn hàng...' : 'Đặt hàng'}
+                                        </button>
                                     </div>
                                 )
                             ) : (
