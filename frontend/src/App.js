@@ -10,10 +10,13 @@ import { AuthProvider } from './context/AuthContext';
 import Personal from './pages/Personal';
 import NotificationContainer from './components/ui/notification/NotificationContainer';
 import ToastManager from './components/ui/toast/ToastManager';
+import ScrollToTop from './components/ui/ScrollToTop';
+import ScrollToTopOnNavigate from './components/common/ScrollToTopOnNavigate';
 import overrideAlert from './utils/overrideAlert';
 import visitorLogService from './services/visitorLogService';
 import './App.css';
 import './assets/css/light-mode-only.css';
+import './assets/css/ModernAnimations.css';
 
 function PageTracker() {
     const location = useLocation();  
@@ -93,6 +96,10 @@ function App() {
                                 </Route>
                             </Route>
                         </Routes>
+                        
+                        {/* Global Components */}
+                        <ScrollToTopOnNavigate />
+                        <ScrollToTop />
                         <NotificationContainer />
                         <ToastManager />
                     </div>

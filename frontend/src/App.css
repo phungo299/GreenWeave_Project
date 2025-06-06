@@ -4,6 +4,18 @@
     box-sizing: border-box;
 }
 
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Disable smooth scroll khi prefer-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
         'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',

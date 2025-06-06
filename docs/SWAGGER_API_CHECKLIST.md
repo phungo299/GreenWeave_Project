@@ -74,14 +74,14 @@ Checklist đầy đủ tất cả API endpoints được document trong Swagger 
 
 ## 5. ORDER APIs (6 endpoints) ✅
 
-| Endpoint | Method | Description | Status |
-|----------|--------|-------------|---------|
-| `/api/orders` | GET | Lấy tất cả đơn hàng | ✅ |
-| `/api/orders` | POST | Tạo đơn hàng mới | ✅ |
-| `/api/orders/{id}` | GET | Lấy đơn hàng theo ID | ✅ |
-| `/api/orders/{id}` | PUT | Cập nhật đơn hàng | ✅ |
-| `/api/orders/{id}` | DELETE | Xóa đơn hàng | ✅ |
-| `/api/orders/user/{userId}` | GET | Lấy đơn hàng của user | ✅ |
+| Endpoint | Method | Description | Status | Notes |
+|----------|--------|-------------|---------|-------|
+| `/api/orders` | GET | Lấy tất cả đơn hàng | ✅ | Response format: `{success, data, message}` |
+| `/api/orders` | POST | Tạo đơn hàng mới | ✅ | Response format: `{success, data, message}` |
+| `/api/orders/{id}` | GET | Lấy đơn hàng theo ID | ✅ | Response format: `{success, data, message}` |
+| `/api/orders/{id}` | PUT | Cập nhật đơn hàng | ✅ | Response format: `{success, data, message}` |
+| `/api/orders/{id}` | DELETE | Xóa đơn hàng | ✅ | Response format: `{success, data, message}` |
+| `/api/orders/user/{userId}` | GET | Lấy đơn hàng của user | ✅ | Response format: `{success, data, message}` |
 
 ---
 

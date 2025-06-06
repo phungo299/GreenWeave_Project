@@ -10,6 +10,7 @@ const Product = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [dataLoaded, setDataLoaded] = useState(false);
     const navigate = useNavigate();
   
     // Fetch featured products when component mounts
@@ -17,8 +18,9 @@ const Product = () => {
         const fetchFeaturedProducts = async () => {
             try {
                 setLoading(true);
+                setDataLoaded(false);
                 const response = await productService.getFeatured();
-                console.log('Featured products response:', response);              
+                
                 if (response && response.success && response.data && response.data.length > 0) {
                     // Format featured products
                     const formattedProducts = response.data.map(product => ({
@@ -40,10 +42,14 @@ const Product = () => {
             } catch (err) {
                 console.error('Error fetching featured products:', err);
                 setError(err.message);
-                // Use fallback to default products (keep the existing ones)
-                // We're not setting any fallback products here as we'll show an error message
+                // Set empty products array on error
+                setProducts([]);
             } finally {
                 setLoading(false);
+                // Add delay to ensure smooth animation after data is ready
+                setTimeout(() => {
+                    setDataLoaded(true);
+                }, 100);
             }
         };
         
@@ -55,7 +61,6 @@ const Product = () => {
     };
 
     const handleProductClick = (productId) => {
-        console.log('Navigate to product detail page for ID:', productId);
         navigate(`/products/${productId}`);
     };
 
@@ -66,9 +71,8 @@ const Product = () => {
     return (
         <section id="products" className="featured-product-section">
             <div className="featured-product-container">
-                {/* Single AnimatedSection wrapper for entire content */}
+                {/* Header Animation - Always show */}
                 <AnimatedSection animation="fadeIn" delay={0.1} duration={0.6}>
-                    {/* Header */}
                     <div className="featured-product-header">
                         <div className="featured-product-title-wrapper">
                             <div className="featured-product-title-container">
@@ -81,7 +85,15 @@ const Product = () => {
                             </div>
                         </div>
                     </div>
-                    {/* Product Cards with CSS-based staggered animation */}
+                </AnimatedSection>
+
+                {/* Content Animation - Only after data loaded */}
+                <AnimatedSection 
+                    animation="slideUp" 
+                    delay={dataLoaded ? 0.3 : 0} 
+                    duration={0.6}
+                    key={dataLoaded ? 'loaded' : 'loading'} // Force re-render when data loads
+                >
                     <div className="featured-product-slider">
                         {loading ? (
                             <div className="loading-container">
@@ -99,14 +111,12 @@ const Product = () => {
                         ) : (
                             <div className="featured-product-cards">
                                 {products.map((product, index) => (
-                                    <div 
+                                    <AnimatedSection
                                         key={product.id} 
+                                        animation="slideUp"
+                                        delay={0.1 + index * 0.1}
+                                        duration={0.5}
                                         className="product-card-wrapper"
-                                        style={{ 
-                                            animationDelay: `${0.2 + index * 0.1}s`,
-                                            opacity: 0,
-                                            animation: 'slideUpFade 0.6s ease-out forwards'
-                                        }}
                                     >
                                         <ProductCard
                                             id={product.id}
@@ -117,7 +127,7 @@ const Product = () => {
                                             imageClass={product.imageClass}
                                             onClick={handleProductClick}
                                         />
-                                    </div>
+                                    </AnimatedSection>
                                 ))}
                             </div>
                         )}
@@ -135,7 +145,10 @@ const Product = () => {
                             </div>
                         )}
                     </div>
-                    {/* View All Button */}
+                </AnimatedSection>
+
+                {/* View All Button Animation */}
+                <AnimatedSection animation="fadeIn" delay={dataLoaded ? 0.5 : 0}>
                     <div className="featured-product-view-all-container">
                         <button 
                             className="featured-product-view-all-button"

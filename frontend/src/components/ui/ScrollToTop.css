@@ -1,0 +1,245 @@
+/* ==========================================
+   SCROLL TO TOP COMPONENT
+   Modern design with progress indicator
+========================================== */
+
+.scroll-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.8);
+    transition: 
+        opacity var(--duration-normal) var(--ease-spring-1),
+        visibility var(--duration-normal) var(--ease-spring-1),
+        transform var(--duration-normal) var(--ease-spring-1);
+    pointer-events: none;
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+}
+
+.scroll-progress-ring {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.progress-ring-background {
+    opacity: 0.3;
+}
+
+.progress-ring-progress {
+    transition: stroke-dashoffset 0.1s ease;
+    stroke-linecap: round;
+}
+
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #0A4B3E 0%, #2c5530 100%);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 4px 12px rgba(10, 75, 62, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: 
+        transform var(--duration-fast) var(--ease-spring-1),
+        box-shadow var(--duration-fast) var(--ease-spring-1),
+        background var(--duration-fast) ease;
+    scale: 1;
+}
+
+.scroll-btn:hover {
+    background: linear-gradient(135deg, #0d5943 0%, #345933 100%);
+    scale: 1.1;
+    box-shadow: 
+        0 6px 20px rgba(10, 75, 62, 0.4),
+        0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.scroll-btn:active {
+    scale: 0.95;
+    transition-duration: 0.1s;
+}
+
+.scroll-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform var(--duration-fast) var(--ease-spring-1);
+}
+
+.scroll-btn:hover .scroll-icon {
+    transform: translateY(-2px);
+}
+
+/* Pulse animation when first appears */
+.scroll-to-top.visible .scroll-btn {
+    animation: scrollButtonPulse 2s ease-in-out;
+}
+
+@keyframes scrollButtonPulse {
+    0% { 
+        scale: 1;
+        box-shadow: 
+            0 4px 12px rgba(10, 75, 62, 0.3),
+            0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    50% { 
+        scale: 1.1;
+        box-shadow: 
+            0 6px 20px rgba(10, 75, 62, 0.5),
+            0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    100% { 
+        scale: 1;
+        box-shadow: 
+            0 4px 12px rgba(10, 75, 62, 0.3),
+            0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .scroll-progress-ring {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .progress-ring {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .progress-ring-background,
+    .progress-ring-progress {
+        r: 21;
+        cx: 25;
+        cy: 25;
+    }
+    
+    .progress-ring-progress {
+        stroke-dasharray: 131.95;
+    }
+    
+    .scroll-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .scroll-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scroll-to-top {
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .scroll-btn {
+        border: 2px solid #ffffff;
+    }
+    
+    .progress-ring-background {
+        stroke: #000000;
+        opacity: 0.5;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .scroll-to-top {
+        transition: opacity 0.2s ease;
+    }
+    
+    .scroll-btn {
+        transition: none;
+    }
+    
+    .scroll-btn:hover .scroll-icon {
+        transform: none;
+    }
+    
+    .scroll-to-top.visible .scroll-btn {
+        animation: none;
+    }
+    
+    .progress-ring-progress {
+        transition: none;
+    }
+}
+
+/* Focus styles for accessibility */
+.scroll-btn:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    .progress-ring-background {
+        stroke: #4a4a4a;
+    }
+    
+    .progress-ring-progress {
+        stroke: #6abad3;
+    }
+    
+    .scroll-btn {
+        background: linear-gradient(135deg, #1a5a4a 0%, #2d4a2d 100%);
+    }
+    
+    .scroll-btn:hover {
+        background: linear-gradient(135deg, #206650 0%, #3a5a3a 100%);
+    }
+}
+
+/* Loading state (nếu cần) */
+.scroll-btn.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.scroll-btn.loading .scroll-icon {
+    animation: spin 1s linear infinite;
+}
+
+/* Floating effect on hover */
+.scroll-to-top:hover {
+    transform: translateY(-2px) scale(1);
+}
+
+.scroll-to-top.visible:hover {
+    transform: translateY(-2px) scale(1);
+} 

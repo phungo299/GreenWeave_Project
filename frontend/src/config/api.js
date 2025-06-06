@@ -33,6 +33,7 @@ const API_CONFIG = {
         
         // Order endpoints
         ORDERS: {
+            GET_ALL: '/orders',
             USER_ORDERS: (userId) => `/orders/user/${userId}`,
             ORDER_DETAIL: (orderId) => `/orders/${orderId}`,
             CREATE_ORDER: (userId) => `/orders/user/${userId}`,

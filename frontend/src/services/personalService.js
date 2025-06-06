@@ -52,9 +52,46 @@ const personalService = {
     getUserOrders: async (userId, params = {}) => {
         try {
             const response = await axiosClient.get(API_CONFIG.ENDPOINTS.ORDERS.USER_ORDERS(userId), { params });
-            return response;
+            
+            // Xử lý response format mới từ backend
+            if (response && response.success && response.data) {
+                return {
+                    success: true,
+                    data: response.data,
+                    message: response.message
+                };
+            }
+            
+            // Fallback cho format cũ (nếu backend chưa cập nhật)
+            if (Array.isArray(response)) {
+                return {
+                    success: true,
+                    data: response,
+                    message: 'Lấy danh sách đơn hàng thành công'
+                };
+            }
+            
+            // Trường hợp không có data
+            return {
+                success: true,
+                data: [],
+                message: 'Không có đơn hàng nào'
+            };
         } catch (error) {
-            throw error;
+            console.error('Error in getUserOrders:', error);
+            
+            // Xử lý lỗi chi tiết
+            let errorMessage = 'Không thể tải danh sách đơn hàng';
+            
+            if (error.status === 400) {
+                errorMessage = 'ID người dùng không hợp lệ';
+            } else if (error.status === 401) {
+                errorMessage = 'Vui lòng đăng nhập để xem đơn hàng';
+            } else if (error.status === 0) {
+                errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+            }
+            
+            throw new Error(errorMessage);
         }
     },
 
@@ -65,9 +102,42 @@ const personalService = {
     getOrderDetail: async (orderId) => {
         try {
             const response = await axiosClient.get(API_CONFIG.ENDPOINTS.ORDERS.ORDER_DETAIL(orderId));
-            return response;
+            
+            // Xử lý response format mới từ backend
+            if (response && response.success && response.data) {
+                return {
+                    success: true,
+                    data: response.data,
+                    message: response.message
+                };
+            }
+            
+            // Fallback cho format cũ
+            if (response && response._id) {
+                return {
+                    success: true,
+                    data: response,
+                    message: 'Lấy thông tin đơn hàng thành công'
+                };
+            }
+            
+            throw new Error('Không tìm thấy thông tin đơn hàng');
         } catch (error) {
-            throw error;
+            console.error('Error in getOrderDetail:', error);
+            
+            let errorMessage = 'Không thể tải thông tin đơn hàng';
+            
+            if (error.status === 400) {
+                errorMessage = 'ID đơn hàng không hợp lệ';
+            } else if (error.status === 404) {
+                errorMessage = 'Không tìm thấy đơn hàng';
+            } else if (error.status === 401) {
+                errorMessage = 'Không có quyền xem đơn hàng này';
+            } else if (error.status === 0) {
+                errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+            }
+            
+            throw new Error(errorMessage);
         }
     },
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import '../assets/css/AboutUsPage.css';
+import '../assets/css/ModernAnimations.css';
 import ab1 from '../assets/images/ab1.png';
 import ab2 from '../assets/images/ab2.png';
 import Logo from '../assets/images/logo-no-background.png';
-import initFlipGallery from '../assets/js/flipGallery';
 import AnimatedSection from '../components/common/AnimatedSection';
+import ModernGallery from '../components/common/ModernGallery';
 import Footer from '../components/layout/footer/Footer';
 import Header from '../components/layout/header/Header';
 import DangThuyDuong from '../assets/images/group-member-photo/Dang Thuy Duong.jpg';
@@ -14,333 +15,467 @@ import NgoTranAnhPhu from '../assets/images/group-member-photo/Ngo Tran Anh Phu.
 import LeBaoDuy from '../assets/images/group-member-photo/Le Bao Duy.jpg';
 import NguyenVanCuong from '../assets/images/group-member-photo/Nguyen Van Cuong.jpg';
 
+// Thêm preset animation variants ở đầu file
+const smoothZoomIn = {
+  hidden: { opacity: 0, scale: 0.92, filter: "blur(2px)" },
+  visible: {
+    opacity: 1, scale: 1, filter: "blur(0px)",
+    transition: { type: "spring", stiffness: 66, damping: 20, mass: 0.9, duration: 1.05 }
+  }
+};
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] } }
+};
+const slideUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80, damping: 18, duration: 0.9 } }
+};
+
 const AboutUsPage = () => {
-    const [imagesLoaded, setImagesLoaded] = useState(false);
-    const [hasError, setHasError] = useState(false);
-
+    const [isLoaded, setIsLoaded] = useState(false);
+    
     useEffect(() => {
-        try {
-            // Dữ liệu hình ảnh cho unique points flip gallery
-            const images = [
-                { title: "Chai nhựa PET", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585584/chai-nhua_eyinh4.jpg" },
-                { title: "Bao bì thân thiện môi trường", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585736/recycled-mailer-packaging-design-for-kids-clothing-brand_w8g30x.jpg" },
-                { title: "Sản phẩm từ chất liệu bền vững", url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585563/recycled-tote-bag-3_j142it.jpg" }
-            ];
-
-            // Preload hình ảnh trong head và kiểm tra khi đã tải xong
-            const preloadImages = () => {
-                const head = document.head;
-                
-                // Xóa các thẻ preload cũ nếu có
-                const oldLinks = document.querySelectorAll('link[data-flip-preload]');
-                oldLinks.forEach(link => link.remove());
-                
-                // Tạo Promise chứa tất cả việc tải hình ảnh
-                const imageLoadPromises = images.map(image => {
-                    return new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = () => resolve();
-                        img.onerror = () => {
-                            console.warn(`Không thể tải hình ảnh: ${image.url}`);
-                            resolve(); // Vẫn resolve ngay cả khi lỗi
-                        };
-                        img.src = image.url;
-                        
-                        // Thêm preload link
-                        const link = document.createElement('link');
-                        link.rel = 'preload';
-                        link.href = image.url;
-                        link.as = 'image';
-                        link.type = 'image/jpeg';
-                        link.setAttribute('data-flip-preload', 'true');
-                        head.appendChild(link);
-                    });
-                });
-                
-                // Khi tất cả hình ảnh đã tải xong
-                Promise.all(imageLoadPromises)
-                    .then(() => {
-                        setImagesLoaded(true);
-                        // Khởi tạo flip gallery sau khi ảnh đã tải xong
-                        if (typeof initFlipGallery === 'function') {
-                            initFlipGallery('unique-flip-gallery', images);
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Lỗi khi tải hình ảnh:', err);
-                        setImagesLoaded(true); // Vẫn hiển thị gallery ngay cả khi lỗi
-                        setHasError(true);
-                    });
-            };
-            
-            // Thực hiện preload
-            preloadImages();
-            
-        } catch (error) {
-            console.error('Lỗi khởi tạo AboutUsPage:', error);
-            setHasError(true);
-            setImagesLoaded(true);
-        }
-        
-        // Dọn dẹp khi unmount
-        return () => {
-            try {
-                // Xóa các thẻ preload khi unmount
-                const oldLinks = document.querySelectorAll('link[data-flip-preload]');
-                oldLinks.forEach(link => link.remove());
-            } catch (error) {
-                console.warn('Lỗi khi dọn dẹp:', error);
-            }
-        };
+        setIsLoaded(true);
     }, []);
+
+    // Modern gallery data với better structure
+    const galleryImages = [
+        { 
+            id: 1,
+            title: "Chai nhựa PET - Nguyên liệu tái chế chính", 
+            url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585584/chai-nhua_eyinh4.jpg" 
+        },
+        { 
+            id: 2,
+            title: "Bao bì thân thiện môi trường", 
+            url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585736/recycled-mailer-packaging-design-for-kids-clothing-brand_w8g30x.jpg" 
+        },
+        { 
+            id: 3,
+            title: "Sản phẩm từ chất liệu bền vững", 
+            url: "https://res.cloudinary.com/dacbvhtgz/image/upload/v1747585563/recycled-tote-bag-3_j142it.jpg" 
+        }
+    ];
+
+    // Team data với real information
+    const teamMembers = [
+        {
+            id: 1,
+            name: "Đặng Thùy Dương",
+            position: "Người đại diện",
+            description: "Chuyên gia chiến lược với tầm nhìn phát triển bền vững",
+            image: DangThuyDuong,
+            expertise: ["Chiến lược", "Phát triển bền vững", "Quản lý dự án"]
+        },
+        {
+            id: 2,
+            name: "Nguyễn Thị Bích Mùi",
+            position: "Chief Marketing Officer",
+            description: "Chuyên gia marketing với 5+ năm kinh nghiệm trong ngành thời trang",
+            image: NguyenThiBichMui,
+            expertise: ["Digital Marketing", "Brand Strategy", "Consumer Insights"]
+        },
+        {
+            id: 3,
+            name: "Phạm Ngọc Hương Quỳnh",
+            position: "Chief Executive Officer",
+            description: "Nhà lãnh đạo tầm nhìn với passion về môi trường và đổi mới",
+            image: PhamNgocHuongQuynh,
+            expertise: ["Leadership", "Business Strategy", "Sustainability"]
+        },
+        {
+            id: 4,
+            name: "Ngô Trần Anh Phú",
+            position: "Chief Technology Officer",
+            description: "Kỹ sư công nghệ với chuyên môn về platform và development",
+            image: NgoTranAnhPhu,
+            expertise: ["Full-stack Development", "System Architecture", "Innovation"]
+        },
+        {
+            id: 5,
+            name: "Lê Bảo Duy",
+            position: "Chief Operating Officer",
+            description: "Chuyên gia vận hành với kinh nghiệm tối ưu quy trình sản xuất",
+            image: LeBaoDuy,
+            expertise: ["Operations", "Supply Chain", "Quality Control"]
+        },
+        {
+            id: 6,
+            name: "Nguyễn Văn Cường",
+            position: "Chief Business Development Officer",
+            description: "Chuyên gia phát triển kinh doanh và mở rộng thị trường",
+            image: NguyenVanCuong,
+            expertise: ["Business Development", "Partnership", "Market Expansion"]
+        }
+    ];
 
     return (
         <div className="aboutpage-container">
             <Header />
 
-            <div className="about-us-content">
-                {/* About Us Header section - Redesigned */}
-                <AnimatedSection animation="fadeIn" duration={0.8}>
-                    <section className="about-hero-section">
-                        <div className="about-hero-container">
-                            <AnimatedSection animation="slideRight" delay={0.3} className="left-section-container">
-                                <div className="blue-image">
-                                    <img src={ab1} alt="Màu xanh đại dương" />
-                                </div>
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="slideUp" delay={0.5} className="right-section-container">
-                                <div className="logo-section">
-                                    <img src={Logo} alt="GreenWeave Logo" className="logo-image" />
-                                </div>
-                                <div className="stairs-image">
-                                    <img src={ab2} alt="Cầu thang hiện đại" />
-                                </div>
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="slideLeft" delay={0.7} className="right-section">
-                                <h1 className="about-title">ABOUT US</h1>
-                                <div className="about-description">
-                                    <p><span className="highlight">GreenWeave</span> là thương hiệu thời trang bền vững tiên phong trong việc tái tạo giá trị từ rác thải nhựa. Chúng tôi chuyên cung cấp các sản phẩm thời trang như mũ, nón bucket, túi tote làm từ <span className="highlight">sợi vải tái chế PET</span>, góp phần giảm thiểu ô nhiễm môi trường và lan toả lối sống xanh đến cộng đồng.</p>
-                                </div>
-                            </AnimatedSection>
-                        </div>
-                    </section>
-                </AnimatedSection>
+            {/* Floating Background Orbs */}
+            <div className="floating-orbs">
+                <div className="orb orb-1"></div>
+                <div className="orb orb-2"></div>
+                <div className="orb orb-3"></div>
+            </div>
 
-                {/* Section 3 - 100% Recycled with Ocean Image */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="recycled-ocean-section">
-                        <div className="recycled-ocean-container">
-                            <div className="recycled-cards">
-                                <AnimatedSection animation="slideRight" delay={0.2} className="recycled-card-left">
-                                    <img src="https://picsum.photos/500/600?green=1" alt="Túi tái chế màu xanh" className="recycled-bag-image" />
+            <div className="about-us-content">
+                {/* Premium Hero Section - Completely Redesigned */}
+                <AnimatedSection variants={smoothZoomIn}>
+                    <section className="premium-hero-section">
+                        <div className="hero-background-gradient"></div>
+                        
+                        <div className="premium-hero-container">
+                            {/* Left Side - Visual Elements */}
+                            <div className="hero-visual-section">
+                                <AnimatedSection variants={smoothZoomIn} delay={0.3} className="hero-image-card glassmorphism">
+                                    <img src={ab1} alt="Sustainable Ocean" className="hero-main-image" />
+                                    <div className="image-overlay">
+                                        <div className="impact-badge">
+                                            <span className="impact-number">100%</span>
+                                            <span className="impact-text">Tái chế</span>
+                                        </div>
+                                    </div>
                                 </AnimatedSection>
                                 
-                                <div className="recycled-card-right">
-                                    <AnimatedSection animation="slideLeft" delay={0.3} className="recycled-hats-image-container">
-                                        <img src="https://picsum.photos/500/300?hats=1" alt="Mũ nón tái chế" className="recycled-hats-image" />
-                                    </AnimatedSection>
-                                    
-                                    <AnimatedSection animation="zoomIn" delay={0.5} className="recycled-badge">
-                                        <h2 className="recycled-percentage">100<span className="percentage-symbol">%</span></h2>
-                                        <h3 className="recycled-title">VẬT LIỆU TÁI CHẾ</h3>
-                                    </AnimatedSection>
-                                    
-                                    <AnimatedSection animation="fadeIn" delay={0.7} className="recycled-description">
-                                        <span className="highlight">Tất cả sản phẩm của chúng tôi được làm từ vật liệu tái chế,
-                                        giảm thiểu rác thải nhựa trong đại dương.</span>
-                                    </AnimatedSection>
-                                </div>
+                                <AnimatedSection variants={smoothZoomIn} delay={0.6} className="hero-logo-card glassmorphism">
+                                    <img src={Logo} alt="GreenWeave Logo" className="hero-logo" />
+                                    <div className="logo-glow"></div>
+                                </AnimatedSection>
+                                
+                                <AnimatedSection variants={slideUp} delay={0.9} className="hero-secondary-image glassmorphism">
+                                    <img src={ab2} alt="Modern Architecture" />
+                                </AnimatedSection>
+                            </div>
+                            
+                            {/* Right Side - Content */}
+                            <div className="hero-content-section">
+                                <AnimatedSection variants={smoothZoomIn} delay={0.4}>
+                                    <div className="hero-badge">
+                                        <span>🌿 Thời trang bền vững</span>
+                                    </div>
+                                </AnimatedSection>
+                                
+                                <AnimatedSection variants={smoothZoomIn} delay={0.6}>
+                                    <h1 className="hero-title">
+                                        <span className="title-gradient">About</span>
+                                        <span className="title-outline">GreenWeave</span>
+                                    </h1>
+                                </AnimatedSection>
+                                
+                                <AnimatedSection variants={smoothZoomIn} delay={0.8}>
+                                    <div className="hero-description">
+                                        <p className="description-highlight">
+                                            <strong>GreenWeave</strong> là thương hiệu thời trang bền vững tiên phong 
+                                            trong việc tái tạo giá trị từ rác thải nhựa.
+                                        </p>
+                                        <p className="description-detail">
+                                            Chúng tôi chuyên cung cấp các sản phẩm thời trang như mũ, nón bucket, 
+                                            túi tote làm từ <strong>sợi vải tái chế PET</strong>, góp phần giảm thiểu 
+                                            ô nhiễm môi trường và lan toả lối sống xanh đến cộng đồng.
+                                        </p>
+                                    </div>
+                                </AnimatedSection>
+                                
+
                             </div>
                         </div>
                     </section>
                 </AnimatedSection>
 
-                {/* Unique Points section */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="unique-section">
+                {/* Premium Values Section */}
+                <AnimatedSection variants={fadeIn}>
+                    <section className="premium-values-section">
+                        <div className="values-container">
+                            <AnimatedSection variants={slideUp} delay={0.2}>
+                                <h2 className="section-title gradient-text">Giá trị cốt lõi</h2>
+                                <p className="section-subtitle">
+                                    Những nguyên tắc dẫn lối cho sứ mệnh phát triển bền vững của chúng tôi
+                                </p>
+                            </AnimatedSection>
+                            
+                            <div className="values-grid">
+                                <AnimatedSection variants={slideUp} delay={0.3} className="value-card glassmorphism">
+                                    <div className="value-icon">🌱</div>
+                                    <h3>Bền vững</h3>
+                                    <p>100% nguyên liệu tái chế từ chai nhựa PET, giảm thiểu tác động môi trường</p>
+                                </AnimatedSection>
+                                
+                                <AnimatedSection variants={slideUp} delay={0.4} className="value-card glassmorphism">
+                                    <div className="value-icon">✨</div>
+                                    <h3>Chất lượng</h3>
+                                    <p>Sản phẩm bền bỉ, thiết kế hiện đại, đáp ứng tiêu chuẩn quốc tế</p>
+                                </AnimatedSection>
+                                
+                                <AnimatedSection variants={slideUp} delay={0.5} className="value-card glassmorphism">
+                                    <div className="value-icon">🤝</div>
+                                    <h3>Trách nhiệm</h3>
+                                    <p>Cam kết với cộng đồng và hành tinh, tạo ra tác động tích cực lâu dài</p>
+                                </AnimatedSection>
+                            </div>
+                        </div>
+                    </section>
+                </AnimatedSection>
+
+                {/* Enhanced Unique Points section */}
+                <AnimatedSection variants={fadeIn}>
+                    <section className="premium-unique-section">
                         <div className="unique-container">
-                            <AnimatedSection animation="slideRight" delay={0.2} className="unique-content">
-                                <h1 className="unique-title">Điểm khác biệt</h1>
-                                <ul className="unique-list">
-                                    <AnimatedSection animation="slideUp" delay={0.4}>
-                                        <li>
-                                            <span className="bullet-point">•</span>
-                                            <p>Sử dụng <span className="highlight-text">sợi vải tái chế từ chai nhựa PET</span> - 
-                                            giải pháp <span className="highlight-text">thân thiện môi trường</span>, góp phần 
-                                            <span className="highlight-text">giảm thiểu rác thải nhựa.</span></p>
-                                        </li>
+                            <AnimatedSection variants={smoothZoomIn} delay={0.2} className="unique-content">
+                                <h2 className="section-title gradient-text">Điểm khác biệt</h2>
+                                <div className="unique-features">
+                                    <AnimatedSection variants={slideUp} delay={0.4} className="feature-item">
+                                        <div className="feature-icon">♻️</div>
+                                        <div className="feature-text">
+                                            <h3>Công nghệ tái chế tiên tiến</h3>
+                                            <p>Sử dụng <strong>sợi vải tái chế từ chai nhựa PET</strong> với công nghệ 
+                                            hiện đại, tạo ra vật liệu bền vững và thân thiện môi trường.</p>
+                                        </div>
                                     </AnimatedSection>
                                     
-                                    <AnimatedSection animation="slideUp" delay={0.6}>
-                                        <li>
-                                            <span className="bullet-point">•</span>
-                                            <p>Tích hợp <span className="highlight-text">giá trị bền vững</span> trong mỗi công
-                                            đoạn sản xuất, từ nguyên liệu đến bao bì.</p>
-                                        </li>
+                                    <AnimatedSection variants={slideUp} delay={0.6} className="feature-item">
+                                        <div className="feature-icon">🌍</div>
+                                        <div className="feature-text">
+                                            <h3>Quy trình sản xuất xanh</h3>
+                                            <p>Tích hợp <strong>giá trị bền vững</strong> trong mỗi công đoạn sản xuất, 
+                                            từ nguyên liệu đến bao bì, đảm bảo tối thiểu tác động môi trường.</p>
+                                        </div>
                                     </AnimatedSection>
-                                </ul>
+                                </div>
                             </AnimatedSection>
                             
-                            <AnimatedSection animation="zoomIn" delay={0.4} className="flip-gallery-container">
-                                {hasError ? (
-                                    <div className="gallery-fallback">
-                                        <div className="fallback-images">
-                                            <img src="https://via.placeholder.com/300x200/4CAF50/white?text=Chai+nhựa+PET" alt="Chai nhựa PET" />
-                                            <img src="https://via.placeholder.com/300x200/2196F3/white?text=Bao+bì+thân+thiện" alt="Bao bì thân thiện môi trường" />
-                                            <img src="https://via.placeholder.com/300x200/FF9800/white?text=Sản+phẩm+bền+vững" alt="Sản phẩm từ chất liệu bền vững" />
+                            <AnimatedSection variants={smoothZoomIn} delay={0.4} className="modern-gallery-container">
+                                <ModernGallery 
+                                    images={galleryImages}
+                                    autoplay={true}
+                                    autoplayDelay={4000}
+                                    showNavigation={true}
+                                    className="unique-points-gallery"
+                                    style={{ height: '300px' }}
+                                />
+                            </AnimatedSection>
+                        </div>
+                    </section>
+                </AnimatedSection>
+
+                {/* Premium Design section */}
+                <AnimatedSection variants={fadeIn}>
+                    <section className="premium-design-section">
+                        <AnimatedSection variants={slideUp} delay={0.2} className="design-header">
+                            <h2 className="section-title gradient-text">Thiết kế hiện đại</h2>
+                            <p className="section-subtitle">
+                                Kết hợp thẩm mỹ đương đại với giá trị bền vững, tạo nên phong cách sống xanh
+                            </p>
+                        </AnimatedSection>
+                        
+                        <div className="design-showcase">
+                            <AnimatedSection variants={smoothZoomIn} delay={0.3} hoverEffect="float" className="design-item glassmorphism">
+                                <img src="https://picsum.photos/300/400?random=12" alt="Sustainable Design 1" />
+                                <div className="design-overlay">
+                                    <h3>Túi Tote Eco</h3>
+                                    <p>Thiết kế tối giản, tiện dụng</p>
+                                </div>
+                            </AnimatedSection>
+                            
+                            <AnimatedSection variants={smoothZoomIn} delay={0.4} hoverEffect="float" className="design-item glassmorphism">
+                                <img src="https://picsum.photos/300/400?random=13" alt="Sustainable Design 2" />
+                                <div className="design-overlay">
+                                    <h3>Nón Bucket Premium</h3>
+                                    <p>Phong cách streetwear hiện đại</p>
+                                </div>
+                            </AnimatedSection>
+                            
+                            <AnimatedSection variants={smoothZoomIn} delay={0.5} hoverEffect="float" className="design-item glassmorphism">
+                                <img src="https://picsum.photos/300/400?random=14" alt="Sustainable Design 3" />
+                                <div className="design-overlay">
+                                    <h3>Mũ Cap Classic</h3>
+                                    <p>Đa dạng màu sắc, cá tính</p>
+                                </div>
+                            </AnimatedSection>
+                        </div>
+                    </section>
+                </AnimatedSection>
+
+                {/* PREMIUM Team Section - Executive Level */}
+                <AnimatedSection variants={fadeIn}>
+                    <section className="premium-team-section">
+                        <div className="team-header">
+                            <AnimatedSection variants={slideUp} delay={0.2}>
+                                <h2 className="section-title gradient-text">Đội ngũ lãnh đạo</h2>
+                                <p className="section-subtitle">
+                                    Những tài năng trẻ với tầm nhìn và passion thay đổi thế giới
+                                </p>
+                            </AnimatedSection>
+                        </div>
+                        
+                        <div className="premium-team-grid">
+                            {teamMembers.map((member, index) => (
+                                <AnimatedSection 
+                                    key={member.id}
+                                    variants={smoothZoomIn} 
+                                    delay={0.3 + index * 0.1} 
+                                    hoverEffect="float" 
+                                    className="premium-team-card glassmorphism"
+                                >
+                                    <div className="team-card-header">
+                                        <div className="member-image-container">
+                                            <img src={member.image} alt={member.name} className="member-image" />
+                                            <div className="image-glow"></div>
+                                        </div>
+                                        <div className="member-status">
+                                            <span className="status-dot"></span>
+                                            <span>Active</span>
                                         </div>
                                     </div>
-                                ) : (
-                                    <>
-                                        <div 
-                                            id="unique-flip-gallery" 
-                                            className={`flip-gallery ${!imagesLoaded ? 'gallery-loading' : ''}`}
-                                        >
-                                            <div className="top unite"></div>
-                                            <div className="bottom unite"></div>
-                                            <div className="overlay-top unite"></div>
-                                            <div className="overlay-bottom unite"></div>
+                                    
+                                    <div className="team-card-content">
+                                        <h3 className="member-name">{member.name}</h3>
+                                        <p className="member-position">{member.position}</p>
+                                        <p className="member-description">{member.description}</p>
+                                        
+                                        <div className="member-expertise">
+                                            {member.expertise.map((skill, skillIndex) => (
+                                                <span key={skillIndex} className="expertise-tag">
+                                                    {skill}
+                                                </span>
+                                            ))}
                                         </div>
-                                        <div className="gallery-nav">
-                                            <button type="button" data-gallery-nav="-1" title="Previous">&#10094;</button>
-                                            <button type="button" data-gallery-nav="1" title="Next">&#10095;</button>
+                                    </div>
+                                    
+                                    <div className="team-card-footer">
+                                        <div className="social-links">
+                                            <span className="social-icon">💼</span>
+                                            <span className="social-icon">📧</span>
+                                            <span className="social-icon">🔗</span>
                                         </div>
-                                    </>
-                                )}
-                            </AnimatedSection>
+                                    </div>
+                                </AnimatedSection>
+                            ))}
                         </div>
                     </section>
                 </AnimatedSection>
 
-                {/* Design section */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="design-section">
-                        <AnimatedSection animation="slideUp" delay={0.2} className="design-header">
-                            <h2 className="design-title">Thiết kế</h2>
-                            <p className="design-description">
-                                Thiết kế trẻ trung, năng động, phù hợp với xu hướng sống xanh hiện đại.
-                            </p>
-                        </AnimatedSection>
-                        
-                        <div className="design-gallery">
-                            <AnimatedSection animation="zoomIn" delay={0.3} hoverEffect="zoom">
-                                <img src="https://picsum.photos/250/300?random=12" alt="Design example 1" />
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="zoomIn" delay={0.4} hoverEffect="zoom">
-                                <img src="https://picsum.photos/250/300?random=13" alt="Design example 2" />
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="zoomIn" delay={0.5} hoverEffect="zoom">
-                                <img src="https://picsum.photos/250/300?random=14" alt="Design example 3" />
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="zoomIn" delay={0.6} hoverEffect="zoom">
-                                <img src="https://picsum.photos/250/300?random=15" alt="Design example 4" />
-                            </AnimatedSection>
-                        </div>
-                        
-                        <AnimatedSection animation="fadeIn" delay={0.7}>
-                            <p className="design-custom">
-                                Tạo nên tặng trải nghiệm tiện lợi, cho phép khách hàng thiết kế và tùy chỉnh
-                                sản phẩm theo sở thích riêng.
-                            </p>
-                        </AnimatedSection>
-                    </section>
-                </AnimatedSection>
-
-                {/* Team section */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="team-section">
-                        <AnimatedSection animation="slideUp" delay={0.2}>
-                            <h2 className="team-title">Đội ngũ nhân sự</h2>
-                            <p className="team-description">
-                                GreenWeave là tập hợp của những con người trẻ trung, sáng tạo, giàu tinh thần trách nhiệm
-                            </p>
-                        </AnimatedSection>                       
-                        <div className="team-members">
-                            <AnimatedSection animation="zoomIn" delay={0.3} hoverEffect="float" className="team-member">
-                                <img src={DangThuyDuong} alt="Đặng Thùy Dương" />
-                                <h3>Đặng Thùy Dương</h3>
-                                <p>Người đại diện</p>
-                            </AnimatedSection>                           
-                            <AnimatedSection animation="zoomIn" delay={0.4} hoverEffect="float" className="team-member">
-                                <img src={NguyenThiBichMui} alt="Nguyễn Thị Bích Mùi" />
-                                <h3>Nguyễn Thị Bích Mùi</h3>
-                                <p>CMO</p>
-                            </AnimatedSection>                           
-                            <AnimatedSection animation="zoomIn" delay={0.5} hoverEffect="float" className="team-member">
-                                <img src={PhamNgocHuongQuynh} alt="Phạm Ngọc Hương Quỳnh" />
-                                <h3>Phạm Ngọc Hương Quỳnh</h3>
-                                <p>CEO</p>
-                            </AnimatedSection>                           
-                            <AnimatedSection animation="zoomIn" delay={0.6} hoverEffect="float" className="team-member">
-                                <img src={NgoTranAnhPhu} alt="Ngô Trần Anh Phú" />
-                                <h3>Ngô Trần Anh Phú</h3>
-                                <p>CTO</p>
-                            </AnimatedSection>                         
-                           <AnimatedSection animation="zoomIn" delay={0.7} hoverEffect="float" className="team-member">
-                                <img src={LeBaoDuy} alt="Lê Bảo Duy" />
-                                <h3>Lê Bảo Duy</h3>
-                                <p>COO</p>
-                            </AnimatedSection>                           
-                            <AnimatedSection animation="zoomIn" delay={0.8} hoverEffect="float" className="team-member">
-                                <img src={NguyenVanCuong} alt="Nguyễn Văn Cường" />
-                                <h3>Nguyễn Văn Cường</h3>
-                                <p>CBDO</p>
-                            </AnimatedSection>
-                        </div>
-                    </section>
-                </AnimatedSection>
-                {/* Achievements section */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="achievements-section">
-                        <div className="achievements-container">
-                            <AnimatedSection animation="slideRight" delay={0.3} className="achievements-list">
-                                <h2>Thành tựu</h2>
-                                <ul>
-                                    <li>Được nhận tài trợ từ trường Đại học FPT Quy Nhơn</li>
-                                    <li>Được giải thưởng hệch văn hóa truyền thông tỉnh và nhiều cuộc thi</li>
-                                </ul>
-                            </AnimatedSection>
-                            
-                            <AnimatedSection animation="slideLeft" delay={0.4} className="certificates">
-                                <img src="https://picsum.photos/200/300?document" alt="Certificate" />
-                            </AnimatedSection>
-                        </div>
-                    </section>
-                </AnimatedSection>
-
-                {/* Certifications section */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="certification-section">
-                        <AnimatedSection animation="slideUp" delay={0.3} className="certification-container">
-                            <h2>Chứng nhận</h2>
-                            <ul>
-                                <li>Đạt giải "Ý tưởng khởi nghiệp sáng tạo vì môi trường" - Phishing Day FPT education" năm 2023</li>
-                                <li>Sản phẩm đạt tiêu chuẩn Global Recycled Standard (GRS)</li>
-                            </ul>
-                        </AnimatedSection>
-                    </section>
-                </AnimatedSection>
-
-                {/* Commitment section */}
-                <AnimatedSection animation="fadeIn">
-                    <section className="commitment-section">
+                {/* Premium Commitment section */}
+                <AnimatedSection variants={fadeIn}>
+                    <section className="premium-commitment-section">
                         <div className="commitment-container">
-                            <AnimatedSection animation="slideRight" delay={0.3} className="commitment-image">
-                                <img src="https://picsum.photos/400/300?clothing" alt="Sustainable clothing" />
+                            <AnimatedSection variants={smoothZoomIn} delay={0.3} className="commitment-visual glassmorphism">
+                                <img src="https://picsum.photos/600/400?sustainability" alt="Sustainable Future" />
+                                <div className="visual-overlay">
+                                    <div className="overlay-content">
+                                        <h3>Tương lai bền vững</h3>
+                                        <p>Cùng nhau xây dựng thế giới xanh</p>
+                                    </div>
+                                </div>
                             </AnimatedSection>
                             
-                            <AnimatedSection animation="slideLeft" delay={0.5} className="commitment-text">
-                                <h2>Lời cam kết</h2>
-                                <ul>
-                                    <li>Chỉ sử dụng nguyên liệu tái chế và thân thiện với môi trường</li>
-                                    <li>Không sử dụng hóa chất độc hại trong quá trình sản xuất</li>
-                                    <li>Cam kết chất lượng bền vững, dịch vụ tận tâm và trải nghiệm tích cực cho khách hàng</li>
-                                </ul>
+                            <AnimatedSection variants={slideUp} delay={0.5} className="commitment-content">
+                                <h2 className="section-title gradient-text">Cam kết của chúng tôi</h2>
+                                
+                                <div className="commitment-list">
+                                    <div className="commitment-item">
+                                        <div className="commitment-icon">🌱</div>
+                                        <div className="commitment-text">
+                                            <h3>Nguyên liệu xanh 100%</h3>
+                                            <p>Chỉ sử dụng nguyên liệu tái chế và thân thiện với môi trường</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="commitment-item">
+                                        <div className="commitment-icon">🧪</div>
+                                        <div className="commitment-text">
+                                            <h3>Không hóa chất độc hại</h3>
+                                            <p>Cam kết quy trình sản xuất an toàn, không sử dụng chất độc hại</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="commitment-item">
+                                        <div className="commitment-icon">⭐</div>
+                                        <div className="commitment-text">
+                                            <h3>Chất lượng & Dịch vụ</h3>
+                                            <p>Đảm bảo chất lượng bền vững và trải nghiệm khách hàng tuyệt vời</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </AnimatedSection>
+                        </div>
+                    </section>
+                </AnimatedSection>
+
+                {/* ULTRA PREMIUM Call to Action Section - SMOOTH ANIMATIONS */}
+                <AnimatedSection variants={smoothZoomIn} delay={0.2}>
+                    <section className="ultra-premium-cta-section">
+                        {/* Floating Orbs Background */}
+                        <div className="cta-floating-orbs">
+                            <div className="floating-orb orb-1"></div>
+                            <div className="floating-orb orb-2"></div>
+                            <div className="floating-orb orb-3"></div>
+                            <div className="floating-orb orb-4"></div>
+                        </div>
+                        
+                        {/* Gradient Background */}
+                        <div className="cta-premium-gradient"></div>
+                        
+                        <div className="cta-premium-container">
+                            <AnimatedSection variants={smoothZoomIn} delay={0.4} className="cta-main-content">
+                                <div className="cta-badge">
+                                    <AnimatedSection variants={smoothZoomIn} animation="pulse" hoverEffect="glow">
+                                        <span className="badge-icon">🌱</span>
+                                        <span className="badge-text">Tương lai xanh</span>
+                                    </AnimatedSection>
+                                </div>
+                                
+                                <h1 className="cta-premium-title">
+                                    <span className="title-line-1">Cùng tạo nên</span>
+                                    <span className="title-line-2 gradient-text-premium">tương lai xanh</span>
+                                </h1>
+                                
+                                <p className="cta-premium-description">
+                                    Hãy tham gia cùng <strong>GreenWeave</strong> trong hành trình 
+                                    <span className="highlight-text"> phát triển bền vững</span> và 
+                                    tạo ra những giá trị thực cho cộng đồng
+                                </p>
+                                
+              
+                                
+                                <div className="cta-premium-buttons">
+                                    <AnimatedSection variants={smoothZoomIn} animation="zoomIn" delay={0.9} hoverEffect="lift">
+                                        <button className="cta-btn-ultra primary-premium">
+                                            <span className="btn-content">
+                                                <span className="btn-icon">🛍️</span>
+                                                <span className="btn-text">Khám phá sản phẩm</span>
+                                            </span>
+                                            <div className="btn-glow"></div>
+                                        </button>
+                                    </AnimatedSection>
+                                    
+                                    <AnimatedSection variants={smoothZoomIn} animation="zoomIn" delay={1.0} hoverEffect="lift">
+                                        <button className="cta-btn-ultra secondary-premium">
+                                            <span className="btn-content">
+                                                <span className="btn-icon">💬</span>
+                                                <span className="btn-text">Liên hệ với chúng tôi</span>
+                                            </span>
+                                            <div className="btn-border-glow"></div>
+                                        </button>
+                                    </AnimatedSection>
+                                </div>
+                                
+                                <AnimatedSection variants={fadeIn} delay={1.2} className="cta-trust-indicators">
+                                    <div className="trust-item">
+                                        <span className="trust-icon">🔒</span>
+                                        <span className="trust-text">Cam kết chất lượng</span>
+                                    </div>
+                                    <div className="trust-item">
+                                        <span className="trust-icon">🚚</span>
+                                        <span className="trust-text">Giao hàng toàn quốc</span>
+                                    </div>
+                                    <div className="trust-item">
+                                        <span className="trust-icon">🌿</span>
+                                        <span className="trust-text">100% thân thiện môi trường</span>
+                                    </div>
+                                </AnimatedSection>
                             </AnimatedSection>
                         </div>
                     </section>

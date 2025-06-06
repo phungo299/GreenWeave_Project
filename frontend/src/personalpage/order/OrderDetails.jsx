@@ -27,14 +27,29 @@ export default function OrderDetails() {
                 
                 const response = await personalService.getOrderDetail(id);
                 
-                if (response && response.data) {
+                // Xử lý response format mới
+                if (response && response.success && response.data) {
                     setOrder(response.data);
+                } else if (response && response.data) {
+                    // Fallback cho format cũ
+                    setOrder(response.data);
+                } else if (response && response._id) {
+                    // Fallback cho response trực tiếp là object
+                    setOrder(response);
                 } else {
                     setError('Không tìm thấy đơn hàng');
                 }
             } catch (err) {
                 console.error('Error fetching order details:', err);
-                setError(err.message || 'Không thể tải chi tiết đơn hàng');
+                let errorMessage = 'Không thể tải chi tiết đơn hàng';
+                
+                if (err.message) {
+                    errorMessage = err.message;
+                } else if (err.status === 0) {
+                    errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+                }
+                
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -163,20 +178,31 @@ export default function OrderDetails() {
                     <div className="personal-order-details-product" key={idx}>
                         <img 
                             src={
+                                // Ưu tiên imageUrl từ product
+                                item.productId?.imageUrl || 
+                                // Fallback sang variant image
+                                item.productId?.variants?.[0]?.imageUrl ||
+                                // Sử dụng imageUtils với variant
                                 imageUtils.getProductImageUrl(
                                     item.productId?.variants?.[0]?.imageUrl,
                                     'thumbnail'
-                                ) || imageUtils.getPlaceholder('product', { width: 80, height: 80 })
+                                ) || 
+                                // Placeholder cuối cùng
+                                imageUtils.getPlaceholder('product', { width: 80, height: 80 })
                             } 
                             alt={item.productId?.name || 'Sản phẩm'} 
-                            className="personal-order-details-product-img" 
+                            className="personal-order-details-product-img"
+                            onError={(e) => {
+                                // Fallback khi image load lỗi
+                                e.target.src = imageUtils.getPlaceholder('product', { width: 80, height: 80 });
+                            }}
                         />
                         <div className="personal-order-details-product-info">
                             <div className="personal-order-details-product-name">{item.productId?.name || 'Sản phẩm'}</div>
                             <div className="personal-order-details-product-color">Màu: {item.color}</div>
                             <div className="personal-order-details-product-qty">x{item.quantity}</div>
                         </div>
-                        <div className="personal-order-details-product-price">{formatPrice(item.price)}</div>
+                        <div className="personal-order-details-product-price">{formatPrice(item.unitPrice || item.price)}</div>
                     </div>
                 ))}
             </div>

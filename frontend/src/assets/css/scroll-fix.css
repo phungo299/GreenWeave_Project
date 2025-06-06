@@ -40,28 +40,34 @@ section {
 #products {
     position: relative;
     z-index: 2;
-    transform: translate3d(0, 0, 0) !important;
+    /* Removed transform to let framer-motion handle it */
     will-change: auto;
     /* Optimize paint and layout */
     contain: layout style paint;
 }
 
 /* Optimize animation performance with enhanced containment */
-.featured-product-section,
+.featured-product-section {
+    contain: layout style paint;
+    /* Removed transform to avoid framer-motion conflicts */
+    will-change: auto;
+    /* Prevent layout shifts during animation */
+    min-height: 600px;
+}
+
 .featured-product-container,
 .featured-product-cards {
     contain: layout style paint;
-    transform: translate3d(0, 0, 0);
-    /* Optimize compositing */
+    /* Removed transform to let framer-motion handle it */
     will-change: auto;
 }
 
 /* Prevent layout shifts with enhanced containment */
 .product-card-wrapper {
     contain: layout style;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to let framer-motion handle it */
     /* Optimize individual card rendering */
-    backface-visibility: hidden;
+    /* Removed backface-visibility to avoid conflicts */
 }
 
 /* Smooth transitions without sticky behavior - Enhanced */

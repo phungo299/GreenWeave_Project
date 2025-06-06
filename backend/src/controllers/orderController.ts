@@ -8,16 +8,33 @@ export const getUserOrders = async (req: Request, res: Response) => {
     const userId = req.params.userId;
     
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "ID người dùng không hợp lệ" });
+      return res.status(400).json({ 
+        success: false,
+        message: "ID người dùng không hợp lệ",
+        data: null
+      });
     }
     
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
-      .populate("paymentId");
+      .populate("paymentId")
+      .populate({
+        path: "items.productId",
+        select: "name price description imageUrl variants slug"
+      });
     
-    return res.status(200).json(orders);
+    return res.status(200).json({
+      success: true,
+      message: "Lấy danh sách đơn hàng thành công",
+      data: orders
+    });
   } catch (error: any) {
-    return res.status(500).json({ message: error.message });
+    console.error('Error in getUserOrders:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi lấy danh sách đơn hàng",
+      data: null
+    });
   }
 };
 
@@ -27,23 +44,40 @@ export const getOrderById = async (req: Request, res: Response) => {
     const orderId = req.params.id;
     
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ message: "ID đơn hàng không hợp lệ" });
+      return res.status(400).json({ 
+        success: false,
+        message: "ID đơn hàng không hợp lệ",
+        data: null
+      });
     }
     
     const order = await Order.findById(orderId)
       .populate("paymentId")
       .populate({
         path: "items.productId",
-        select: "name price description imageUrl variants"
+        select: "name price description imageUrl variants slug"
       });
     
     if (!order) {
-      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Không tìm thấy đơn hàng",
+        data: null
+      });
     }
     
-    return res.status(200).json(order);
+    return res.status(200).json({
+      success: true,
+      message: "Lấy thông tin đơn hàng thành công",
+      data: order
+    });
   } catch (error: any) {
-    return res.status(500).json({ message: error.message });
+    console.error('Error in getOrderById:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi lấy thông tin đơn hàng",
+      data: null
+    });
   }
 };
 

@@ -41,14 +41,29 @@ const OrderList = () => {
                 
                 const response = await personalService.getUserOrders(currentUser._id);
                 
-                if (response && response.data) {
+                // Xử lý response format mới
+                if (response && response.success && response.data) {
                     setOrders(response.data);
+                } else if (response && response.data) {
+                    // Fallback cho format cũ
+                    setOrders(response.data);
+                } else if (Array.isArray(response)) {
+                    // Fallback cho response trực tiếp là array
+                    setOrders(response);
                 } else {
                     setOrders([]);
                 }
             } catch (err) {
                 console.error('Error fetching orders:', err);
-                setError(err.message || 'Không thể tải danh sách đơn hàng');
+                let errorMessage = 'Không thể tải danh sách đơn hàng';
+                
+                if (err.message) {
+                    errorMessage = err.message;
+                } else if (err.status === 0) {
+                    errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra xem backend đã chạy chưa.';
+                }
+                
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -155,13 +170,24 @@ const OrderList = () => {
                                 <div className="personal-order-main-item">
                                     <img 
                                         src={
+                                            // Ưu tiên imageUrl từ product
+                                            order.items[0].productId?.imageUrl || 
+                                            // Fallback sang variant image
+                                            order.items[0].productId?.variants?.[0]?.imageUrl ||
+                                            // Sử dụng imageUtils với variant
                                             imageUtils.getProductImageUrl(
                                                 order.items[0].productId?.variants?.[0]?.imageUrl,
                                                 'thumbnail'
-                                            ) || imageUtils.getPlaceholder('product', { width: 80, height: 80 })
+                                            ) || 
+                                            // Placeholder cuối cùng
+                                            imageUtils.getPlaceholder('product', { width: 80, height: 80 })
                                         } 
                                         alt={order.items[0].productId?.name || 'Sản phẩm'} 
-                                        className="personal-order-image" 
+                                        className="personal-order-image"
+                                        onError={(e) => {
+                                            // Fallback khi image load lỗi
+                                            e.target.src = imageUtils.getPlaceholder('product', { width: 80, height: 80 });
+                                        }}
                                     />          
                                     <div className="personal-order-details">
                                         <h3 className="personal-order-title">

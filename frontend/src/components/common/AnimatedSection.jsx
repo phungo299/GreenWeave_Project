@@ -1,236 +1,254 @@
-import { motion, useAnimation } from 'framer-motion';
-import React, { useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import React from 'react';
 
 /**
- * Component animation cho các phần tử trong trang - Optimized version
- * @param {Object} props
- * @param {React.ReactNode} props.children - Nội dung bên trong
- * @param {Object} props.variants - Custom variants animation
- * @param {string} props.className - CSS classes
- * @param {number} props.delay - Độ trễ của animation (giây)
- * @param {number} props.duration - Thời gian của animation (giây)
- * @param {Object} props.style - Custom CSS styles
- * @param {string} props.animation - Loại animation ('fadeIn' | 'slideUp' | 'slideRight' | 'slideLeft' | 'zoomIn' | 'rotateIn' | 'bounce' | 'custom')
- * @param {string} props.hoverEffect - Hiệu ứng hover ('zoom' | 'glow' | 'float' | 'pulse' | 'tilt' | 'none')
- * @param {boolean} props.once - Chỉ chạy animation một lần
+ * ULTRA SMOOTH AnimatedSection - Premium Animation Component
+ * Optimized for 60fps performance with zero jank
  */
 
-// Optimized animation variants with GPU acceleration
-const animationVariants = {
+// PREMIUM SPRING EASING - Natural motion curves
+const springConfig = {
+  type: "spring",
+  stiffness: 100,
+  damping: 12,
+  mass: 0.8,
+  restDelta: 0.001
+};
+
+const smoothEasing = [0.25, 0.46, 0.45, 0.94]; // Custom bezier for smooth motion
+
+// ULTRA SMOOTH ANIMATION VARIANTS - GPU Optimized
+const premiumVariants = {
   fadeIn: {
-    hidden: { opacity: 0, transform: 'translate3d(0,0,0)' },
+    hidden: { 
+      opacity: 0,
+      transform: 'translate3d(0,0,0)',
+      filter: 'blur(1px)'
+    },
     visible: { 
       opacity: 1,
       transform: 'translate3d(0,0,0)',
-      transition: { duration: 0.4, ease: "easeOut" } 
+      filter: 'blur(0px)',
+      transition: { 
+        duration: 0.8,
+        ease: smoothEasing,
+        opacity: { duration: 0.6 },
+        filter: { duration: 0.4, delay: 0.2 }
+      }
     }
   },
   slideUp: {
-    hidden: { opacity: 0, transform: 'translate3d(0,20px,0)' },
-    visible: { 
-      opacity: 1, 
-      transform: 'translate3d(0,0,0)',
-      transition: { duration: 0.4, ease: "easeOut" } 
-    }
-  },
-  slideRight: {
-    hidden: { opacity: 0, transform: 'translate3d(-30px,0,0)' },
-    visible: { 
-      opacity: 1, 
-      transform: 'translate3d(0,0,0)',
-      transition: { duration: 0.6, ease: "easeOut" } 
-    }
-  },
-  slideLeft: {
-    hidden: { opacity: 0, transform: 'translate3d(30px,0,0)' },
-    visible: { 
-      opacity: 1, 
-      transform: 'translate3d(0,0,0)',
-      transition: { duration: 0.6, ease: "easeOut" } 
-    }
-  },
-  zoomIn: {
-    hidden: { opacity: 0, transform: 'translate3d(0,0,0) scale(0.9)' },
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(0,40px,0) scale(0.98)',
+    },
     visible: { 
       opacity: 1, 
       transform: 'translate3d(0,0,0) scale(1)',
-      transition: { duration: 0.6, ease: "easeOut" } 
+      transition: {
+        ...springConfig,
+        opacity: { duration: 0.6, ease: smoothEasing },
+        transform: { ...springConfig, duration: 0.8 }
+      }
+    }
+  },
+  slideRight: {
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(-50px,0,0) scale(0.97)',
+    },
+    visible: { 
+      opacity: 1, 
+      transform: 'translate3d(0,0,0) scale(1)',
+      transition: {
+        type: 'spring',
+        stiffness: 68,
+        damping: 20,
+        mass: 0.9,
+        duration: 0.95,
+        opacity: { duration: 0.5, ease: smoothEasing }
+      }
+    }
+  },
+  slideLeft: {
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(50px,0,0) scale(0.97)',
+    },
+    visible: { 
+      opacity: 1, 
+      transform: 'translate3d(0,0,0) scale(1)',
+      transition: {
+        type: 'spring',
+        stiffness: 68,
+        damping: 20,
+        mass: 0.9,
+        duration: 0.95,
+        opacity: { duration: 0.5, ease: smoothEasing }
+      }
+    }
+  },
+  zoomIn: {
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(0,0,0) scale(0.8)',
+      filter: 'blur(2px)'
+    },
+    visible: { 
+      opacity: 1, 
+      transform: 'translate3d(0,0,0) scale(1)',
+      filter: 'blur(0px)',
+      transition: {
+        ...springConfig,
+        duration: 1.0,
+        opacity: { duration: 0.6 },
+        filter: { duration: 0.8 }
+      }
     }
   },
   rotateIn: {
-    hidden: { opacity: 0, transform: 'translate3d(0,0,0) rotate(-5deg) scale(0.95)' },
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(0,0,0) rotate(-8deg) scale(0.9)',
+    },
     visible: { 
       opacity: 1, 
       transform: 'translate3d(0,0,0) rotate(0deg) scale(1)',
-      transition: { duration: 0.6, ease: "easeOut" } 
+      transition: {
+        ...springConfig,
+        duration: 1.2,
+        opacity: { duration: 0.6 }
+      }
     }
   },
   bounce: {
-    hidden: { opacity: 0, transform: 'translate3d(0,50px,0)' },
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(0,60px,0)',
+    },
     visible: { 
       opacity: 1, 
       transform: 'translate3d(0,0,0)',
-      transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 15 
-      } 
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 18,
+        mass: 1,
+        opacity: { duration: 0.4 }
+      }
+    }
+  },
+  // NEW PREMIUM ANIMATIONS
+  floatIn: {
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(0,30px,0)',
+      filter: 'blur(1px)'
+    },
+    visible: { 
+      opacity: 1, 
+      transform: 'translate3d(0,0,0)',
+      filter: 'blur(0px)',
+      transition: {
+        type: "spring",
+        stiffness: 120,
+        damping: 15,
+        duration: 1.1,
+        opacity: { duration: 0.8, ease: smoothEasing },
+        filter: { duration: 0.6, delay: 0.2 }
+      }
+    }
+  },
+  scaleInFade: {
+    hidden: { 
+      opacity: 0, 
+      transform: 'translate3d(0,0,0) scale(0.85)',
+    },
+    visible: { 
+      opacity: 1, 
+      transform: 'translate3d(0,0,0) scale(1)',
+      transition: {
+        type: "spring",
+        stiffness: 140,
+        damping: 20,
+        duration: 0.9,
+        opacity: { duration: 0.7, ease: smoothEasing }
+      }
     }
   }
 };
 
-// Optimized hover effects with GPU acceleration
-const getHoverEffects = (effect) => {
+// PREMIUM HOVER EFFECTS - Ultra smooth
+const getPremiumHoverEffects = (effect) => {
+  const baseTransition = {
+    type: "spring",
+    stiffness: 400,
+    damping: 25,
+    mass: 0.5
+  };
+
   switch (effect) {
     case 'zoom':
-      return { transform: 'translate3d(0,0,0) scale(1.05)', transition: { duration: 0.3 } };
+      return { 
+        transform: 'translate3d(0,0,0) scale(1.04)',
+        transition: baseTransition
+      };
     case 'glow':
       return { 
-        boxShadow: "0 0 15px rgba(10, 75, 62, 0.5)",
-        transition: { duration: 0.3 } 
+        boxShadow: "0 8px 32px rgba(10, 75, 62, 0.25), 0 0 0 1px rgba(10, 75, 62, 0.1)",
+        transition: { duration: 0.4, ease: smoothEasing }
       };
     case 'float':
-      return { transform: 'translate3d(0,-10px,0)', transition: { duration: 0.4, yoyo: Infinity, repeat: 1 } };
-    case 'pulse':
       return { 
-        transform: ['translate3d(0,0,0) scale(1)', 'translate3d(0,0,0) scale(1.03)', 'translate3d(0,0,0) scale(1)'],
-        transition: { duration: 1.2, repeat: Infinity } 
+        transform: 'translate3d(0,-8px,0)',
+        transition: baseTransition
+      };
+    case 'pulse':
+      return {
+        scale: [1, 1.02, 1],
+        transition: { 
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }
       };
     case 'tilt':
-      return { transform: 'translate3d(0,0,0) rotate(1deg)', transition: { duration: 0.2 } };
+      return { 
+        transform: 'translate3d(0,0,0) rotate(1deg) scale(1.01)',
+        transition: baseTransition
+      };
+    case 'lift':
+      return {
+        transform: 'translate3d(0,-6px,0)',
+        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.12)",
+        transition: baseTransition
+      };
     default:
       return {};
   }
 };
 
-// Throttle function for performance
-const throttle = (func, limit) => {
-  let inThrottle;
-  return function() {
-    const args = arguments;
-    const context = this;
-    if (!inThrottle) {
-      func.apply(context, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
-    }
-  }
-};
-
-const AnimatedSection = ({ 
-  children, 
-  variants, 
-  className = "w-full", 
-  delay = 0,
-  duration,
-  style,
-  animation = 'slideUp',
-  hoverEffect = 'none',
+const AnimatedSection = ({
+  children,
+  className = '',
+  variants,
   once = true,
+  threshold = 0.15,
   ...props
 }) => {
-  const controls = useAnimation();
-  const elementRef = useRef(null);
-  const hasAnimated = useRef(false);
-  
-  // Optimized intersection observer with throttling
   const [ref, inView] = useInView({
     triggerOnce: once,
-    threshold: 0.1,
-    rootMargin: '0px 0px -5% 0px', // Reduced margin for better performance
+    threshold,
   });
-
-  // Throttled animation trigger
-  const triggerAnimation = useCallback(() => {
-    const throttledFunction = throttle(() => {
-      if (inView && (!once || !hasAnimated.current)) {
-        controls.start("visible");
-        hasAnimated.current = true;
-      } else if (!once && !inView) {
-        controls.start("hidden");
-      }
-    }, 16);  
-    throttledFunction();
-  }, [controls, inView, once]);
-
-  useEffect(() => {
-    triggerAnimation();
-  }, [triggerAnimation]);
-
-  // Will-change management for performance
-  useEffect(() => {
-    const element = elementRef.current;
-    if (element && inView) {
-      element.style.willChange = 'transform, opacity';
-      
-      // Clean up will-change after animation
-      const timer = setTimeout(() => {
-        if (element) {
-          element.style.willChange = 'auto';
-        }
-      }, (duration || 0.6) * 1000 + (delay * 1000) + 100);
-      
-      return () => {
-        clearTimeout(timer);
-        if (element) {
-          element.style.willChange = 'auto';
-        }
-      };
-    }
-  }, [inView, duration, delay]);
-
-  // Select variants based on animation type
-  let selectedVariants = variants;
-  if (!variants && animation !== 'custom') {
-    selectedVariants = animationVariants[animation];
-  }
-
-  // Make a copy of the variants to avoid mutation
-  const customVariants = selectedVariants ? JSON.parse(JSON.stringify(selectedVariants)) : undefined;
-  
-  // Add delay or duration if provided
-  if (customVariants && (delay > 0 || duration)) {
-    if (!customVariants.visible) {
-      customVariants.visible = {};
-    }
-    
-    if (!customVariants.visible.transition) {
-      customVariants.visible.transition = {};
-    }
-    
-    if (delay > 0) {
-      customVariants.visible.transition.delay = delay;
-    }
-    
-    if (duration) {
-      customVariants.visible.transition.duration = duration;
-    }
-  }
-
-  // Define hover effect
-  const hoverStyles = getHoverEffects(hoverEffect);
-
-  // Combine refs
-  const setRefs = useCallback((node) => {
-    ref(node);
-    elementRef.current = node;
-  }, [ref]);
 
   return (
     <motion.div
-      ref={setRefs}
+      ref={ref}
       initial="hidden"
-      animate={controls}
-      variants={customVariants}
+      animate={inView ? 'visible' : 'hidden'}
+      variants={variants}
       className={className}
-      style={{
-        ...style,
-        transform: 'translate3d(0,0,0)', // Force GPU layer
-        backfaceVisibility: 'hidden',
-        perspective: 1000,
-      }}
-      whileHover={hoverEffect !== 'none' ? hoverStyles : undefined}
       {...props}
     >
       {children}

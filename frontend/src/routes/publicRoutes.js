@@ -6,6 +6,7 @@ import ResetPassword from '../pages/ResetPassword';
 import ProductOverviewPage from '../pages/ProductOverviewPage';
 import ProductDetails from '../pages/ProductDetails';
 import AboutUsPage from '../pages/AboutUsPage';
+import ContactPage from '../pages/ContactPage';
 
 const publicRoutes = [
     {
@@ -39,6 +40,10 @@ const publicRoutes = [
     {
         path: '/about-us',
         component: AboutUsPage
+    },
+    {
+        path: '/contact',
+        component: ContactPage
     }
     // Add more public routes here
 ];

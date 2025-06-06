@@ -21,12 +21,12 @@ const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const dropdownRef = useRef(null);
     
-    // Check if the current URL is a products page
-    const isProductsPage = location.pathname === '/products';
+    // Determine current page for navigation highlighting
+    const isHomePage = location.pathname === '/';
+    const isProductsPage = location.pathname === '/products' || location.pathname.startsWith('/products/');
     const isAboutUsPage = location.pathname === '/about-us';
+    const isContactPage = location.pathname === '/contact';
     const isPersonalPage = location.pathname.startsWith('/personal');
-    
-
     
     // Scroll effect for header with throttling
     useEffect(() => {
@@ -50,7 +50,6 @@ const Header = () => {
     // Logout handling
     const handleLogout = () => {
         logout();
-        // Close dropdown after logout
         setIsDropdownOpen(false);
     };
 
@@ -70,6 +69,16 @@ const Header = () => {
     const toggleDropdown = () => {
         setIsDropdownOpen(!isDropdownOpen);
     };
+
+    // Unified navigation handler
+    const handleNavigation = (href, sectionId, e) => {
+        if (sectionId && isHomePage) {
+            // If on homepage and clicking section link, scroll to section
+            e.preventDefault();
+            scrollToSection(e, sectionId);
+        }
+        // Otherwise, let Link handle normal navigation
+    };
     
     return (
         <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
@@ -81,39 +90,25 @@ const Header = () => {
                 </div>
                 <nav className="nav-menu">
                     <ul>
-                        {isAboutUsPage || isProductsPage || isPersonalPage ? (
-                            // Menu when on About Us page, Products page, or Personal page
-                            <>
-                                <li>
-                                    <Link to="/">Trang chủ</Link>
-                                </li>
-                                <li className={isProductsPage ? "active" : ""}>
-                                    <Link to="/products">Sản phẩm</Link>
-                                </li>
-                                <li className={isAboutUsPage ? "active" : ""}>
-                                    <Link to="/about-us">Về chúng tôi</Link>
-                                </li>
-                                <li>
-                                    <Link to="/#contact">Liên hệ</Link>
-                                </li>
-                            </>
-                        ) : (
-                            // Menu when on landing page
-                            <>
-                                <li className={(!isProductsPage && activeSection === 'home') ? 'active' : ''}>
-                                    <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>Trang chủ</a>
-                                </li>
-                                <li className={isProductsPage || (!isProductsPage && activeSection === 'products') ? 'active' : ''}>
-                                    <Link to="/products">Sản phẩm</Link>
-                                </li>
-                                <li className={(!isProductsPage && activeSection === 'about') ? 'active' : ''}>
-                                    <Link to="/about-us">Về chúng tôi</Link>
-                                </li>
-                                <li className={(!isProductsPage && activeSection === 'contact') ? 'active' : ''}>
-                                    <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Liên hệ</a>
-                                </li>
-                            </>
-                        )}
+                        <li className={isHomePage ? 'active' : ''}>
+                            <Link 
+                                to="/" 
+                                onClick={(e) => handleNavigation('/', 'home', e)}
+                            >
+                                Trang chủ
+                            </Link>
+                        </li>
+                        <li className={isProductsPage ? 'active' : ''}>
+                            <Link to="/products">Sản phẩm</Link>
+                        </li>
+                        <li className={isAboutUsPage ? 'active' : ''}>
+                            <Link to="/about-us">Về chúng tôi</Link>
+                        </li>
+                        <li className={isContactPage ? 'active' : ''}>
+                            <Link to="/contact">
+                                Liên hệ
+                            </Link>
+                        </li>
                     </ul>
                 </nav>
                 <div className="auth-buttons">

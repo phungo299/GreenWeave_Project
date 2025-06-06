@@ -49,18 +49,7 @@
     font-size: 1.1rem;
 }
 
-/* CSS Keyframes for smooth animations */
-@keyframes slideUpFade {
-    from {
-        opacity: 0;
-        transform: translate3d(0, 20px, 0);
-    }
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-    }
-}
-
+/* CSS Keyframes for smooth animations - REMOVED slideUpFade to avoid framer-motion conflicts */
 @keyframes fadeInScale {
     from {
         opacity: 0;
@@ -82,7 +71,7 @@
     align-items: flex-start;
     margin-bottom: 60px;
     text-align: left;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to avoid framer-motion conflict */
 }
 
 .featured-product-title-wrapper {
@@ -106,7 +95,7 @@
     font-weight: 700;
     margin: 0;
     line-height: 1;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to avoid framer-motion conflict */
 }
 
 .featured-product-title-sub {
@@ -117,7 +106,7 @@
     line-height: 1;
     margin-left: 0;
     text-indent: 180px;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to avoid framer-motion conflict */
 }
 
 .featured-product-subtitle {
@@ -132,13 +121,13 @@
     padding-right: 120px; 
     position: relative;
     margin-bottom: 30px;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to avoid framer-motion conflict */
 }
 
 /* Product Cards Grid with optimizations */
 .featured-product-slider {
     margin-bottom: 40px;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to let framer-motion handle it */
 }
 
 .featured-product-cards {
@@ -148,15 +137,14 @@
     max-width: 100%;
     position: relative;
     contain: layout style;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to let framer-motion handle it */
 }
 
 .product-card-wrapper {
     position: relative;
     contain: layout style;
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    /* Removed transform and backface-visibility to avoid framer-motion conflicts */
+    /* Let framer-motion handle all transforms */
 }
 
 /* Ensure ProductCard has proper sizing in this section */
@@ -164,6 +152,7 @@
     max-width: 350px;
     margin: 0 auto;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Keep this transform as it's for hover, not conflicting */
     transform: translate3d(0, 0, 0);
     will-change: transform;
 }
@@ -176,7 +165,7 @@
     aspect-ratio: 4/3;
     max-height: 250px;
     overflow: hidden;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to avoid conflicts */
 }
 
 .featured-product-cards .product-image {
@@ -184,6 +173,7 @@
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Keep this transform as it's for hover, not conflicting */
     transform: translate3d(0, 0, 0);
     will-change: transform;
 }
@@ -197,7 +187,7 @@
     justify-content: center;
     gap: 10px;
     margin: 30px 0;
-    transform: translate3d(0, 0, 0);
+    /* Removed transform to avoid framer-motion conflict */
 }
 
 .featured-product-slider-dot {
