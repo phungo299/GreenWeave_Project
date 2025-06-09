@@ -5,37 +5,7 @@ import { LineChart, Line } from 'recharts';
 import { PieChart, Pie, Cell } from 'recharts';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import visitorLogService from '../../services/visitorLogService';
-
-const salesData = [
-    { name: '1', value: 400 },
-    { name: '2', value: 300 },
-    { name: '3', value: 600 },
-    { name: '4', value: 800 },
-    { name: '5', value: 500 },
-    // Add more data points as needed
-];
-
-const customerData = [
-    { name: '1', value: 400 },
-    { name: '2', value: 600 },
-    { name: '3', value: 300 },
-    { name: '4', value: 700 },
-    { name: '5', value: 500 },
-];
-
-const bestSellersData = [
-    { name: 'Mũ lưỡi trai', value: 220000 },
-    { name: 'Túi tote', value: 220000 },
-    { name: 'Áo phông', value: 220000 },
-];
-
-const recentOrders = [
-    { category: 'Áo phông', date: '20 Mar, 2023', total: '220,000 đ', status: 'processing' },
-    { category: 'Mũ lưỡi trai', date: '19 Mar, 2023', total: '220,000 đ', status: 'cancelled' },
-    { category: 'Túi tote', date: '7 Feb, 2023', total: '220,000 đ', status: 'delivered' },
-    { category: 'Balo', date: '29 Jan, 2023', total: '220,000 đ', status: 'delivered' },
-    { category: 'Áo phông', date: '27 Jan, 2023', total: '220,000 đ', status: 'cancelled' },
-];
+import orderService from '../../services/orderService';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -45,6 +15,25 @@ const AdminStatisticPage = () => {
         uniqueVisitors: 0,
         dailyVisits: [],
         topPages: [],
+        isLoading: true
+    });
+    
+    const [orderStats, setOrderStats] = useState({
+        currentMonth: {
+            totalOrders: 0,
+            revenue: 0,
+            deliveredOrders: 0,
+            statusBreakdown: []
+        },
+        yearlyRevenue: {
+            total: 0,
+            monthlyData: []
+        },
+        period: {
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            monthName: ''
+        },
         isLoading: true
     });
     
@@ -82,6 +71,24 @@ const AdminStatisticPage = () => {
         fetchVisitorStats();
     }, [selectedPeriod]);
 
+    useEffect(() => {
+        const fetchOrderStats = async () => {
+            try {
+                const response = await orderService.getOrderStats();
+                if (response.success) {
+                    setOrderStats({
+                        ...response.data,
+                        isLoading: false
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching order stats:', error);
+                setOrderStats(prev => ({ ...prev, isLoading: false }));
+            }
+        };
+        fetchOrderStats();
+    }, []);
+
     // Calculate today's visits
     const today = new Date().getDate();
     const todayVisits = visitorStats.dailyVisits.find(
@@ -93,9 +100,33 @@ const AdminStatisticPage = () => {
         return total + (item.visits || 0);
     }, 0);
     
+    // Calculate this month's unique visitors chart data
+    const thisMonthUniqueVisitors = visitorStats.dailyVisits.map((item, index) => ({
+        name: item.date,
+        value: item.uniqueVisitors || 0
+    }));
+    
     // Handler for period change
     const handlePeriodChange = (period) => {
         setSelectedPeriod(period);
+    };
+
+    // Format currency
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount || 0);
+    };
+
+    // Format large numbers
+    const formatLargeNumber = (num) => {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toString();
     };
 
     return (
@@ -136,31 +167,43 @@ const AdminStatisticPage = () => {
                     {/* Sales Card */}
                     <div className="gw-admin-statistic-card">
                         <div className="gw-admin-statistic-card-header">
-                            <h3>Tổng doanh số</h3>
-                            <span className="gw-admin-statistic-period">THÁNG NÀY</span>
+                            <h3>Doanh thu tháng {orderStats.period.month}</h3>
+                            <span className="gw-admin-statistic-period">{orderStats.period.monthName.toUpperCase()}</span>
                         </div>
-                        <div className="gw-admin-statistic-value">1M</div>
+                        <div className="gw-admin-statistic-value">
+                            {orderStats.isLoading ? '...' : formatLargeNumber(orderStats.currentMonth.revenue)}
+                        </div>
                         <div className="gw-admin-statistic-chart">
                             <ResponsiveContainer width="100%" height={100}>
-                                <BarChart data={salesData}>
-                                    <Bar dataKey="value" fill="#4318FF" />
+                                <BarChart data={orderStats.yearlyRevenue.monthlyData}>
+                                    <Bar dataKey="revenue" fill="#4318FF" />
+                                    <Tooltip 
+                                        formatter={(value) => [formatCurrency(value), 'Doanh thu']}
+                                        labelFormatter={(label) => `Tháng ${label}`}
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
                 </div>
                 <div className="gw-admin-statistic-row">
-                    {/* Customers Card */}
+                    {/* Customers Card - UPDATED to use uniqueVisitors */}
                     <div className="gw-admin-statistic-card">
                         <div className="gw-admin-statistic-card-header">
-                            <h3>Khách hàng</h3>
-                            <span className="gw-admin-statistic-period">THÁNG NÀY</span>
+                            <h3>Khách hàng (Unique Visitors)</h3>
+                            <span className="gw-admin-statistic-period">{selectedPeriod.toUpperCase()}</span>
                         </div>
-                        <div className="gw-admin-statistic-value">2,571</div>
+                        <div className="gw-admin-statistic-value">
+                            {visitorStats.isLoading ? '...' : visitorStats.uniqueVisitors.toLocaleString()}
+                        </div>
                         <div className="gw-admin-statistic-chart">
                             <ResponsiveContainer width="100%" height={100}>
-                                <LineChart data={customerData}>
+                                <LineChart data={thisMonthUniqueVisitors}>
                                     <Line type="monotone" dataKey="value" stroke="#4318FF" strokeWidth={2} dot={false} />
+                                    <Tooltip 
+                                        formatter={(value) => [value, 'Unique Visitors']}
+                                        labelFormatter={(label) => `Ngày ${label}`}
+                                    />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -168,18 +211,22 @@ const AdminStatisticPage = () => {
                     {/* Orders Card */}
                     <div className="gw-admin-statistic-card">
                         <div className="gw-admin-statistic-card-header">
-                            <h3>Đơn hàng</h3>
-                            <span className="gw-admin-statistic-period">MỤC TIÊU hàng tháng: 1,000</span>
+                            <h3>Đơn hàng tháng {orderStats.period.month}</h3>
+                            <span className="gw-admin-statistic-period">HIỆN TẠI: {orderStats.isLoading ? '...' : orderStats.currentMonth.totalOrders}</span>
                         </div>
-                        <div className="gw-admin-statistic-value">734</div>
+                        <div className="gw-admin-statistic-value">
+                            {orderStats.isLoading ? '...' : orderStats.currentMonth.totalOrders}
+                        </div>
                         <div className="gw-admin-progress-container">
                             <div className="gw-admin-progress-bar">
                                 <div 
                                     className="gw-admin-progress-fill"
-                                    style={{ width: '73.4%' }}
+                                    style={{ width: `${Math.min((orderStats.currentMonth.totalOrders / 1000) * 100, 100)}%` }}
                                 ></div>
                             </div>
-                            <span className="gw-admin-progress-text">Còn 266 Đơn</span>
+                            <span className="gw-admin-progress-text">
+                                Mục tiêu: 1,000 đơn (còn {Math.max(1000 - orderStats.currentMonth.totalOrders, 0)} đơn)
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -219,9 +266,7 @@ const AdminStatisticPage = () => {
                                     <Tooltip />
                                     <Legend />
                                     <Bar name="Lượt xem" dataKey="visits" fill="#4318FF" />
-                                    {visitorStats.dailyVisits[0]?.uniqueVisitors !== undefined && (
-                                        <Bar name="Người dùng" dataKey="uniqueVisitors" fill="#00C49F" />
-                                    )}
+                                    <Bar name="Người dùng" dataKey="uniqueVisitors" fill="#00C49F" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -347,35 +392,45 @@ const AdminStatisticPage = () => {
                 {/* Best Sellers Card */}
                 <div className="gw-admin-statistic-card gw-admin-bestsellers">
                     <div className="gw-admin-statistic-card-header">
-                        <h3>Bán chạy nhất</h3>
-                        <span className="gw-admin-statistic-period">THÁNG NÀY</span>
+                        <h3>Doanh thu năm {orderStats.period.year}</h3>
+                        <span className="gw-admin-statistic-period">TỔNG CỘNG</span>
                     </div>
                     <div className="gw-admin-bestsellers-content">
                         <div className="gw-admin-bestsellers-value-container">
-                            <div className="gw-admin-bestsellers-value">1M</div>
-                            <div className="gw-admin-bestsellers-subtitle">— Tổng doanh số</div>
+                            <div className="gw-admin-bestsellers-value">
+                                {orderStats.isLoading ? '...' : formatLargeNumber(orderStats.yearlyRevenue.total)}
+                            </div>
+                            <div className="gw-admin-bestsellers-subtitle">— Tổng doanh thu</div>
                         </div>
                         <div className="gw-admin-bestsellers-list">
-                            {bestSellersData.map((item, index) => (
-                                <div key={index} className="gw-admin-bestsellers-item">
-                                    <span>{item.name} — {item.value.toLocaleString()} đ</span>
-                                </div>
-                            ))}
+                            <div className="gw-admin-bestsellers-item">
+                                Tháng {orderStats.period.month}: {orderStats.isLoading ? '...' : formatCurrency(orderStats.currentMonth.revenue)}
+                            </div>
+                            <div className="gw-admin-bestsellers-item">
+                                Đơn đã giao: {orderStats.isLoading ? '...' : orderStats.currentMonth.deliveredOrders.toLocaleString()}
+                            </div>
+                            <div className="gw-admin-bestsellers-item">
+                                Trung bình/tháng: {orderStats.isLoading ? '...' : formatCurrency(orderStats.yearlyRevenue.total / orderStats.period.month)}
+                            </div>
                         </div>
                         <div className="gw-admin-bestsellers-chart">
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
                                     <Pie
-                                        data={bestSellersData}
+                                        data={orderStats.yearlyRevenue.monthlyData.filter(item => item.revenue > 0)}
                                         innerRadius={60}
                                         outerRadius={80}
                                         paddingAngle={5}
-                                        dataKey="value"
+                                        dataKey="revenue"
+                                        nameKey="name"
                                     >
-                                        {bestSellersData.map((entry, index) => (
+                                        {orderStats.yearlyRevenue.monthlyData.filter(item => item.revenue > 0).map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
+                                    <Tooltip 
+                                        formatter={(value) => [formatCurrency(value), 'Doanh thu']}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -384,7 +439,7 @@ const AdminStatisticPage = () => {
                 {/* Recent Orders Card */}
                 <div className="gw-admin-statistic-card gw-admin-recent-orders">
                     <div className="gw-admin-statistic-card-header">
-                        <h3>Đơn hàng gần đây</h3>
+                        <h3>Thống kê đơn hàng tháng {orderStats.period.month}</h3>
                         <div className="gw-admin-toggle-switch">
                             {/* Add toggle switch here if needed */}
                         </div>
@@ -392,27 +447,35 @@ const AdminStatisticPage = () => {
                     <table className="gw-admin-orders-table">
                         <thead>
                             <tr>
-                                <th>Phân loại</th>
-                                <th>Ngày</th>
-                                <th>Tổng</th>
                                 <th>Trạng thái</th>
+                                <th>Số lượng</th>
+                                <th>Tổng giá trị</th>
+                                <th>Tỷ lệ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {recentOrders.map((order, index) => (
-                                <tr key={index}>
-                                    <td>{order.category}</td>
-                                    <td>{order.date}</td>
-                                    <td>{order.total}</td>
-                                    <td>
-                                        <span className={`gw-admin-order-status ${order.status.toLowerCase()}`}>
-                                            {order.status === 'processing' && 'Đang xử lý'}
-                                            {order.status === 'cancelled' && 'Đã hủy'}
-                                            {order.status === 'delivered' && 'Đã Giao'}
-                                        </span>
-                                    </td>
+                            {orderStats.isLoading ? (
+                                <tr>
+                                    <td colSpan="4" className="gw-admin-loading">Đang tải...</td>
                                 </tr>
-                            ))}
+                            ) : orderStats.currentMonth.statusBreakdown.length > 0 ? (
+                                orderStats.currentMonth.statusBreakdown.map((status, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            <span className={`gw-admin-order-status ${status._id.toLowerCase()}`}>
+                                                {orderService.getStatusText(status._id)}
+                                            </span>
+                                        </td>
+                                        <td>{status.count.toLocaleString()}</td>
+                                        <td>{formatCurrency(status.totalAmount)}</td>
+                                        <td>{((status.count / orderStats.currentMonth.totalOrders) * 100).toFixed(1)}%</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="4" className="gw-admin-no-data">Không có dữ liệu đơn hàng</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -134,6 +134,86 @@
     text-align: center;
 }
 
+.admin-customer-design-form-address {
+    margin: 16px 0;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e3f0e7;
+}
+
+.admin-customer-design-form-address-text {
+    color: #4b5c4b;
+    font-size: 1rem;
+    line-height: 1.4;
+    margin-top: 8px;
+}
+
+.admin-customer-design-form-items {
+    margin: 16px 0;
+}
+
+.admin-customer-design-form-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.admin-customer-design-form-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e3f0e7;
+}
+
+.admin-customer-design-form-item-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #f4f8f4;
+    flex-shrink: 0;
+}
+
+.admin-customer-design-form-item-info {
+    flex: 1;
+}
+
+.admin-customer-design-form-item-name {
+    font-weight: 600;
+    color: #1a3c1a;
+    margin-bottom: 4px;
+}
+
+.admin-customer-design-form-item-details {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #4b5c4b;
+}
+
+.admin-customer-design-form-item-details span {
+    background: #f4f8f4;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.admin-customer-design-form-custom-note {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    border: 1px dashed #ddd;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .admin-customer-design-form-modal {
@@ -152,5 +232,17 @@
     }
     .admin-customer-design-form-section {
         align-items: flex-start;
+    }
+    .admin-customer-design-form-items-list {
+        max-height: 150px;
+    }    
+    .admin-customer-design-form-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }    
+    .admin-customer-design-form-item-details {
+        flex-wrap: wrap;
+        gap: 6px;
     }
 }

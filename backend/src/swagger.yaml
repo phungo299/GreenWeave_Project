@@ -2572,6 +2572,152 @@ paths:
         '500':
           description: Server error
 
+  /api/orders/stats:
+    get:
+      tags:
+        - Orders
+      summary: Lấy thống kê đơn hàng và doanh thu (admin)
+      description: |
+        Lấy thống kê tổng quan về đơn hàng và doanh thu bao gồm:
+        - Thống kê đơn hàng tháng hiện tại (tổng số, trạng thái)
+        - Doanh thu tháng hiện tại (chỉ đơn hàng delivered)
+        - Doanh thu theo từng tháng trong năm
+        - Tổng doanh thu năm hiện tại
+        
+        **Lưu ý:** Doanh thu chỉ được tính từ các đơn hàng có trạng thái "delivered"
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Thống kê đơn hàng được lấy thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      currentMonth:
+                        type: object
+                        description: Thống kê tháng hiện tại
+                        properties:
+                          totalOrders:
+                            type: integer
+                            description: Tổng số đơn hàng tháng hiện tại
+                            example: 156
+                          revenue:
+                            type: number
+                            description: Doanh thu tháng hiện tại (chỉ đơn hàng delivered)
+                            example: 45200000
+                          deliveredOrders:
+                            type: integer
+                            description: Số đơn hàng đã giao thành công tháng hiện tại
+                            example: 142
+                          statusBreakdown:
+                            type: array
+                            description: Phân tích theo trạng thái đơn hàng
+                            items:
+                              type: object
+                              properties:
+                                _id:
+                                  type: string
+                                  enum: [pending, shipped, delivered, cancelled]
+                                  description: Trạng thái đơn hàng
+                                  example: "delivered"
+                                count:
+                                  type: integer
+                                  description: Số lượng đơn hàng
+                                  example: 142
+                                totalAmount:
+                                  type: number
+                                  description: Tổng giá trị đơn hàng theo trạng thái
+                                  example: 45200000
+                      yearlyRevenue:
+                        type: object
+                        description: Doanh thu theo năm
+                        properties:
+                          total:
+                            type: number
+                            description: Tổng doanh thu năm hiện tại
+                            example: 520000000
+                          monthlyData:
+                            type: array
+                            description: Doanh thu theo từng tháng
+                            items:
+                              type: object
+                              properties:
+                                month:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 12
+                                  description: Tháng (1-12)
+                                  example: 6
+                                name:
+                                  type: string
+                                  description: Tên tháng hiển thị
+                                  example: "T6"
+                                revenue:
+                                  type: number
+                                  description: Doanh thu của tháng
+                                  example: 45200000
+                                count:
+                                  type: integer
+                                  description: Số đơn hàng delivered của tháng
+                                  example: 142
+                      period:
+                        type: object
+                        description: Thông tin kỳ thống kê
+                        properties:
+                          year:
+                            type: integer
+                            description: Năm hiện tại
+                            example: 2025
+                          month:
+                            type: integer
+                            description: Tháng hiện tại
+                            example: 6
+                          monthName:
+                            type: string
+                            description: Tên tháng hiện tại (tiếng Việt)
+                            example: "tháng 6"
+                  message:
+                    type: string
+                    example: "Lấy thống kê đơn hàng thành công"
+        '401':
+          description: Unauthorized - Cần đăng nhập với quyền admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Không có quyền truy cập"
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Lỗi server khi lấy thống kê đơn hàng"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+
   /api/orders/search:
     get:
       tags:
@@ -2580,6 +2726,17 @@ paths:
       security:
         - BearerAuth: []
       parameters:
+        - name: q
+          in: query
+          description: |
+            Text search query. Searches in:
+            - Order ID
+            - Shipping address
+            - User information (username, email, phone)
+            - Product information (name, title, product code)
+          schema:
+            type: string
+          example: "FB85760B"
         - name: orderId
           in: query
           description: Order ID
@@ -2656,6 +2813,30 @@ paths:
                       $ref: '#/components/schemas/Order'
                   filters:
                     type: object
+                    properties:
+                      q:
+                        type: string
+                        description: Text search query used
+                      orderId:
+                        type: string
+                      userId:
+                        type: string
+                      status:
+                        type: string
+                      minAmount:
+                        type: number
+                      maxAmount:
+                        type: number
+                      startDate:
+                        type: string
+                        format: date-time
+                      endDate:
+                        type: string
+                        format: date-time
+                      sortBy:
+                        type: string
+                      sortOrder:
+                        type: string
                   pagination:
                     type: object
                     properties:
@@ -5399,6 +5580,14 @@ paths:
       tags:
         - VisitorLog
       summary: Lấy thống kê truy cập
+      description: |
+        Lấy thống kê chi tiết về lượt truy cập website bao gồm:
+        - Tổng số lượt truy cập và người dùng duy nhất
+        - Top quốc gia và trang được truy cập nhiều nhất
+        - Thống kê truy cập hàng ngày với số người dùng duy nhất
+        - Thống kê thiết bị và trình duyệt
+        
+        **Cập nhật:** API hiện đã bao gồm `uniqueVisitors` cho từng ngày trong `dailyVisits`
       security:
         - BearerAuth: []
       parameters:
@@ -5411,7 +5600,7 @@ paths:
           description: Khoảng thời gian thống kê
       responses:
         '200':
-          description: Visitor statistics retrieved successfully
+          description: Thống kê truy cập được lấy thành công
           content:
             application/json:
               schema:
@@ -5419,31 +5608,122 @@ paths:
                 properties:
                   totalVisits:
                     type: integer
+                    description: Tổng số lượt truy cập
+                    example: 1250
                   uniqueVisitors:
                     type: integer
-                  topPages:
+                    description: Tổng số người dùng duy nhất (theo IP + sessionId)
+                    example: 6
+                  topCountries:
                     type: array
+                    description: Top quốc gia có lượt truy cập cao nhất
                     items:
                       type: object
                       properties:
-                        page:
+                        _id:
                           type: string
+                          description: Tên quốc gia
+                          example: "Vietnam"
                         count:
                           type: integer
-                  dailyStats:
+                          description: Số lượt truy cập
+                          example: 850
+                  topPages:
                     type: array
+                    description: Top trang được truy cập nhiều nhất
                     items:
                       type: object
                       properties:
-                        date:
+                        _id:
                           type: string
-                          format: date
-                        visits:
+                          description: Đường dẫn trang
+                          example: "/products"
+                        count:
                           type: integer
+                          description: Số lượt truy cập
+                          example: 320
+                  dailyVisits:
+                    type: array
+                    description: Thống kê truy cập hàng ngày (CẬP NHẬT: có uniqueVisitors)
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: object
+                          properties:
+                            year:
+                              type: integer
+                              example: 2025
+                            month:
+                              type: integer
+                              example: 6
+                            day:
+                              type: integer
+                              example: 9
+                        count:
+                          type: integer
+                          description: Tổng số lượt truy cập trong ngày
+                          example: 125
                         uniqueVisitors:
                           type: integer
+                          description: Số người dùng duy nhất trong ngày (theo IP + sessionId)
+                          example: 3
+                  deviceStats:
+                    type: array
+                    description: Thống kê theo thiết bị
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          description: Loại thiết bị
+                          example: "Mobile"
+                        count:
+                          type: integer
+                          description: Số lượt truy cập
+                          example: 750
+                  browserStats:
+                    type: array
+                    description: Thống kê theo trình duyệt
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          description: Tên trình duyệt
+                          example: "Chrome"
+                        count:
+                          type: integer
+                          description: Số lượt truy cập
+                          example: 980
+                  period:
+                    type: object
+                    description: Thông tin kỳ thống kê
+                    properties:
+                      startDate:
+                        type: string
+                        format: date-time
+                        description: Ngày bắt đầu thống kê
+                      endDate:
+                        type: string
+                        format: date-time
+                        description: Ngày kết thúc thống kê
+                      selectedPeriod:
+                        type: string
+                        description: Kỳ thống kê đã chọn
+                        example: "month"
+        '401':
+          description: Unauthorized - Cần đăng nhập với quyền admin
         '500':
-          description: Server error
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Đã xảy ra lỗi khi lấy thống kê visitor"
 
   /api/visitor-logs/cleanup:
     delete:

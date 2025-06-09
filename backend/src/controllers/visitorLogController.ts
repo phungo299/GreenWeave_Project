@@ -115,8 +115,31 @@ export const createVisitorLog = async (req: Request, res: Response) => {
 // Lấy thống kê visitor
 export const getVisitorStats = async (req: Request, res: Response) => {
   try {
-    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
-    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date();
+    const period = req.query.period as string || 'month';
+    let startDate: Date;
+    let endDate: Date = new Date();
+    
+    // Xác định khoảng thời gian dựa trên period
+    switch (period) {
+      case 'day':
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'week':
+        startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+        break;
+      case 'year':
+        startDate = new Date();
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        break;
+      default:
+        startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+    }
     
     const dateQuery = {
       visitedAt: {
@@ -128,8 +151,21 @@ export const getVisitorStats = async (req: Request, res: Response) => {
     // Tổng số visits
     const totalVisits = await VisitorLog.countDocuments(dateQuery);
     
-    // Unique visitors (by IP)
-    const uniqueVisitors = await VisitorLog.distinct("ipAddress", dateQuery);
+    // Unique visitors (by IP and sessionId combination)
+    const uniqueVisitors = await VisitorLog.aggregate([
+      { $match: dateQuery },
+      {
+        $group: {
+          _id: {
+            ip: "$ipAddress",
+            session: "$sessionId"
+          }
+        }
+      },
+      { $count: "totalUniqueVisitors" }
+    ]);
+    
+    const totalUniqueVisitors = uniqueVisitors[0]?.totalUniqueVisitors || 0;
     
     // Top countries
     const topCountries = await VisitorLog.aggregate([
@@ -147,7 +183,7 @@ export const getVisitorStats = async (req: Request, res: Response) => {
       { $limit: 10 }
     ]);
     
-    // Daily visits
+    // Daily visits WITH unique visitors per day
     const dailyVisits = await VisitorLog.aggregate([
       { $match: dateQuery },
       {
@@ -157,7 +193,21 @@ export const getVisitorStats = async (req: Request, res: Response) => {
             month: { $month: "$visitedAt" },
             day: { $dayOfMonth: "$visitedAt" }
           },
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          // Count unique visitors per day (by IP and sessionId)
+          uniqueIpSessions: {
+            $addToSet: {
+              ip: "$ipAddress",
+              session: "$sessionId"
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          count: 1,
+          uniqueVisitors: { $size: "$uniqueIpSessions" }
         }
       },
       { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
@@ -181,7 +231,7 @@ export const getVisitorStats = async (req: Request, res: Response) => {
     
     return res.status(200).json({
       totalVisits,
-      uniqueVisitors: uniqueVisitors.length,
+      uniqueVisitors: totalUniqueVisitors,
       topCountries,
       topPages,
       dailyVisits,
@@ -189,7 +239,8 @@ export const getVisitorStats = async (req: Request, res: Response) => {
       browserStats,
       period: {
         startDate,
-        endDate
+        endDate,
+        selectedPeriod: period
       }
     });
   } catch (error: any) {

@@ -6,7 +6,7 @@ import adminRoutes from './routes/adminRoutes';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import { CartProvider } from './context/CartContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Personal from './pages/Personal';
 import NotificationContainer from './components/ui/notification/NotificationContainer';
 import ToastManager from './components/ui/toast/ToastManager';
@@ -19,16 +19,17 @@ import './assets/css/light-mode-only.css';
 import './assets/css/ModernAnimations.css';
 
 function PageTracker() {
-    const location = useLocation();  
-    useEffect(() => {
-        // Log when path changes
-        const path = location.pathname + location.search;
-        visitorLogService.trackPageVisit(path);      
-        // Can also be used for Google Analytics or other tools
-        //console.log(`Page visited: ${path}`);
-    }, [location.pathname, location.search]);
+    const location = useLocation();
+    const { isAuthenticated, user } = useAuth(); // Destructure specific properties
     
-    return null; // Component này không hiển thị gì
+    useEffect(() => {
+        // Log when path changes with enhanced data
+        const path = location.pathname + location.search;
+        const authContext = { isAuthenticated, user }; // Recreate minimal context
+        visitorLogService.trackPageVisit(path, authContext);      
+    }, [location.pathname, location.search, isAuthenticated, user]); // Use specific dependencies
+    
+    return null;
 }
 
 function App() {
@@ -95,8 +96,7 @@ function App() {
                                     })}
                                 </Route>
                             </Route>
-                        </Routes>
-                        
+                        </Routes>                        
                         {/* Global Components */}
                         <ScrollToTopOnNavigate />
                         <ScrollToTop />

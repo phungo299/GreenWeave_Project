@@ -3,6 +3,7 @@ import {
     createOrder,
     getAllOrders,
     getOrderById,
+    getOrderStats,
     getUserOrders,
     searchOrders,
     updateOrderStatus
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // GET /api/orders - Lấy tất cả đơn hàng (cho admin)
 router.get("/", getAllOrders);
+
+// GET /api/orders/stats - Lấy thống kê đơn hàng (cho admin)
+router.get("/stats", getOrderStats);
 
 // GET /api/orders/search - Tìm kiếm đơn hàng
 router.get("/search", searchOrders);
