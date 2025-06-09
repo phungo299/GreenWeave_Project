@@ -30,15 +30,13 @@ const AdminLoginModal = ({ isOpen, onClose, intendedPath }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        
+        setLoading(true);      
         try {
             // Make sure you are logged out before logging in again
             if (isAuthenticated) {
                 await logout();
-            }
-            
-            const result = await login(credentials);
+            }            
+            const result = await login(credentials.username, credentials.password);
             if (result.success) {
                 if (result.isAdmin) {
                     // If login is successful with admin rights

@@ -6,13 +6,11 @@ import userIcon from '../../../assets/icons/user.png';
 import Logo from '../../../assets/images/logo.jpg';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
-import { useActiveSection } from '../../hooks/useActiveSection';
 import { useScrollToSection } from '../../hooks/useScrollToSection';
 import imageUtils from '../../../utils/imageUtils';
 import './Header.css';
 
 const Header = () => {
-    const activeSection = useActiveSection();
     const { scrollToSection } = useScrollToSection();
     const location = useLocation();
     const { getCartCount } = useCart();
@@ -26,7 +24,6 @@ const Header = () => {
     const isProductsPage = location.pathname === '/products' || location.pathname.startsWith('/products/');
     const isAboutUsPage = location.pathname === '/about-us';
     const isContactPage = location.pathname === '/contact';
-    const isPersonalPage = location.pathname.startsWith('/personal');
     
     // Scroll effect for header with throttling
     useEffect(() => {
