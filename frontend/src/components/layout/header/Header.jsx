@@ -140,6 +140,11 @@ const Header = () => {
                                         <Link to="/personal" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                                             <span>Tài khoản cá nhân</span>
                                         </Link>
+                                        {user?.role === 'admin' && (
+                                            <Link to="/admin" className="dropdown-item admin-item" onClick={() => setIsDropdownOpen(false)}>
+                                                <span>Quản trị viên</span>
+                                            </Link>
+                                        )}
                                         <button onClick={handleLogout} className="dropdown-item logout-item">
                                             <img src={exitIcon} alt="Logout" className="dropdown-icon" />
                                             <span>Đăng xuất</span>

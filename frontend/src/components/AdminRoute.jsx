@@ -12,8 +12,16 @@ const AdminRoute = () => {
     // Show modal in all cases when not admin
     useEffect(() => {
         if (isAuthenticated && user && user.role === 'admin') {
-            // If admin, hide modal
+            // If admin, hide modal and ensure they're on admin route
             setShowLoginModal(false);
+            
+            // Auto-redirect admin users to admin dashboard if they're on homepage or other public routes
+            const isOnPublicRoute = ['/', '/home', '/products', '/about-us', '/contact'].includes(location.pathname);
+            const isOnAdminRoute = location.pathname.startsWith('/admin');
+            
+            if (isOnPublicRoute && !isOnAdminRoute) {
+                navigate('/admin', { replace: true });
+            }
         } else {
             // In all other cases, display the modal
             setShowLoginModal(true);
@@ -23,7 +31,7 @@ const AdminRoute = () => {
                 logout(); // Log out the current user
             }
         }
-    }, [isAuthenticated, user, logout]);
+    }, [isAuthenticated, user, logout, location.pathname, navigate]);
     
     // If admin, display admin content
     if (isAuthenticated && user && user.role === 'admin') {

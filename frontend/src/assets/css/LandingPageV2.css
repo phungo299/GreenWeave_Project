@@ -444,9 +444,10 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
     transition: all 0.4s ease;
-    /* Increased image size */
-    width: 120%;
-    max-width: 650px;
+    /* Fixed proper image size - removed 120% width */
+    width: 100%;
+    max-width: 550px;
+    aspect-ratio: 4/3; /* Maintain consistent aspect ratio */
 }
 
 .minimalist-hero__image-wrapper:hover {
@@ -456,12 +457,12 @@
 
 .minimalist-hero__image {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     transition: all 0.4s ease;
-    /* Ensure crisp image quality */
+    /* Proper image fitting without distortion */
     object-fit: cover;
-    min-height: 400px;
+    object-position: center;
 }
 
 .minimalist-hero__image-wrapper:hover .minimalist-hero__image {
@@ -515,6 +516,11 @@
     
     .minimalist-hero__stats {
         gap: 32px;
+    }
+    
+    .minimalist-hero__image-wrapper {
+        max-width: 100%;
+        aspect-ratio: 3/2; /* Slightly wider on mobile for better viewing */
     }
 }
 

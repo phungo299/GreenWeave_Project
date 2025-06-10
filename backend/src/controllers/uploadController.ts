@@ -17,12 +17,28 @@ const parseCloudinaryUrl = () => {
   }
   
   try {
-    const url = new URL(cloudinaryUrl);
-    return {
-      cloud_name: url.hostname,
-      api_key: url.username,
-      api_secret: url.password
-    };
+    // Handle both cloudinary:// and https:// URL formats
+    if (cloudinaryUrl.startsWith('cloudinary://')) {
+      const url = new URL(cloudinaryUrl);
+      return {
+        cloud_name: url.hostname,
+        api_key: url.username,
+        api_secret: url.password
+      };
+    } else {
+      // Fallback for manual config format
+      const parts = cloudinaryUrl.split(',');
+      const config: any = {};
+      parts.forEach(part => {
+        const [key, value] = part.split('=');
+        if (key && value) config[key.trim()] = value.trim();
+      });
+      return {
+        cloud_name: config.cloud_name || '',
+        api_key: config.api_key || '',
+        api_secret: config.api_secret || ''
+      };
+    }
   } catch (error) {
     console.error('Invalid CLOUDINARY_URL format:', error);
     return {
@@ -33,8 +49,15 @@ const parseCloudinaryUrl = () => {
   }
 };
 
-// Configure Cloudinary
+// Configure Cloudinary with enhanced error handling
 const cloudinaryConfig = parseCloudinaryUrl();
+
+// Validate configuration
+if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
+  console.warn('Cloudinary configuration incomplete. Please check CLOUDINARY_URL environment variable.');
+  console.warn('Expected format: cloudinary://api_key:api_secret@cloud_name');
+}
+
 cloudinary.config(cloudinaryConfig);
 
 // Configure multer for memory storage

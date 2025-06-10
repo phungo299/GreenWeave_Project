@@ -64,6 +64,15 @@ export const AuthProvider = ({ children }) => {
                     role: data.role
                 });
                 setIsAuthenticated(true);
+                
+                // Auto-redirect admin users to admin dashboard
+                if (data.role === 'admin') {
+                    // Use setTimeout to ensure state is updated first
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 100);
+                }
+                
                 return { 
                     success: true, 
                     message,
