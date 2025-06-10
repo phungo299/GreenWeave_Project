@@ -65,13 +65,13 @@ export const AuthProvider = ({ children }) => {
                 });
                 setIsAuthenticated(true);
                 
-                // Auto-redirect admin users to admin dashboard
-                if (data.role === 'admin') {
-                    // Use setTimeout to ensure state is updated first
-                    setTimeout(() => {
-                        window.location.href = '/admin';
-                    }, 100);
-                }
+                // // Auto-redirect admin users to admin dashboard
+                // if (data.role === 'admin') {
+                //     // Use setTimeout to ensure state is updated first
+                //     setTimeout(() => {
+                //         window.location.href = '/admin';
+                //     }, 100);
+                // }
                 
                 return { 
                     success: true, 
