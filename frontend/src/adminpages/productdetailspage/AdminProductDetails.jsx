@@ -4,6 +4,7 @@ import './AdminProductDetails.css';
 import Breadcrumb from '../../components/ui/adminbreadcrumb/AdminBreadcrumb';
 import { FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
 import productService from '../../services/productService';
+import cloudinaryService from '../../services/cloudinaryService';
 
 const AdminProductDetails = () => {
     const { id } = useParams();
@@ -11,6 +12,7 @@ const AdminProductDetails = () => {
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [uploadingImages, setUploadingImages] = useState(false);
     const [error, setError] = useState(null);
 
     const [productData, setProductData] = useState({
@@ -112,13 +114,87 @@ const AdminProductDetails = () => {
         }));
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
-        const imageUrls = files.map(file => URL.createObjectURL(file));
-        setProductData(prev => ({
-            ...prev,
-            images: [...prev.images, ...imageUrls]
-        }));
+        
+        if (!files.length) return;
+        
+        // Prevent concurrent uploads
+        if (uploadingImages) {
+            window.toast?.warning('Đang tải ảnh, vui lòng chờ hoàn thành trước khi tải ảnh mới');
+            e.target.value = ''; // Reset input
+            return;
+        }
+        
+        // Validate files
+        for (const file of files) {
+            if (!file.type.startsWith('image/')) {
+                alert('Chỉ chấp nhận file hình ảnh');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) { // 10MB
+                alert('Kích thước file không được vượt quá 10MB');
+                return;
+            }
+        }
+        
+        try {
+            setUploadingImages(true);
+            setError(null);
+            
+            // Show immediate preview with blob URLs
+            const previewUrls = files.map(file => URL.createObjectURL(file));
+            setProductData(prev => ({
+                ...prev,
+                images: [...prev.images, ...previewUrls]
+            }));
+            
+            // Upload to Cloudinary
+            const uploadOptions = {
+                width: 800,
+                height: 800,
+                quality: 'auto',
+                format: 'webp',
+                maxSize: 10 * 1024 * 1024
+            };
+            
+            const result = await cloudinaryService.uploadMultipleImages(files, 'products', uploadOptions);
+            
+            if (result.successful && result.successful.length > 0) {
+                // Replace preview URLs with Cloudinary URLs
+                const cloudinaryUrls = result.successful.map(response => response.data.secure_url);
+                
+                setProductData(prev => {
+                    // Remove the preview URLs and add Cloudinary URLs
+                    const filteredImages = prev.images.filter(img => !previewUrls.includes(img));
+                    return {
+                        ...prev,
+                        images: [...filteredImages, ...cloudinaryUrls]
+                    };
+                });
+                
+                window.toast?.success(`Đã tải lên ${result.successful.length} hình ảnh thành công!`);
+            }
+            
+            if (result.failed && result.failed.length > 0) {
+                window.toast?.error(`${result.failed.length} hình ảnh tải lên thất bại`);
+            }
+        } catch (err) {
+            console.error('Error uploading images:', err);
+            setError(err.message || 'Không thể tải lên hình ảnh');
+            window.toast?.error('Không thể tải lên hình ảnh: ' + (err.message || 'Lỗi không xác định'));
+            
+            // Remove failed preview URLs
+            const previewUrls = files.map(file => URL.createObjectURL(file));
+            setProductData(prev => ({
+                ...prev,
+                images: prev.images.filter(img => !previewUrls.includes(img))
+            }));
+        } finally {
+            setUploadingImages(false);
+            // Reset file input
+            e.target.value = '';
+        }
     };
 
     const removeImage = (index) => {
@@ -326,12 +402,25 @@ const AdminProductDetails = () => {
                                     accept="image/*"
                                     onChange={handleImageUpload}
                                     id="product-images"
+                                    disabled={uploadingImages}
                                     hidden
                                 />
-                                <label htmlFor="product-images" className="admin-product-details-upload-button">
+                                <label 
+                                    htmlFor="product-images" 
+                                    className={`admin-product-details-upload-button ${uploadingImages ? 'uploading' : ''}`}
+                                >
                                     <span className="admin-product-details-upload-content">
-                                        <FaCloudUploadAlt className="admin-product-details-upload-icon" />
-                                        <span>Chọn hình ảnh sản phẩm</span>
+                                        {uploadingImages ? (
+                                            <>
+                                                <div className="loading-spinner"></div>
+                                                <span>Đang tải lên...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaCloudUploadAlt className="admin-product-details-upload-icon" />
+                                                <span>Chọn hình ảnh sản phẩm</span>
+                                            </>
+                                        )}
                                     </span>
                                 </label>
                             </div>

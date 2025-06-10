@@ -170,7 +170,7 @@ const cloudinaryService = {
                 if (options.format) formData.append('format', options.format);
 
                 // Upload to server (server will handle Cloudinary upload)
-                const response = await axiosClient.post('/api/upload/image', formData, {
+                const response = await axiosClient.post('/upload/image', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
@@ -205,7 +205,7 @@ const cloudinaryService = {
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await axiosClient.post('/api/upload/avatar', formData, {
+            const response = await axiosClient.post('/upload/avatar', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -251,11 +251,25 @@ const cloudinaryService = {
      */
     uploadMultipleImages: async (files, folder = 'general', options = {}) => {
         try {
-            const uploadPromises = Array.from(files).map(file => 
-                cloudinaryService.uploadImage(file, folder, options)
-            );
-
-            const results = await Promise.allSettled(uploadPromises);
+            // Limit concurrent uploads to prevent overwhelming the server
+            const batchSize = 3; // Upload max 3 files at a time
+            const fileArray = Array.from(files);
+            const results = [];
+            
+            for (let i = 0; i < fileArray.length; i += batchSize) {
+                const batch = fileArray.slice(i, i + batchSize);
+                const uploadPromises = batch.map(file => 
+                    cloudinaryService.uploadImage(file, folder, options)
+                );
+                
+                const batchResults = await Promise.allSettled(uploadPromises);
+                results.push(...batchResults);
+                
+                // Small delay between batches to prevent rate limiting
+                if (i + batchSize < fileArray.length) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
             
             const successful = results
                 .filter(result => result.status === 'fulfilled')
@@ -263,7 +277,7 @@ const cloudinaryService = {
                 
             const failed = results
                 .filter(result => result.status === 'rejected')
-                .map(result => result.reason);
+                .map(result => result.reason?.message || 'Upload failed');
 
             return {
                 successful,
@@ -273,6 +287,7 @@ const cloudinaryService = {
                 failCount: failed.length
             };
         } catch (error) {
+            console.error('Error in uploadMultipleImages:', error);
             throw error;
         }
     },
@@ -283,7 +298,7 @@ const cloudinaryService = {
      */
     deleteImage: async (publicId) => {
         try {
-            const response = await axiosClient.delete('/api/upload/delete-image', {
+            const response = await axiosClient.delete('/upload/delete-image', {
                 data: { publicId }
             });
             return response;
