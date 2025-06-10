@@ -91,13 +91,6 @@ const LandingPage = () => {
         }
     ];
 
-    const stats = [
-        { number: "10K+", label: "Khách hàng hài lòng" },
-        { number: "500+", label: "Sản phẩm" },
-        { number: "99%", label: "Đánh giá tích cực" },
-        { number: "24/7", label: "Hỗ trợ khách hàng" }
-    ];
-
     return (
         <div className="landing-v2">
             <Header />

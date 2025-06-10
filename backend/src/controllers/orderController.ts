@@ -273,7 +273,11 @@ export const getAllOrders = async (req: Request, res: Response) => {
       .skip(skip)
       .limit(limit)
       .populate("userId", "username email")
-      .populate("paymentId");
+      .populate("paymentId")
+      .populate({
+        path: "items.productId",
+        select: "name price description imageUrl images slug productCode"
+      });
     
     // Đếm tổng số đơn hàng
     const total = await Order.countDocuments(query);
@@ -300,6 +304,7 @@ export const searchOrders = async (req: Request, res: Response) => {
     const skip = (page - 1) * limit;
     
     // Lấy các tham số tìm kiếm
+    const q = req.query.q as string; // Text search parameter
     const orderId = req.query.orderId as string;
     const userId = req.query.userId as string;
     const status = req.query.status as string;
@@ -310,60 +315,132 @@ export const searchOrders = async (req: Request, res: Response) => {
     const sortBy = req.query.sortBy as string || "createdAt";
     const sortOrder = req.query.sortOrder as string || "desc";
     
-    // Xây dựng query tìm kiếm
-    const searchQuery: any = {};
+    // Xây dựng base query cho filters khác ngoài text search
+    let baseQuery: any = {};
     
     // Tìm theo ID đơn hàng
     if (orderId && mongoose.Types.ObjectId.isValid(orderId)) {
-      searchQuery._id = new mongoose.Types.ObjectId(orderId);
+      baseQuery._id = new mongoose.Types.ObjectId(orderId);
     }
     
     // Tìm theo ID người dùng
     if (userId && mongoose.Types.ObjectId.isValid(userId)) {
-      searchQuery.userId = new mongoose.Types.ObjectId(userId);
+      baseQuery.userId = new mongoose.Types.ObjectId(userId);
     }
     
     // Tìm theo trạng thái
     if (status && ["pending", "shipped", "delivered", "cancelled"].includes(status)) {
-      searchQuery.status = status;
+      baseQuery.status = status;
     }
     
     // Tìm theo khoảng giá trị đơn hàng
     if (minAmount !== undefined || maxAmount !== undefined) {
-      searchQuery.totalAmount = {};
-      if (minAmount !== undefined) searchQuery.totalAmount.$gte = minAmount;
-      if (maxAmount !== undefined) searchQuery.totalAmount.$lte = maxAmount;
+      baseQuery.totalAmount = {};
+      if (minAmount !== undefined) baseQuery.totalAmount.$gte = minAmount;
+      if (maxAmount !== undefined) baseQuery.totalAmount.$lte = maxAmount;
     }
     
     // Tìm theo khoảng thời gian
     if (startDate !== undefined || endDate !== undefined) {
-      searchQuery.createdAt = {};
-      if (startDate !== undefined) searchQuery.createdAt.$gte = startDate;
+      baseQuery.createdAt = {};
+      if (startDate !== undefined) baseQuery.createdAt.$gte = startDate;
       if (endDate !== undefined) {
-        // Đặt thời gian kết thúc vào cuối ngày
         const endOfDay = new Date(endDate);
         endOfDay.setHours(23, 59, 59, 999);
-        searchQuery.createdAt.$lte = endOfDay;
+        baseQuery.createdAt.$lte = endOfDay;
       }
     }
-    
+
+    let finalQuery = baseQuery;
+
+    // Text search logic
+    if (q && q.trim()) {
+      const searchRegex = new RegExp(q.trim(), 'i');
+      
+      // Tìm users matching search criteria
+      const matchingUsers = await mongoose.model('User').find({
+        $or: [
+          { username: searchRegex },
+          { email: searchRegex },
+          { phone: searchRegex }
+        ]
+      }).select('_id');
+      
+      const matchingUserIds = matchingUsers.map(user => user._id);
+
+      // Tìm products matching search criteria
+      const matchingProducts = await Product.find({
+        $or: [
+          { name: searchRegex },
+          { title: searchRegex },
+          { productCode: searchRegex }
+        ]
+      }).select('_id');
+      
+      const matchingProductIds = matchingProducts.map(product => product._id);
+
+      // Build text search conditions
+      const textSearchConditions: any[] = [
+        // Search in shipping address
+        { shippingAddress: searchRegex }
+      ];
+
+      // Add user-based search
+      if (matchingUserIds.length > 0) {
+        textSearchConditions.push({ userId: { $in: matchingUserIds } });
+      }
+
+      // Add product-based search  
+      if (matchingProductIds.length > 0) {
+        textSearchConditions.push({ 'items.productId': { $in: matchingProductIds } });
+      }
+
+      // ====== FIX: Thêm partial Order ID search ======
+      // Try to search by full order ID if it looks like an ObjectId
+      if (mongoose.Types.ObjectId.isValid(q.trim())) {
+        textSearchConditions.push({ _id: new mongoose.Types.ObjectId(q.trim()) });
+      } else {
+        // Search for partial Order ID (convert ObjectId to string and match)
+        // This uses $expr with $regexMatch to search in string representation of _id
+        textSearchConditions.push({
+          $expr: {
+            $regexMatch: {
+              input: { $toString: "$_id" },
+              regex: q.trim(),
+              options: "i"
+            }
+          }
+        });
+      }
+
+      // Combine base query with text search
+      finalQuery = {
+        ...baseQuery,
+        $or: textSearchConditions
+      };
+    }
+
     // Xác định hướng sắp xếp
     const sort: any = {};
     sort[sortBy] = sortOrder === "asc" ? 1 : -1;
     
     // Thực hiện tìm kiếm với bộ lọc, sắp xếp và phân trang
-    const orders = await Order.find(searchQuery)
+    const orders = await Order.find(finalQuery)
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .populate("userId", "username email")
-      .populate("paymentId");
+      .populate("paymentId")
+      .populate({
+        path: "items.productId",
+        select: "name price description imageUrl images slug productCode"
+      });
     
     // Đếm tổng số kết quả
-    const total = await Order.countDocuments(searchQuery);
+    const total = await Order.countDocuments(finalQuery);
     
-    // Thêm thông tin meta
     const filters = {
+      q: q || undefined,
       orderId: orderId || undefined,
       userId: userId || undefined,
       status: status || undefined,
@@ -386,6 +463,137 @@ export const searchOrders = async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
+    console.error('Error in searchOrders:', error);
     return res.status(500).json({ message: error.message });
   }
-}; 
+};
+
+// Lấy thống kê đơn hàng 
+export const getOrderStats = async (req: Request, res: Response) => {
+  try {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // Tính ngày đầu và cuối tháng hiện tại
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const startOfNextMonth = new Date(currentYear, currentMonth, 1);
+    
+    // Thống kê đơn hàng tháng hiện tại
+    const currentMonthStats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfMonth,
+            $lt: startOfNextMonth
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalAmount: { $sum: "$totalAmount" }
+        }
+      }
+    ]);
+    
+    // Tổng số đơn hàng tháng hiện tại
+    const totalOrdersThisMonth = await Order.countDocuments({
+      createdAt: {
+        $gte: startOfMonth,
+        $lt: startOfNextMonth
+      }
+    });
+    
+    // Doanh thu theo từng tháng trong năm (chỉ đơn hàng delivered)
+    const monthlyRevenue = await Order.aggregate([
+      {
+        $match: {
+          status: "delivered",
+          createdAt: {
+            $gte: new Date(currentYear, 0, 1), // Đầu năm
+            $lt: new Date(currentYear + 1, 0, 1) // Đầu năm sau
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          revenue: { $sum: "$totalAmount" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+    
+    // Tạo array 12 tháng với doanh thu (default 0)
+    const monthlyData = Array.from({ length: 12 }, (_, index) => {
+      const monthData = monthlyRevenue.find(item => item._id === index + 1);
+      return {
+        month: index + 1,
+        name: `T${index + 1}`,
+        revenue: monthData ? monthData.revenue : 0,
+        count: monthData ? monthData.count : 0
+      };
+    });
+    
+    // Tính tổng doanh thu năm hiện tại
+    const totalRevenueThisYear = monthlyData.reduce((sum, month) => sum + month.revenue, 0);
+    
+    // Doanh thu tháng hiện tại (chỉ đơn hàng delivered)
+    const currentMonthRevenue = await Order.aggregate([
+      {
+        $match: {
+          status: "delivered",
+          createdAt: {
+            $gte: startOfMonth,
+            $lt: startOfNextMonth
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          revenue: { $sum: "$totalAmount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    const thisMonthRevenue = currentMonthRevenue[0]?.revenue || 0;
+    const thisMonthDeliveredOrders = currentMonthRevenue[0]?.count || 0;
+    
+    // Trả về thống kê
+    return res.status(200).json({
+      success: true,
+      data: {
+        currentMonth: {
+          totalOrders: totalOrdersThisMonth,
+          revenue: thisMonthRevenue,
+          deliveredOrders: thisMonthDeliveredOrders,
+          statusBreakdown: currentMonthStats
+        },
+        yearlyRevenue: {
+          total: totalRevenueThisYear,
+          monthlyData: monthlyData
+        },
+        period: {
+          year: currentYear,
+          month: currentMonth,
+          monthName: startOfMonth.toLocaleDateString('vi-VN', { month: 'long' })
+        }
+      },
+      message: "Lấy thống kê đơn hàng thành công"
+    });
+  } catch (error: any) {
+    console.error('Error in getOrderStats:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi lấy thống kê đơn hàng",
+      data: null
+    });
+  }
+};

@@ -11,7 +11,15 @@ const orderService = {
     getAllOrders: async (params = {}) => {
         try {
             const response = await axiosClient.get(API_CONFIG.ENDPOINTS.ORDERS.GET_ALL || '/orders', { params });
-            
+            if (response && response.orders) {
+                return {
+                    success: true,
+                    data: response.orders,
+                    message: 'Lấy danh sách đơn hàng thành công',
+                    pagination: response.pagination
+                };
+            }           
+            // Fallback cho format với success field
             if (response && response.success && response.data) {
                 return {
                     success: true,
@@ -19,8 +27,7 @@ const orderService = {
                     message: response.message,
                     pagination: response.pagination
                 };
-            }
-            
+            }           
             // Fallback cho format cũ
             if (Array.isArray(response)) {
                 return {
@@ -28,8 +35,7 @@ const orderService = {
                     data: response,
                     message: 'Lấy danh sách đơn hàng thành công'
                 };
-            }
-            
+            }          
             return {
                 success: true,
                 data: [],
@@ -38,6 +44,71 @@ const orderService = {
         } catch (error) {
             console.error('Error in getAllOrders:', error);
             throw new Error(error.message || 'Không thể tải danh sách đơn hàng');
+        }
+    },
+
+    /**
+     * Lấy thống kê đơn hàng (cho admin)
+     */
+    getOrderStats: async () => {
+        try {
+            const response = await axiosClient.get('/orders/stats');           
+            if (response && response.success && response.data) {
+                return {
+                    success: true,
+                    data: response.data,
+                    message: response.message || 'Lấy thống kê đơn hàng thành công'
+                };
+            }          
+            return {
+                success: false,
+                data: null,
+                message: 'Không thể lấy thống kê đơn hàng'
+            };
+        } catch (error) {
+            console.error('Error in getOrderStats:', error);           
+            let errorMessage = 'Không thể lấy thống kê đơn hàng';           
+            if (error.status === 401) {
+                errorMessage = 'Không có quyền truy cập thống kê';
+            } else if (error.status === 0) {
+                errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+            }           
+            throw new Error(errorMessage);
+        }
+    },
+
+    /**
+     * Tìm kiếm đơn hàng với bộ lọc nâng cao (cho admin)
+     * @param {Object} params - Search parameters
+     */
+    searchOrders: async (params = {}) => {
+        try {
+            const response = await axiosClient.get('/orders/search', { params });
+            if (response && response.orders) {
+                return {
+                    success: true,
+                    data: response.orders,
+                    filters: response.filters,
+                    pagination: response.pagination,
+                    message: 'Tìm kiếm đơn hàng thành công'
+                };
+            }         
+            return {
+                success: true,
+                data: [],
+                filters: params,
+                pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+                message: 'Không tìm thấy đơn hàng nào'
+            };
+        } catch (error) {
+            console.error('Error in searchOrders:', error);           
+            let errorMessage = 'Không thể tìm kiếm đơn hàng';            
+            if (error.status === 401) {
+                errorMessage = 'Không có quyền truy cập';
+            } else if (error.status === 0) {
+                errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+            }           
+            throw new Error(errorMessage);
         }
     },
 
@@ -254,6 +325,21 @@ const orderService = {
     },
 
     /**
+     * Lấy màu sắc cho trạng thái
+     * @param {string} status - Trạng thái đơn hàng
+     */
+    getStatusColor: (status) => {
+        const colorMap = {
+            'pending': '#FFA500',      // Orange
+            'processing': '#2196F3',   // Blue  
+            'shipped': '#9C27B0',      // Purple
+            'delivered': '#4CAF50',    // Green
+            'cancelled': '#F44336'     // Red
+        };
+        return colorMap[status] || '#757575';
+    },
+
+    /**
      * Lấy class CSS cho trạng thái
      * @param {string} status - Trạng thái đơn hàng
      */
@@ -275,6 +361,25 @@ const orderService = {
     canCancelOrder: (order) => {
         if (!order) return false;
         return ['pending', 'processing'].includes(order.status);
+    },
+
+    /**
+     * Kiểm tra xem đơn hàng có thể cập nhật trạng thái không
+     * @param {Object} order - Đối tượng đơn hàng
+     * @param {string} newStatus - Trạng thái mới
+     */
+    canUpdateStatus: (order, newStatus) => {
+        if (!order) return false;
+        
+        const statusFlow = {
+            'pending': ['processing', 'cancelled'],
+            'processing': ['shipped', 'cancelled'],
+            'shipped': ['delivered'],
+            'delivered': [],
+            'cancelled': []
+        };
+        
+        return statusFlow[order.status]?.includes(newStatus) || false;
     },
 
     /**
@@ -313,6 +418,46 @@ const orderService = {
             hour: '2-digit',
             minute: '2-digit'
         });
+    },
+
+    /**
+     * Tạo bộ lọc mặc định cho search
+     */
+    getDefaultSearchFilters: () => ({
+        page: 1,
+        limit: 10,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+    }),
+
+    /**
+     * Validate search parameters
+     * @param {Object} params - Search parameters
+     */
+    validateSearchParams: (params) => {
+        const validStatuses = ['pending', 'shipped', 'delivered', 'cancelled'];
+        const validSortFields = ['createdAt', 'totalAmount', 'status'];
+        const validSortOrders = ['asc', 'desc'];
+
+        const errors = [];
+
+        if (params.status && !validStatuses.includes(params.status)) {
+            errors.push('Trạng thái không hợp lệ');
+        }
+
+        if (params.sortBy && !validSortFields.includes(params.sortBy)) {
+            errors.push('Trường sắp xếp không hợp lệ');
+        }
+
+        if (params.sortOrder && !validSortOrders.includes(params.sortOrder)) {
+            errors.push('Thứ tự sắp xếp không hợp lệ');
+        }
+
+        if (params.minAmount && params.maxAmount && params.minAmount > params.maxAmount) {
+            errors.push('Giá trị tối thiểu phải nhỏ hơn giá trị tối đa');
+        }
+
+        return errors;
     }
 };
 

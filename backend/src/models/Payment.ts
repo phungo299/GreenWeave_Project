@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 export interface IPayment {
   orderId: mongoose.Types.ObjectId;
   amount: number;
-  paymentMethod: "credit_card" | "paypal" | "bank_transfer";
+  paymentMethod: "credit_card" | "paypal" | "bank_transfer" | "cash_on_delivery";
   status: "pending" | "completed" | "failed";
   createdAt: Date;
 }

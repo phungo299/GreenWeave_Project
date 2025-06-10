@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import '../assets/css/AboutUsPage.css';
 import '../assets/css/ModernAnimations.css';
 import ab1 from '../assets/images/ab1.png';
@@ -33,12 +32,6 @@ const slideUp = {
 };
 
 const AboutUsPage = () => {
-    const [isLoaded, setIsLoaded] = useState(false);
-    
-    useEffect(() => {
-        setIsLoaded(true);
-    }, []);
-
     // Modern gallery data với better structure
     const galleryImages = [
         { 
