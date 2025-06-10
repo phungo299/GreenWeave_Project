@@ -3,7 +3,7 @@ import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import AnimatedSection from '../components/common/AnimatedSection';
 import '../assets/css/ModernAnimations.css';
-import './ContactPage.css';
+import '../assets/css/ContactPage.css';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({
@@ -54,7 +54,7 @@ const ContactPage = () => {
         {
             icon: "📍",
             title: "Địa chỉ",
-            content: "123 Đường Bền Vững, Quận Xanh, TP. Thân Thiện",
+            content: "Khu Đô Thị Mới An Phú Thịnh, Nhơn Bình, Quy Nhơn",
             color: "#059669"
         },
         {
@@ -366,8 +366,8 @@ const ContactPage = () => {
                                 <div className="map-content">
                                     <div className="map-icon-premium">🗺️</div>
                                     <h3>Vị trí showroom</h3>
-                                    <p><strong>123 Đường Bền Vững</strong></p>
-                                    <p>Quận Xanh, TP. Thân Thiện</p>
+                                    <p><strong>Khu Đô Thị Mới An Phú Thịnh</strong></p>
+                                    <p>Nhơn Bình, Quy Nhơn</p>
                                     <div className="map-features">
                                         <span className="map-feature">🚗 Bãi đỗ xe miễn phí</span>
                                         <span className="map-feature">🌱 Không gian xanh</span>
