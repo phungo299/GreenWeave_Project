@@ -81,111 +81,179 @@ export const getOrderById = async (req: Request, res: Response) => {
   }
 };
 
-// Tạo đơn hàng mới từ giỏ hàng
+// Tạo đơn hàng mới từ giỏ hàng hoặc trực tiếp
 export const createOrder = async (req: Request, res: Response) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   
   try {
-    const userId = req.params.userId;
-    const { shippingAddress, paymentMethod } = req.body;
+    // Support both legacy (userId in params) and new (userId in body) formats
+    const userId = req.params.userId || req.body.userId;
+    const { 
+      shippingAddress, 
+      paymentMethod, 
+      items, 
+      totalAmount, 
+      shippingCost,
+      status = "pending"
+    } = req.body;
     
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "ID người dùng không hợp lệ" });
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "ID người dùng không hợp lệ",
+        data: null
+      });
     }
     
-    if (!shippingAddress) {
-      return res.status(400).json({ message: "Địa chỉ giao hàng là bắt buộc" });
-    }
+    let orderItems = [];
+    let calculatedTotal = 0;
     
-    // Lấy giỏ hàng hiện tại
-    const cart = await Cart.findOne({ userId }).session(session);
-    if (!cart || cart.items.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ message: "Giỏ hàng trống" });
-    }
-    
-    // Tạo mảng các sản phẩm đã kiểm tra tính hợp lệ
-    const orderItems = [];
-    let totalAmount = 0;
-    
-    // Kiểm tra tồn kho và tính tổng giá trị đơn hàng
-    for (const item of cart.items) {
-      const product = await Product.findById(item.productId).session(session);
-      
-      if (!product) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ 
-          message: `Không tìm thấy sản phẩm với ID: ${item.productId}` 
+    // New flow: items provided directly in request body
+    if (items && Array.isArray(items)) {
+      // Validate and process provided items
+      for (const item of items) {
+        const product = await Product.findById(item.productId).session(session);
+        
+        if (!product) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(404).json({ 
+            success: false,
+            message: `Không tìm thấy sản phẩm với ID: ${item.productId}`,
+            data: null
+          });
+        }
+        
+        // Check stock
+        if (product.quantity < item.quantity) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ 
+            success: false,
+            message: `Sản phẩm "${product.name}" chỉ còn ${product.quantity} sản phẩm trong kho`,
+            data: null
+          });
+        }
+        
+        orderItems.push({
+          productId: item.productId,
+          variantId: item.variantId,
+          color: item.color,
+          quantity: item.quantity,
+          unitPrice: item.price || product.price
+        });
+        
+        calculatedTotal += (item.price || product.price) * item.quantity;
+        
+        // Decrease stock
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { quantity: -item.quantity } },
+          { session }
+        );
+      }
+    } else {
+      // Legacy flow: get items from cart
+      if (!shippingAddress) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Địa chỉ giao hàng là bắt buộc",
+          data: null
         });
       }
       
-      // Kiểm tra tồn kho
-      if (product.quantity < item.quantity) {
+      const cart = await Cart.findOne({ userId }).session(session);
+      if (!cart || cart.items.length === 0) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          message: `Sản phẩm "${product.name}" chỉ còn ${product.quantity} sản phẩm trong kho` 
+          success: false,
+          message: "Giỏ hàng trống",
+          data: null
         });
       }
       
-      // Thêm vào danh sách sản phẩm trong đơn hàng
-      orderItems.push({
-        productId: item.productId,
-        variantId: item.variantId,
-        color: item.color,
-        quantity: item.quantity,
-        unitPrice: product.price
-      });
+      // Process cart items
+      for (const item of cart.items) {
+        const product = await Product.findById(item.productId).session(session);
+        
+        if (!product) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(404).json({ 
+            success: false,
+            message: `Không tìm thấy sản phẩm với ID: ${item.productId}`,
+            data: null
+          });
+        }
+        
+        if (product.quantity < item.quantity) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ 
+            success: false,
+            message: `Sản phẩm "${product.name}" chỉ còn ${product.quantity} sản phẩm trong kho`,
+            data: null
+          });
+        }
+        
+        orderItems.push({
+          productId: item.productId,
+          variantId: item.variantId,
+          color: item.color,
+          quantity: item.quantity,
+          unitPrice: product.price
+        });
+        
+        calculatedTotal += product.price * item.quantity;
+        
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { quantity: -item.quantity } },
+          { session }
+        );
+      }
       
-      // Tính tổng giá trị
-      totalAmount += product.price * item.quantity;
-      
-      // Giảm số lượng tồn kho
-      await Product.findByIdAndUpdate(
-        item.productId,
-        { $inc: { quantity: -item.quantity } },
-        { session }
-      );
+      // Clear cart after processing
+      cart.items = [];
+      await cart.save({ session });
     }
     
-    // Tạo đơn hàng mới
+    // Use provided total or calculated total
+    const finalTotal = totalAmount || calculatedTotal;
+    
+    // Create new order
     const newOrder = new Order({
       userId,
       items: orderItems,
-      totalAmount,
-      status: "pending",
-      shippingAddress
+      totalAmount: finalTotal,
+      shippingCost: shippingCost || 0,
+      status,
+      shippingAddress,
+      paymentMethod: paymentMethod?.toUpperCase() || "COD"
     });
     
     const savedOrder = await newOrder.save({ session });
     
-    // Tạo payment
-    if (paymentMethod) {
+    // Create payment record if payment method specified
+    if (paymentMethod && paymentMethod.toUpperCase() !== "COD") {
       const payment = new Payment({
         orderId: savedOrder._id,
-        amount: totalAmount,
-        paymentMethod,
+        amount: finalTotal,
+        paymentMethod: paymentMethod.toUpperCase(),
         status: "pending"
       });
       
       const savedPayment = await payment.save({ session });
-      
-      // Cập nhật payment trong order
       savedOrder.paymentId = savedPayment._id;
       await savedOrder.save({ session });
     }
     
-    // Xóa giỏ hàng
-    cart.items = [];
-    await cart.save({ session });
-    
     await session.commitTransaction();
     session.endSession();
     
-    // Trả về đơn hàng đã tạo
+    // Return created order
     const completeOrder = await Order.findById(savedOrder._id)
       .populate("paymentId")
       .populate({
@@ -193,11 +261,23 @@ export const createOrder = async (req: Request, res: Response) => {
         select: "name price description imageUrl"
       });
     
-    return res.status(201).json(completeOrder);
+    return res.status(201).json({
+      success: true,
+      message: "Tạo đơn hàng thành công",
+      data: {
+        orderId: savedOrder._id,
+        order: completeOrder
+      }
+    });
   } catch (error: any) {
     await session.abortTransaction();
     session.endSession();
-    return res.status(500).json({ message: error.message });
+    console.error('Error in createOrder:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi tạo đơn hàng",
+      data: null
+    });
   }
 };
 
@@ -593,6 +673,91 @@ export const getOrderStats = async (req: Request, res: Response) => {
     return res.status(500).json({ 
       success: false,
       message: error.message || "Lỗi server khi lấy thống kê đơn hàng",
+      data: null
+    });
+  }
+};
+
+// Tạo đơn hàng test (không cần validate products)
+export const createTestOrder = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    const userId = req.params.userId || req.body.userId;
+    const { 
+      items, 
+      totalAmount, 
+      shippingCost = 0,
+      paymentMethod = "PAYOS",
+      status = "pending"
+    } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false,
+        message: "ID người dùng là bắt buộc",
+        data: null
+      });
+    }
+    
+    // For test orders, we don't validate against real products
+    const orderItems = items.map((item: any) => ({
+      productId: new mongoose.Types.ObjectId(), // Generate fake ObjectId for test
+      variantId: item.variantId || "",
+      color: item.color || "",
+      quantity: item.quantity,
+      unitPrice: item.price
+    }));
+    
+    // Create test order
+    const newOrder = new Order({
+      userId: mongoose.Types.ObjectId.isValid(userId) ? userId : new mongoose.Types.ObjectId(),
+      items: orderItems,
+      totalAmount: totalAmount,
+      shippingCost: shippingCost,
+      status: status,
+      paymentMethod: paymentMethod,
+      shippingAddress: "Test Address - PayOS Integration Test"
+    });
+    
+    const savedOrder = await newOrder.save({ session });
+    
+    // Create test payment record
+    const payment = new Payment({
+      orderId: savedOrder._id,
+      amount: totalAmount,
+      paymentMethod: paymentMethod,
+      status: "pending"
+    });
+    
+    const savedPayment = await payment.save({ session });
+    
+    // Link payment to order
+    savedOrder.paymentId = savedPayment._id;
+    await savedOrder.save({ session });
+    
+    await session.commitTransaction();
+    session.endSession();
+    
+    return res.status(201).json({
+      success: true,
+      message: "Tạo đơn hàng test thành công",
+      data: {
+        orderId: savedOrder._id,
+        orderCode: savedOrder._id.toString().slice(-8), // Use last 8 chars as orderCode
+        totalAmount: savedOrder.totalAmount,
+        status: savedOrder.status,
+        paymentId: savedPayment._id
+      }
+    });
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error in createTestOrder:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi tạo đơn hàng test",
       data: null
     });
   }

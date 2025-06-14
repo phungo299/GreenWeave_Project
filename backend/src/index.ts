@@ -21,11 +21,11 @@ import {
   promotionRoutes,
   reviewRoutes,
   settingRoutes,
-  stripeRoutes,
   uploadRoutes,
   userRoutes,
   visitorLogRoutes,
-  wishlistRoutes
+  wishlistRoutes,
+  payosRoutes
 } from "./routes";
 
 const app = express();
@@ -37,12 +37,35 @@ const swaggerDocument = YAML.load(swaggerPath);
 // Update swagger server URL from env
 swaggerDocument.servers[0].url = process.env.API_URL || "http://localhost:5000";
 
-// Allow all origins for development
-console.log("CORS: Allowing all origins for development");
+// CORS Configuration - Environment Based
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+      'https://green-weave-project.vercel.app',
+      'https://greenweave.vn'
+    ];
+
+console.log("CORS: Allowed origins:", allowedOrigins);
 
 app.use(
   cors({
-    origin: true, // Allow all origins
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Log unauthorized access attempt
+      console.warn(`⚠️ CORS blocked request from: ${origin}`);
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -77,7 +100,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/visitor-logs", visitorLogRoutes);
-app.use("/api/stripe", stripeRoutes);
+app.use("/api/payos", payosRoutes);
 app.use("/api/upload", uploadRoutes);
 
 // Export the app for testing purposes

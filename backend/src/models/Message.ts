@@ -5,6 +5,8 @@ export interface IMessage {
   email: string;
   message: string;
   createdAt: Date;
+  phone?: string;
+  subject?: string;
 }
 
 const messageSchema = new Schema<IMessage>(
@@ -12,6 +14,8 @@ const messageSchema = new Schema<IMessage>(
     name: { type: String, required: true },
     email: { type: String, required: true },
     message: { type: String, required: true },
+    phone: { type: String },
+    subject: { type: String },
   },
   { timestamps: true }
 );

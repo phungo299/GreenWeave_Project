@@ -21,6 +21,10 @@ export const AuthProvider = ({ children }) => {
             if (token && userData) {
                 try {
                     const parsedUser = JSON.parse(userData);
+                    // Ensure compatibility: add _id if only id is present
+                    if (!parsedUser._id && parsedUser.id) {
+                        parsedUser._id = parsedUser.id;
+                    }
                     setUser(parsedUser);
                     setIsAuthenticated(true);
                 } catch (error) {
@@ -50,19 +54,16 @@ export const AuthProvider = ({ children }) => {
             
             if (data && data.token) {
                 localStorage.setItem('accessToken', data.token);
-                localStorage.setItem('user', JSON.stringify({
-                    id: data.id,
+                const userObj = {
+                    id: data.id || data._id,
+                    _id: data.id || data._id,
                     username: data.username,
                     email: data.email,
                     role: data.role
-                }));
+                };
+                localStorage.setItem('user', JSON.stringify(userObj));
                 
-                setUser({
-                    id: data.id,
-                    username: data.username,
-                    email: data.email,
-                    role: data.role
-                });
+                setUser(userObj);
                 setIsAuthenticated(true);
                 
                 // // Auto-redirect admin users to admin dashboard

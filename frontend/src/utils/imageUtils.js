@@ -193,17 +193,32 @@ export const imageUtils = {
     },
 
     /**
-     * Get image placeholder based on type
+     * Get image placeholder based on type (using base64 data URI to avoid external dependencies)
      * @param {string} type - Type of placeholder (avatar, product, general)
      * @param {Object} options - Options for placeholder
      */
     getPlaceholder: (type = 'general', options = {}) => {
-        const { width = 400, height = 400, text = 'No Image' } = options;
+        const { width = 80, height = 80 } = options;
+        
+        // Create SVG-based placeholder as base64 data URI
+        const createSvgPlaceholder = (bgColor, textColor, text, w = width, h = height) => {
+            const svg = `
+                <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="${bgColor}"/>
+                    <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${Math.min(w, h) * 0.15}" 
+                          fill="${textColor}" text-anchor="middle" dominant-baseline="middle">${text}</text>
+                </svg>
+            `.trim();
+            
+            // Dùng URL encoding thay vì base64 để support tiếng Việt  
+            const encodedSvg = encodeURIComponent(svg);
+            return `data:image/svg+xml;charset=utf-8,${encodedSvg}`;
+        };
         
         const placeholders = {
-            avatar: `https://via.placeholder.com/${width}x${height}/e8f5f0/134d35?text=Avatar`,
-            product: `https://via.placeholder.com/${width}x${height}/f5f5f5/666?text=Product`,
-            general: `https://via.placeholder.com/${width}x${height}/f0f0f0/999?text=${encodeURIComponent(text)}`
+            avatar: createSvgPlaceholder('#e8f5f0', '#134d35', 'Avatar', width, height),
+            product: createSvgPlaceholder('#f5f5f5', '#666666', 'Sản phẩm', width, height),
+            general: createSvgPlaceholder('#f0f0f0', '#999999', 'Hình ảnh', width, height)
         };
 
         return placeholders[type] || placeholders.general;

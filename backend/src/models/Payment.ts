@@ -3,8 +3,9 @@ import mongoose, { Schema } from "mongoose";
 export interface IPayment {
   orderId: mongoose.Types.ObjectId;
   amount: number;
-  paymentMethod: "credit_card" | "paypal" | "bank_transfer" | "cash_on_delivery";
+  paymentMethod: "CREDIT_CARD" | "PAYPAL" | "BANK_TRANSFER" | "COD" | "PAYOS";
   status: "pending" | "completed" | "failed";
+  transactionId?: string;
   createdAt: Date;
 }
 
@@ -18,7 +19,7 @@ const paymentSchema = new Schema<IPayment>(
     amount: { type: Number, required: true },
     paymentMethod: { 
       type: String, 
-      enum: ["credit_card", "paypal", "bank_transfer"], 
+      enum: ["CREDIT_CARD", "PAYPAL", "BANK_TRANSFER", "COD", "PAYOS"], 
       required: true 
     },
     status: { 
@@ -26,6 +27,7 @@ const paymentSchema = new Schema<IPayment>(
       enum: ["pending", "completed", "failed"], 
       default: "pending"
     },
+    transactionId: { type: String },
   },
   { timestamps: true }
 );

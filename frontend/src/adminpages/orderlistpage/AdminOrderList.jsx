@@ -13,6 +13,44 @@ const PAGE_SIZE = 10;
 // Default placeholder as data URL to avoid infinite loop
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f4f8f4'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='12' fill='%23999'%3ENo Image%3C/text%3E%3C/svg%3E";
 
+// Component hiển thị chi tiết từng sản phẩm trong đơn hàng
+const OrderItemsList = ({ items }) => {
+    if (!items || items.length === 0) {
+        return <span style={{ color: '#999', fontStyle: 'italic' }}>Không có sản phẩm</span>;
+    }
+
+    return (
+        <div className="order-items-list">
+            {items.map((item, index) => {
+                const productName = item.productId?.name || 'Sản phẩm không xác định';
+                const quantity = item.quantity || 1;
+                const color = item.color || '';
+                const size = item.size || '';
+                
+                return (
+                    <div key={index} className="order-item-row">
+                        <div className="order-item-name">
+                            <strong>{productName}</strong>
+                        </div>
+                        <div className="order-item-details">
+                            <span className="order-item-quantity">SL: {quantity}</span>
+                            {color && (
+                                <span className="order-item-color">Màu: {color}</span>
+                            )}
+                            {size && (
+                                <span className="order-item-size">Size: {size}</span>
+                            )}
+                            <span className="order-item-price">
+                                {orderService.formatPrice(item.unitPrice || 0)}
+                            </span>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 const AdminOrderList = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -309,14 +347,7 @@ const AdminOrderList = () => {
                                             />
                                         </td>
                                         <td>
-                                            <span className="admin-order-list-product-name">
-                                                {order.name}
-                                                {order.items.length > 1 && (
-                                                    <span style={{ color: '#666', fontSize: '0.9em' }}>
-                                                        {' '}+{order.items.length - 1} sản phẩm khác
-                                                    </span>
-                                                )}
-                                            </span>
+                                            <OrderItemsList items={order.items} />
                                         </td>
                                         <td>
                                             <span style={{ color: '#4b5c4b', fontSize: '0.9em' }}>

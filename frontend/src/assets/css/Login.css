@@ -655,3 +655,8 @@
     user-select: none;
     transition: filter 0.3s ease;
 }
+
+svg {
+    width: 15px!important;
+    height: 25px!important;
+}

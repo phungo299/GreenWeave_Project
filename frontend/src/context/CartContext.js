@@ -1,203 +1,267 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import cartService from '../services/cartService';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useOptimisticCart } from '../hooks/useOptimisticCart';
+import cartService from '../services/cartService';
 
 const CartContext = createContext();
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+    const context = useContext(CartContext);
+    if (!context) {
+        throw new Error('useCart must be used within CartProvider');
+    }
+    return context;
+};
 
 export const CartProvider = ({ children }) => {
-    const [cartItems, setCartItems] = useState([]);
     const { user, isAuthenticated } = useAuth();
-    
-    // Load cart from localStorage on mount
+    const {
+        cartItems,
+        setCartItems,
+        loading,
+        errors,
+        addToCartOptimistic,
+        removeFromCartOptimistic,
+        updateQuantityOptimistic,
+        getCartCount,
+        isAnyLoading,
+        getCurrentErrors,
+        clearError,
+        clearAllErrors,
+        transformCartItem
+    } = useOptimisticCart([]);
+
+    // Load cart data on mount and auth changes
     useEffect(() => {
         const fetchCart = async () => {
-            // If logged in, prioritize getting the shopping cart from the server
             if (isAuthenticated && user?.id) {
                 try {
                     const response = await cartService.getCart(user.id);
-                    //console.log('Get cart from server: ', response);
-                    if (response && response.items && Array.isArray(response.items)) {
-                        // Transform API response to match CartContext format
-                        const transformedItems = response.items.map(item => ({
-                            cartItemId: item._id,
-                            _id: item._id, // Keep the database ID for API operations
-                            id: item.productId._id,
-                            name: item.productId.name,
-                            title: item.productId.title || '',
-                            color: item.color || item.productId.selectedColor || '',
-                            size: item.productId.selectedSize || '',
-                            price: item.productId.price,
-                            quantity: item.quantity,
-                            image: item.productId.images && item.productId.images.length > 0 
-                                ? item.productId.images[0] 
-                                : '/assets/images/placeholder-product.png'
-                        }));                        
+                    
+                    if (response?.items && Array.isArray(response.items)) {
+                        // Transform server data using consistent transformer
+                        const transformedItems = response.items.map(transformCartItem);
                         setCartItems(transformedItems);
-                        return; // No need to read from localStorage if it is already retrieved from the server
+                        return;
                     }
                 } catch (err) {
                     console.error('Error fetching cart from server:', err);
-                    // If there is an error, will fallback to reading from localStorage
+                    // Fallback to localStorage if server fails
                 }
             }
             
-            // If not logged in or fetch from server fails, read from localStorage
+            // Load from localStorage if not authenticated or server fails
             const savedCart = localStorage.getItem('cart');
             if (savedCart) {
                 try {
-                    setCartItems(JSON.parse(savedCart));
+                    const parsedCart = JSON.parse(savedCart);
+                    if (Array.isArray(parsedCart)) {
+                        setCartItems(parsedCart);
+                    }
                 } catch (error) {
                     console.error('Error parsing cart from localStorage:', error);
                     setCartItems([]);
                 }
             }
-        };       
+        };
+
         fetchCart();
-    }, [isAuthenticated, user]);
-    
-    // Save cart to localStorage when it changes
+    }, [isAuthenticated, user, setCartItems, transformCartItem]);
+
+    // Save to localStorage whenever cart changes
     useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cartItems));
+        // Only save non-optimistic items to localStorage
+        const itemsToSave = cartItems.filter(item => !item.isOptimistic);
+        localStorage.setItem('cart', JSON.stringify(itemsToSave));
     }, [cartItems]);
-    
-    // Add item to cart - updated to call API if authenticated
+
+    // Enhanced add to cart with better user feedback
     const addToCart = async (item) => {
-        // First, update local state for immediate UI response
-        const newItem = { ...item, cartItemId: Date.now() };       
-        setCartItems(prevItems => {
-            // Check if item already exists in cart
-            const existingItemIndex = prevItems.findIndex(
-                cartItem => cartItem.id === item.id && cartItem.color === item.color && cartItem.size === item.size
-            );          
-            if (existingItemIndex !== -1) {
-                // Update quantity if item exists
-                const updatedItems = [...prevItems];
-                updatedItems[existingItemIndex] = {
-                    ...updatedItems[existingItemIndex],
-                    quantity: updatedItems[existingItemIndex].quantity + item.quantity
-                };
-                return updatedItems;
+        try {
+            const result = await addToCartOptimistic(item);
+            
+            if (result.success) {
+                // Success feedback can be handled by calling component
+                return { success: true, message: 'Sản phẩm đã được thêm vào giỏ hàng!' };
             } else {
-                // Add new item if it doesn't exist
-                return [...prevItems, newItem];
+                // Error feedback
+                return { 
+                    success: false, 
+                    error: result.error || 'Không thể thêm vào giỏ hàng',
+                    opId: result.opId
+                };
             }
-        });
-        
-        // If authenticated, also add to server
-        if (isAuthenticated && user?.id) {
-            try {
-                const cartData = {
-                    productId: item.id,
-                    variantId: item.variantId || "",
-                    color: item.color || "",
-                    quantity: item.quantity
-                };                
-                const response = await cartService.addToCart(user.id, cartData);                
-                // If successful, we could refresh cart from server, but we'll skip for now
-                // as the local state is already updated
-                console.log('Item added to cart on server:', response);               
-                // Optionally, update the cartItemId with the server-generated ID
-                if (response && response.items) {
-                    // Find the newly added item in the response
-                    const serverItem = response.items.find(
-                        sItem => sItem.productId._id === item.id && 
-                                sItem.color === (item.color || "") &&
-                                sItem.quantity === item.quantity
-                    );                    
-                    if (serverItem) {
-                        // Update the local item with the server ID
-                        setCartItems(prevItems => 
-                            prevItems.map(prevItem => 
-                                prevItem.cartItemId === newItem.cartItemId
-                                    ? { ...prevItem, _id: serverItem._id, cartItemId: serverItem._id }
-                                    : prevItem
-                            )
-                        );
-                    }
-                }
-            } catch (error) {
-                console.error('Error adding item to cart on server:', error);
-                // The item is still in local state, so the user can still see it
-                // Could show an error message here if needed
-            }
+        } catch (error) {
+            console.error('Add to cart error:', error);
+            return { 
+                success: false, 
+                error: 'Có lỗi xảy ra khi thêm vào giỏ hàng' 
+            };
         }
     };
-    
-    // Remove item from cart - updated to call API if authenticated
+
+    // Enhanced remove from cart
     const removeFromCart = async (cartItemId) => {
-        // Get the item before removing it
-        const itemToRemove = cartItems.find(item => item.cartItemId === cartItemId);      
-        // Update local state first
-        setCartItems(prevItems => prevItems.filter(item => item.cartItemId !== cartItemId));        
-        // If authenticated and item has server ID, remove from server
-        if (isAuthenticated && user?.id && itemToRemove && itemToRemove._id) {
-            try {
-                await cartService.removeItem(user.id, itemToRemove._id);
-            } catch (error) {
-                console.error('Error removing item from cart on server:', error);
-                // Could show an error message here if needed
+        try {
+            const result = await removeFromCartOptimistic(cartItemId);
+            
+            if (result.success) {
+                return { success: true, message: 'Đã xóa sản phẩm khỏi giỏ hàng' };
+            } else {
+                return { 
+                    success: false, 
+                    error: result.error || 'Không thể xóa sản phẩm',
+                    opId: result.opId
+                };
             }
+        } catch (error) {
+            console.error('Remove from cart error:', error);
+            return { 
+                success: false, 
+                error: 'Có lỗi xảy ra khi xóa sản phẩm' 
+            };
         }
     };
-    
-    // Update item quantity - updated to call API if authenticated
+
+    // Enhanced update quantity
     const updateQuantity = async (cartItemId, quantity) => {
-        // Get the item before updating
-        const itemToUpdate = cartItems.find(item => item.cartItemId === cartItemId);       
-        // Update local state first
-        setCartItems(prevItems => 
-            prevItems.map(item => 
-                item.cartItemId === cartItemId 
-                    ? { ...item, quantity } 
-                    : item
-            )
-        );        
-        // If authenticated and item has server ID, update on server
-        if (isAuthenticated && user?.id && itemToUpdate && itemToUpdate._id) {
-            try {
-                await cartService.updateQuantity(user.id, itemToUpdate._id, quantity);
-            } catch (error) {
-                console.error('Error updating quantity on server:', error);
-                // Could show an error message here if needed
+        if (quantity < 1) return { success: false, error: 'Số lượng phải lớn hơn 0' };
+        
+        try {
+            const result = await updateQuantityOptimistic(cartItemId, quantity);
+            
+            if (result.success) {
+                return { success: true, message: 'Đã cập nhật số lượng' };
+            } else {
+                return { 
+                    success: false, 
+                    error: result.error || 'Không thể cập nhật số lượng',
+                    opId: result.opId,
+                    availableQuantity: errors[result.opId]?.availableQuantity
+                };
             }
+        } catch (error) {
+            console.error('Update quantity error:', error);
+            return { 
+                success: false, 
+                error: 'Có lỗi xảy ra khi cập nhật số lượng' 
+            };
         }
     };
-    
-    // Clear cart - updated to call API if authenticated
+
+    // Clear entire cart
     const clearCart = async () => {
-        // Clear local state first
-        setCartItems([]);        
-        // If authenticated, clear cart on server
-        if (isAuthenticated && user?.id) {
-            try {
+        try {
+            setCartItems([]);
+            
+            if (isAuthenticated && user?.id) {
                 await cartService.clearCart(user.id);
-            } catch (error) {
-                console.error('Error clearing cart on server:', error);
-                // Could show an error message here if needed
             }
+            
+            return { success: true, message: 'Đã xóa toàn bộ giỏ hàng' };
+        } catch (error) {
+            console.error('Clear cart error:', error);
+            return { 
+                success: false, 
+                error: 'Không thể xóa giỏ hàng' 
+            };
         }
     };
-    
-    // Get cart count
-    const getCartCount = () => {
-        return cartItems.reduce((count, item) => count + item.quantity, 0);
+
+    // Calculate total price of all items
+    const getCartTotal = () => {
+        return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
-    
+
+    // Get selected items total (for checkout)
+    const getSelectedTotal = (selectedItems = {}) => {
+        return cartItems.reduce((total, item) => {
+            if (selectedItems[item.cartItemId]) {
+                return total + (item.price * item.quantity);
+            }
+            return total;
+        }, 0);
+    };
+
+    // Check if cart has any items
+    const hasItems = () => cartItems.length > 0;
+
+    // Check if specific item exists in cart
+    const hasItem = (productId, color = '', size = '') => {
+        return cartItems.some(item => 
+            item.id === productId && 
+            item.color === color && 
+            item.size === size
+        );
+    };
+
+    // Get cart item by product details
+    const getCartItem = (productId, color = '', size = '') => {
+        return cartItems.find(item => 
+            item.id === productId && 
+            item.color === color && 
+            item.size === size
+        );
+    };
+
+    // Sync cart with server (manual refresh)
+    const syncWithServer = async () => {
+        if (!isAuthenticated || !user?.id) return;
+        
+        try {
+            const response = await cartService.getCart(user.id);
+            
+            if (response?.items && Array.isArray(response.items)) {
+                const transformedItems = response.items.map(transformCartItem);
+                setCartItems(transformedItems);
+                return { success: true };
+            }
+        } catch (error) {
+            console.error('Sync with server failed:', error);
+            return { success: false, error: 'Không thể đồng bộ với server' };
+        }
+    };
+
+    const contextValue = {
+        // State
+        cartItems,
+        loading,
+        errors,
+        
+        // Core operations
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        
+        // Utility functions
+        getCartCount,
+        getCartTotal,
+        getSelectedTotal,
+        hasItems,
+        hasItem,
+        getCartItem,
+        
+        // Status checks
+        isAnyLoading,
+        getCurrentErrors,
+        
+        // Error management
+        clearError,
+        clearAllErrors,
+        
+        // Server sync
+        syncWithServer,
+        
+        // Direct state setters (for advanced usage)
+        setCartItems
+    };
+
     return (
-        <CartContext.Provider 
-            value={{ 
-                cartItems, 
-                setCartItems,
-                addToCart, 
-                removeFromCart, 
-                updateQuantity, 
-                clearCart,
-                getCartCount
-            }}
-        >
+        <CartContext.Provider value={contextValue}>
             {children}
         </CartContext.Provider>
     );
 };
+
+export default CartContext;

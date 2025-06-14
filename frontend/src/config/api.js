@@ -1,7 +1,17 @@
 // API Configuration
 const API_CONFIG = {
     // Sử dụng environment variable hoặc fallback cho development
-    BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+    BASE_URL: (() => {
+        const apiUrl = process.env.REACT_APP_API_URL;
+        
+        // Cảnh báo nếu không có environment variable trong production
+        if (!apiUrl && process.env.NODE_ENV === 'production') {
+            console.error('⚠️ PRODUCTION WARNING: REACT_APP_API_URL not set! Using fallback URL.');
+        }
+        
+        // Development fallback hoặc production environment variable
+        return apiUrl || 'http://localhost:5000/api';
+    })(),
     
     // Timeout settings
     TIMEOUT: 10000,

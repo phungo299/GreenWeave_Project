@@ -1,0 +1,44 @@
+.admin-message-list-container {
+    padding: 20px;
+}
+
+.admin-message-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.admin-message-table-wrapper {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.admin-message-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-message-table th,
+.admin-message-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f1f1;
+    text-align: left;
+}
+
+.admin-message-table th {
+    background: #f9fafb;
+    font-weight: 600;
+}
+
+.message-content-cell {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.error-text {
+    color: red;
+} 

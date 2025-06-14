@@ -340,7 +340,7 @@ const ProductOverviewPage = () => {
 
             {/* Products Grid */}
             <AnimatedSection variants={fadeIn} delay={0.2}>
-            <section className="products-list-section">
+            <section className="products-list-section" style={{paddingBottom: '100px'}}>
                 <div className="container">
                     {visibleProducts.length === 0 ? (
                         <AnimatedSection variants={fadeIn}>
@@ -378,6 +378,7 @@ const ProductOverviewPage = () => {
             <Footer />
         </div>
     );
+    
 };
 
 export default ProductOverviewPage;

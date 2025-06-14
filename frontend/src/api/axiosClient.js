@@ -2,7 +2,17 @@ import axios from 'axios';
 
 // Create an instance of axios
 const axiosClient = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+    baseURL: (() => {
+        const apiUrl = process.env.REACT_APP_API_URL;
+        
+        // Cảnh báo nếu không có environment variable trong production
+        if (!apiUrl && process.env.NODE_ENV === 'production') {
+            console.error('⚠️ PRODUCTION WARNING: REACT_APP_API_URL not set in axiosClient! Using fallback URL.');
+        }
+        
+        // Development fallback hoặc production environment variable
+        return apiUrl || 'http://localhost:5000/api';
+    })(),
     headers: {
         'Content-Type': 'application/json',
     },

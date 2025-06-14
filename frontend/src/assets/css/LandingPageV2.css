@@ -114,6 +114,8 @@
     animation: floatingElement 22s ease-in-out infinite, pulse 8s ease-in-out infinite;
     z-index: 0;
     filter: blur(1px);
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 .minimalist-hero::after {
@@ -128,6 +130,8 @@
     animation: floatingElement 28s ease-in-out infinite reverse, pulse 12s ease-in-out infinite 2s;
     z-index: 0;
     filter: blur(0.8px);
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 /* Additional floating particles */
@@ -142,6 +146,8 @@
     border-radius: 50%;
     animation: floatingElement 18s ease-in-out infinite 3s, sparkle 6s ease-in-out infinite;
     z-index: 0;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 .minimalist-hero .container::after {
@@ -155,6 +161,23 @@
     border-radius: 50%;
     animation: floatingElement 15s ease-in-out infinite 1s, sparkle 10s ease-in-out infinite 4s;
     z-index: 0;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+}
+
+/* Optimize animations on mobile for better performance */
+@media (max-width: 768px) {
+    .minimalist-hero::before,
+    .minimalist-hero::after {
+        animation-duration: 30s, 15s;
+        opacity: 0;
+    }
+    
+    .minimalist-hero .container::before,
+    .minimalist-hero .container::after {
+        animation-duration: 25s, 12s;
+        opacity: 0.6;
+    }
 }
 
 /* Premium Grid Layout with Perfect Proportions */
@@ -469,75 +492,485 @@
     transform: scale(1.02);
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .minimalist-hero .container {
-        gap: 80px;
+/* Enhanced Responsive Design - Mobile First Approach */
+
+/* Extra Large Desktop Optimization */
+@media (min-width: 1400px) {
+    .about-content {
+        max-width: 1400px;
+        gap: 70px;
     }
     
-    .minimalist-hero__title {
-        font-size: 4rem;
+    .about-text-content {
+        padding-right: 50px;
+    }
+    
+    .about-image {
+        max-width: 550px;
     }
 }
 
+/* Large Desktop (1200px+) */
+@media (max-width: 1200px) {
+    .container {
+        padding: 0 30px;
+    }
+    
+    .minimalist-hero .container {
+        gap: 60px;
+    }
+    
+    .minimalist-hero__title {
+        font-size: 4.2rem;
+        line-height: 1.1;
+    }
+    
+    .section-title {
+        font-size: 2.2rem;
+    }
+    
+    /* About section for large desktop */
+    .about-content {
+        gap: 55px;
+    }
+    
+    .about-text-content {
+        padding-right: 35px;
+    }
+    
+    .about-image {
+        max-width: 480px;
+    }
+}
+
+/* Tablet Landscape (992px+) */
 @media (max-width: 992px) {
+    .container {
+        padding: 0 25px;
+    }
+    
     .minimalist-hero .container {
         grid-template-columns: 1fr;
-        gap: 60px;
+        gap: 50px;
         text-align: center;
     }
     
     .minimalist-hero__content {
         max-width: 100%;
         align-items: center;
+        padding-right: 0;
     }
     
     .minimalist-hero__title {
-        font-size: 3.5rem;
+        font-size: 3.8rem;
+        line-height: 1.1;
     }
     
     .minimalist-hero__stats {
         justify-content: center;
     }
+    
+    .features-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    /* About section for tablet */
+    .about-content {
+        grid-template-columns: 5fr 3fr;
+        gap: 40px;
+    }
+    
+    .about-text-content {
+        padding-right: 25px;
+    }
+    
+    .about-image {
+        max-width: 400px;
+    }
 }
 
+/* Tablet Portrait (768px+) */
 @media (max-width: 768px) {
+    .container {
+        padding: 0 20px;
+    }
+    
     .minimalist-hero {
-        padding: 100px 0 60px;
+        padding: 80px 0 50px;
+        min-height: 90vh;
+    }
+    
+    .minimalist-hero__content {
+        gap: 35px;
     }
     
     .minimalist-hero__title {
-        font-size: 3rem;
+        font-size: 3.2rem;
+        line-height: 1.15;
     }
     
     .minimalist-hero__description {
         font-size: 1.1rem;
+        line-height: 1.6;
+        max-width: 500px;
     }
     
     .minimalist-hero__stats {
-        gap: 32px;
+        gap: 25px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     
     .minimalist-hero__image-wrapper {
         max-width: 100%;
-        aspect-ratio: 3/2; /* Slightly wider on mobile for better viewing */
+        aspect-ratio: 4/3;
+    }
+    
+    .minimalist-hero__cta {
+        padding: 16px 32px;
+        font-size: 1.1rem;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .feature-card {
+        padding: 35px 25px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        line-height: 1.2;
+    }
+    
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    
+    /* About section responsive */
+    .about-content {
+        display: flex!important;
+        flex-direction: column;
+        text-align: center;
+        gap: 40px;
+    }
+    
+    .about-text-content {
+        padding-right: 0;
+        order: 2;
+        max-width: 100%;
+    }
+    
+    .about-image {
+        max-width: 100%;
+        margin: 0 auto;
+        margin-left: auto;
+        order: 1;
+    }
+    
+    .about-img {
+        height: auto;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+    }
+    
+    .about-title {
+        font-size: 1.8rem;
+        margin-bottom: 18px;
+    }
+    
+    .about-description {
+        font-size: 1rem;
+        margin-bottom: 25px;
+    }
+    
+    .about-highlights {
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .highlight {
+        font-size: 0.95rem;
+        padding: 10px 0;
+    }
+    
+    .highlight-icon {
+        font-size: 1.2rem;
     }
 }
 
-@media (max-width: 576px) {
+/* Large Mobile (600px+) */
+@media (max-width: 600px) {
+    .container {
+        padding: 0 18px;
+    }
+    
+    .minimalist-hero {
+        padding: 70px 0 40px;
+    }
+    
     .minimalist-hero__title {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
+        line-height: 1.2;
+    }
+    
+    .minimalist-hero__description {
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    
+    .minimalist-hero__cta {
+        padding: 14px 28px;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    .feature-card {
+        padding: 30px 20px;
+    }
+    
+    .feature-title {
+        font-size: 1.3rem;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+    
+    .section-header {
+        margin-bottom: 40px;
+    }
+    
+    .section-title {
+        font-size: 1.6rem;
+    }
+    
+    /* About section responsive for large mobile */
+    .about-title {
+        font-size: 1.7rem;
+    }
+    
+    .about-description {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .about-highlights {
+        gap: 10px;
+    }
+    
+    .highlight {
+        font-size: 0.9rem;
+        padding: 8px 0;
+    }
+    
+    .highlight-icon {
+        font-size: 1.1rem;
+    }
+}
+
+/* Mobile (480px+) */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 16px;
+    }
+    
+    .minimalist-hero {
+        padding: 60px 0 35px;
+        min-height: 85vh;
+    }
+    
+    .minimalist-hero__content {
+        gap: 30px;
+    }
+    
+    .minimalist-hero__title {
+        font-size: 2.4rem;
+        line-height: 1.25;
+    }
+    
+    .minimalist-hero__description {
+        font-size: 0.95rem;
+        line-height: 1.5;
     }
     
     .minimalist-hero__stats {
         flex-direction: column;
         align-items: center;
-        gap: 24px;
+        gap: 20px;
+        width: 100%;
     }
     
     .stat-simple {
         align-items: center;
         text-align: center;
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    
+    .minimalist-hero__cta {
+        width: 100%;
+        max-width: none;
+        padding: 16px 24px;
+    }
+    
+    .feature-card {
+        padding: 25px 18px;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+    }
+    
+    .feature-title {
+        font-size: 1.2rem;
+    }
+    
+    .feature-description {
+        font-size: 0.9rem;
+    }
+    
+    .products-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+    
+    .section-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    /* Improve button touch targets */
+    .btn-primary,
+    .btn-secondary {
+        min-height: 48px;
+        padding: 14px 20px;
+        font-size: 0.95rem;
+    }
+    
+    /* About section responsive for mobile */
+    .about-brief-section {
+        padding: 60px 0;
+    }
+    
+    .about-title {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        line-height: 1.3;
+    }
+    
+    .about-description {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 20px;
+    }
+    
+    .about-highlights {
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .highlight {
+        font-size: 0.85rem;
+        padding: 6px 0;
+        flex-wrap: wrap;
+    }
+    
+    .highlight-icon {
+        font-size: 1rem;
+        min-width: 24px;
+    }
+}
+
+/* Small Mobile (360px+) */
+@media (max-width: 360px) {
+    .container {
+        padding: 0 14px;
+    }
+    
+    .minimalist-hero__title {
+        font-size: 2.1rem;
+    }
+    
+    .minimalist-hero__description {
+        font-size: 0.9rem;
+    }
+    
+    .products-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .feature-card {
+        padding: 20px 15px;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+    }
+    
+    /* About section responsive for small mobile */
+    .about-brief-section {
+        padding: 50px 0;
+    }
+    
+    .about-title {
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+        line-height: 1.2;
+    }
+    
+    .about-description {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        margin-bottom: 18px;
+    }
+    
+    .about-highlights {
+        gap: 6px;
+        margin-bottom: 18px;
+    }
+    
+    .highlight {
+        font-size: 0.8rem;
+        padding: 5px 0;
+        align-items: flex-start;
+    }
+    
+    .highlight-icon {
+        font-size: 0.9rem;
+        margin-top: 2px;
     }
 }
 
@@ -835,15 +1268,16 @@
 
 .about-content {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
+    grid-template-columns: 3fr 2fr;
+    gap: 50px;
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .about-text-content {
-    padding-right: 20px;
+    padding-right: 30px;
+    max-width: none;
 }
 
 .about-title {
@@ -891,13 +1325,35 @@
     border-radius: var(--border-radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-lg);
+    max-width: 500px;
+    width: 100%;
+    margin-left: auto;
+}
+
+/* Fallback for browsers without aspect-ratio support */
+@supports not (aspect-ratio: 4/3) {
+    .about-img {
+        height: 375px; /* 500px * 3/4 = 375px for 4:3 ratio */
+    }
+    
+    @media (max-width: 768px) {
+        .about-img {
+            height: auto;
+            min-height: 250px;
+        }
+    }
 }
 
 .about-img {
     width: 100%;
-    height: 400px;
+    height: auto;
+    aspect-ratio: 4/3;
     object-fit: cover;
+    object-position: center;
     transition: var(--transition-smooth);
+    border-radius: var(--border-radius-lg);
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 .about-image:hover .about-img {
@@ -993,11 +1449,93 @@
     transition: all 0.3s ease;
 }
 
-.cta-features span:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    .cta-features span:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     }
+
+/* CTA Section Responsive */
+@media (max-width: 768px) {
+    .cta-section {
+        padding: 80px 0;
+    }
+    
+    .cta-title {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+    
+    .cta-description {
+        font-size: 1.1rem;
+        margin-bottom: 35px;
+    }
+    
+    .cta-features {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .cta-features span {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+        padding: 14px 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .cta-section {
+        padding: 70px 0;
+    }
+    
+    .cta-title {
+        font-size: 2.2rem;
+        line-height: 1.2;
+    }
+    
+    .cta-description {
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cta-section {
+        padding: 60px 0;
+    }
+    
+    .cta-title {
+        font-size: 1.9rem;
+        line-height: 1.3;
+    }
+    
+    .cta-description {
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+    }
+    
+    .cta-features span {
+        font-size: 0.9rem;
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 360px) {
+    .cta-title {
+        font-size: 1.7rem;
+    }
+    
+    .cta-description {
+        font-size: 0.9rem;
+    }
+    
+    .cta-features span {
+        font-size: 0.85rem;
+        padding: 10px 14px;
+    }
+}
 
 /* Premium Animations */
 @keyframes floatingOrbs {
@@ -1138,10 +1676,66 @@
 }
 
 /* Smooth scrolling enhancement */
+/* Accessibility & Motion Preferences */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+    
+    .minimalist-hero::before,
+    .minimalist-hero::after,
+    .minimalist-hero .container::before,
+    .minimalist-hero .container::after {
+        animation: none !important;
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .minimalist-hero__title,
+    .section-title {
+        color: #000;
+        text-shadow: none;
+    }
+    
+    .minimalist-hero__cta,
+    .btn-primary {
+        border: 2px solid;
+    }
+    
+    .feature-card {
+        border: 2px solid var(--primary-color);
+    }
+}
+
+/* Dark Mode Support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+    .minimalist-hero {
+        background: 
+            linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 30%, #1f2f1f 100%),
+            radial-gradient(circle at 25% 25%, rgba(76, 175, 80, 0.05) 0%, transparent 60%);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .minimalist-hero::before,
+    .minimalist-hero::after,
+    .minimalist-hero .container::before,
+    .minimalist-hero .container::after {
+        display: none;
+    }
+    
+    .minimalist-hero {
+        background: white;
+        color: black;
+    }
+    
+    .minimalist-hero__cta {
+        border: 2px solid black;
+        background: white;
+        color: black;
     }
 } 

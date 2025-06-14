@@ -271,9 +271,9 @@
 
 .contact-info-premium-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
     gap: 30px;
-    max-width: 1100px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
@@ -303,6 +303,11 @@
 
 .contact-info-premium-card:hover .card-glow {
     opacity: 1;
+}
+
+.contact-info-premium-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
 }
 
 .contact-icon {
@@ -782,7 +787,7 @@
     }
     
     .contact-info-premium-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 24px;
     }
 }
@@ -882,6 +887,12 @@
     
     .map-content {
         padding: 30px 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .contact-info-premium-grid {
+        grid-template-columns: 1fr;
     }
 }
 

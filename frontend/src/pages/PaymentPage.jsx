@@ -1,731 +1,443 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import Header from '../components/layout/header/Header';
-import Footer from '../components/layout/footer/Footer';
-import InputField from '../components/ui/inputfield/InputField';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import countriesData from '../assets/data/countriesV1.json';
-import creditCardIcon from '../assets/icons/credit-card.png';
-import cashOnDeliveryIcon from '../assets/icons/cash-on-delivery.png'
-import vietqrIcon from '../assets/icons/vietqr.jpg';
-import '../assets/css/PaymentPage.css';
-import axios from 'axios';
-
-// Initialize Stripe with public key
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
-
-// Separate Card Form component to use Stripe hooks
-const StripeCardForm = ({ orderTotal, shippingInfo, selectedCountry, onPaymentSuccess, onPaymentError }) => {
-    const stripe = useStripe();
-    const elements = useElements();
-    const { token } = useAuth();
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [paymentError, setPaymentError] = useState('');
-    const [clientSecret, setClientSecret] = useState('');
-    const [paymentId, setPaymentId] = useState('');
-    
-    // Create payment intent when component mounts
-    useEffect(() => {
-        const createPaymentIntent = async () => {
-            try {
-                // Create orderId from server first (this step is not shown in code)
-                // Assuming orderId already exists
-                const orderId = localStorage.getItem('currentOrderId');                
-                if (!orderId) {
-                    setPaymentError('Không tìm thấy thông tin đơn hàng');
-                    return;
-                }               
-                const response = await axios.post(
-                    `${process.env.REACT_APP_API_URL}/api/stripe/create-payment-intent`,
-                    {
-                        orderId: orderId,
-                        amount: orderTotal
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
-                );               
-                setClientSecret(response.data.clientSecret);
-                setPaymentId(response.data.paymentId);
-            } catch (error) {
-                console.error('Error creating payment intent:', error);
-                setPaymentError(error.response?.data?.error?.message || 'Không thể tạo phiên thanh toán');
-            }
-        };       
-        if (orderTotal > 0) {
-            createPaymentIntent();
-        }
-    }, [orderTotal, token]);
-    
-    const handleSubmit = async (event) => {
-        event.preventDefault();       
-        if (!stripe || !elements) {
-            return;
-        }        
-        setIsProcessing(true);
-        setPaymentError('');       
-        // Get card information from CardElement
-        const cardNumberElement = elements.getElement(CardNumberElement);     
-        // Confirm payment with Stripe
-        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-            payment_method: {
-                card: cardNumberElement,
-                billing_details: {
-                    name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-                    address: {
-                        line1: shippingInfo.address,
-                        city: shippingInfo.city,
-                        postal_code: shippingInfo.postalCode,
-                        country: selectedCountry?.alpha2Code
-                    }
-                }
-            }
-        });
-        if (error) {
-            setPaymentError(error.message);           
-            // Send payment error message to server
-            try {
-                await axios.post(
-                    `${process.env.REACT_APP_API_URL}/api/stripe/payment-failure`,
-                    {
-                        paymentId: paymentId,
-                        errorMessage: error.message
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
-                );
-            } catch (serverError) {
-                console.error('Không thể gửi thông báo lỗi thanh toán:', serverError);
-            }            
-            onPaymentError(error.message);
-        } else {
-            // Payment successful
-            try {
-                await axios.post(
-                    `${process.env.REACT_APP_API_URL}/api/stripe/payment-success`,
-                    {
-                        paymentIntentId: paymentIntent.id,
-                        paymentId: paymentId
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
-                );               
-                onPaymentSuccess();
-            } catch (serverError) {
-                console.error('Lỗi khi cập nhật thanh toán trên server:', serverError);
-                setPaymentError('Thanh toán đã được xác nhận nhưng có lỗi khi cập nhật trạng thái');
-            }
-        }        
-        setIsProcessing(false);
-    };
-
-    const cardElementOptions = {
-        style: {
-            base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                    color: '#aab7c4',
-                },
-                fontFamily: 'Arial, sans-serif',
-            },
-            invalid: {
-                color: '#9e2146',
-            },
-        },
-    };
-    
-    return (
-        <form onSubmit={handleSubmit} className="stripe-card-form">
-            <div className="card-element-container">
-                <label className="card-label">Số thẻ:</label>
-                <CardNumberElement options={cardElementOptions} className="card-element" />
-            </div>
-            
-            <div className="card-elements-row">
-                <div className="card-element-container expiry-container">
-                    <label className="card-label">Ngày hết hạn:</label>
-                    <CardExpiryElement options={cardElementOptions} className="card-element" />
-                </div>
-                
-                <div className="card-element-container cvc-container">
-                    <label className="card-label">Mã bảo mật (CVC):</label>
-                    <CardCvcElement options={cardElementOptions} className="card-element" />
-                </div>
-            </div>
-            
-            {paymentError && <div className="stripe-error">{paymentError}</div>}
-            
-            <button 
-                type="submit" 
-                disabled={!stripe || isProcessing || !clientSecret} 
-                className="place-order-btn"
-            >
-                {isProcessing ? 'Đang xử lý...' : 'Thanh toán ngay'}
-            </button>
-        </form>
-    );
-};
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import Header from "../components/layout/header/Header";
+import Footer from "../components/layout/footer/Footer";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import payosService from "../services/payosService";
+import { useToast } from "../components/common/Toast";
+import "../assets/css/PaymentPage.css";
 
 const PaymentPage = () => {
-    const navigate = useNavigate();
-    const { cartItems, clearCart } = useCart();
-    const { token } = useAuth();
-    const [countries, setCountries] = useState([]);
-    const [selectedCountry, setSelectedCountry] = useState(null);
-    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filteredCountries, setFilteredCountries] = useState([]);
-    const [visibleCountries, setVisibleCountries] = useState([]);
-    const [paymentMethod, setPaymentMethod] = useState('credit-card');
-    const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
-    const [saveShippingInfo, setSaveShippingInfo] = useState(false);
-    const [itemsTotal, setItemsTotal] = useState(0);
-    const [shipping] = useState(40000);
-    const [orderTotal, setOrderTotal] = useState(0);
-    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-    const countryListRef = useRef(null);
-    const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { cartItems, clearCart, getCartTotal } = useCart();
+  const { user, isAuthenticated } = useAuth();
+  const { showError, showSuccess, showInfo } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [codLoading, setCodLoading] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState("payos");
+  const shippingFee = 40000; // hardcoded temporary
+  
+  // Get selected items from navigation state or fallback to all cart items
+  const selectedItems = location.state?.selectedItems || cartItems;
+  const selectedTotal = location.state?.totalAmount || getCartTotal();
 
-    const [shippingInfo, setShippingInfo] = useState({
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-    });
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login", { state: { returnTo: "/payment" } });
+      return;
+    }
+    if (selectedItems.length === 0) {
+      showInfo("Không có sản phẩm nào được chọn, chuyển hướng về giỏ hàng");
+      navigate("/cart");
+    }
+  }, [isAuthenticated, selectedItems.length, navigate, showInfo]);
 
-    const [errors, setErrors] = useState({
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: '',
-    });
+  const createOrderData = () => ({
+    userId: user?.id,
+    items: selectedItems.map((item) => ({
+      productId: item.id || item.productId?._id, // Fix: Handle both formats
+      variantId: item.variantId || null,
+      color: item.color || '',
+      quantity: item.quantity,
+      price: item.price, // Use price from cart item
+      name: item.name
+    })),
+    totalAmount: selectedTotal + shippingFee,
+    shippingCost: shippingFee,
+    paymentMethod: selectedMethod.toUpperCase(),
+    status: "pending"
+  });
 
-    // Load countries on mount
-    useEffect(() => {
-        try {
-            setCountries(countriesData || []);
-        } catch (error) {
-            console.error('Error loading countries data:', error);
+  const handlePayOSCheckout = async () => {
+    try {
+      setLoading(true);
+      
+      // Validate user authentication
+      if (!user?.id) {
+        showError("Vui lòng đăng nhập để tiếp tục thanh toán");
+        navigate("/login", { state: { returnTo: "/payment" } });
+        return;
+      }
+      
+      // Step 1: Create order in database first
+      const orderData = createOrderData();
+      
+      // Debug log the order data being sent
+      console.log('Order data being sent:', orderData);
+      
+      const orderResponse = await payosService.createOrder(orderData);
+      
+      // 🔧 DEBUG: Log the actual response structure
+      console.log('📋 Full order response:', JSON.stringify(orderResponse, null, 2));
+      console.log('📋 Response type:', typeof orderResponse);
+      console.log('📋 Response success:', orderResponse?.success);
+      console.log('📋 Response message:', orderResponse?.message);
+      console.log('📋 Response data:', orderResponse?.data);
+      console.log('📋 Response data _id:', orderResponse?.data?._id);
+      
+      // 🔧 IMPROVED: Better response validation logic
+      let orderId = null;
+      let responseValid = false;
+      
+      // Case 1: Standard success response format
+      if (orderResponse?.success === true && orderResponse?.data?._id) {
+        orderId = orderResponse.data._id;
+        responseValid = true;
+        console.log('✅ Standard success format detected');
+      }
+      // Case 2: Direct data response (when axiosClient returns data directly)
+      else if (orderResponse?._id) {
+        orderId = orderResponse._id;
+        responseValid = true;
+        console.log('✅ Direct data format detected');
+      }
+      // Case 3: Alternative success field variations
+      else if (orderResponse?.success !== false && orderResponse?.data?._id) {
+        orderId = orderResponse.data._id;
+        responseValid = true;
+        console.log('✅ Alternative success format detected');
+      }
+      // Case 4: Check if response has success message but missing structure
+      else if (orderResponse?.message?.includes?.('thành công') || orderResponse?.message?.includes?.('success')) {
+        console.log('⚠️ Success message detected but missing expected structure');
+        console.log('⚠️ Attempting to extract order ID from response...');
+        
+        // Try different possible ID locations
+        const possibleId = orderResponse?.id || orderResponse?.orderId || orderResponse?._id;
+        if (possibleId) {
+          orderId = possibleId;
+          responseValid = true;
+          console.log('✅ Order ID found in alternative location:', orderId);
         }
-    }, []);
+      }
+      
+      // Final validation
+      if (!responseValid || !orderId) {
+        const errorMsg = orderResponse?.message || "Không thể tạo đơn hàng - format response không hợp lệ";
+        console.error('❌ Order creation failed:', {
+          responseValid,
+          orderId,
+          fullResponse: orderResponse
+        });
+        throw new Error(errorMsg);
+      }
+      
+      console.log('✅ Order created successfully with ID:', orderId);
 
-    // Filter countries based on search query
-    useEffect(() => {
-        if (countries.length > 0) {
-            const filtered = countries.filter(country => 
-                country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (country.nativeName && country.nativeName.toLowerCase().includes(searchQuery.toLowerCase()))
-            );
-            setFilteredCountries(filtered);
-            setVisibleCountries(filtered.slice(0, 20)); // Initially show first 20 countries
-        }
-    }, [searchQuery, countries]);
+      // Step 2: Create PayOS payment link
+      const paymentData = {
+        orderId: orderId,
+        amount: orderData.totalAmount,
+        description: `Thanh toán đơn hàng #${orderId}`,
+        returnUrl: `${window.location.origin}/payment/success`,
+        cancelUrl: `${window.location.origin}/payment/cancel`
+      };
 
-    // Calculate totals when cart items change
-    useEffect(() => {
-        const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        setItemsTotal(total);
-        setOrderTotal(total + shipping);
-    }, [cartItems, shipping]);
-
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            // Check if target is either in country-search-input or country-dropdown-list
-            const isSearchInput = event.target.classList.contains('country-search-input');
-            const isDropdownList = event.target.closest('.country-dropdown-list');
-            if (isSearchInput || isDropdownList) {
-                return;
-            }        
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setShowCountryDropdown(false);
-                setShowPaymentDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-    // Handle virtual scrolling for country list
-    const handleCountryListScroll = () => {
-        if (!countryListRef.current) return;      
-        const { scrollTop, scrollHeight, clientHeight } = countryListRef.current;
-        if (scrollHeight - scrollTop - clientHeight < scrollHeight * 0.2) {
-            const currentLength = visibleCountries.length; 
-            // Only load more if not all filtered countries are displayed
-            if (currentLength < filteredCountries.length) {
-                const nextItems = filteredCountries.slice(currentLength, currentLength + 10);
-                if (nextItems.length > 0) {
-                    // Use functional update to avoid problems with old state
-                    setVisibleCountries(prev => {
-                        // Check for duplicates before adding
-                        const newItems = nextItems.filter(item => 
-                            !prev.some(country => country.alpha3Code === item.alpha3Code)
-                        );
-                        return [...prev, ...newItems];
-                    });
-                }
-            }
-        }
-    };
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;       
-        if (name === 'countrySearch') {
-            setSearchQuery(value);
-            // Reset the displayed list when the search changes
-            if (countries.length > 0) {
-                const filtered = countries.filter(country => 
-                    country.name.toLowerCase().includes(value.toLowerCase()) ||
-                    (country.nativeName && country.nativeName.toLowerCase().includes(value.toLowerCase()))
-                );
-                setFilteredCountries(filtered);
-                setVisibleCountries(filtered.slice(0, 20));               
-                // Scroll to top of list when search changes
-                if (countryListRef.current) {
-                    countryListRef.current.scrollTop = 0;
-                }
-            }
-        } else if (Object.keys(shippingInfo).includes(name)) {
-            setShippingInfo({
-                ...shippingInfo,
-                [name]: value
-            });
-            // Clear error when user types
-            if (errors[name]) {
-                setErrors({
-                    ...errors,
-                    [name]: ''
-                });
-            }
-        }
-    };
-
-    const selectCountry = (country) => {
-        setSelectedCountry(country);
-        setShowCountryDropdown(false);
-        setSearchQuery('');       
-        // Clear country error if it exists
-        if (errors.country) {
-            setErrors({
-                ...errors,
-                country: ''
-            });
-        }
-    };
-
-    const toggleCountryDropdown = () => {
-        setShowCountryDropdown(!showCountryDropdown);
-        if (!showCountryDropdown) {
-            setSearchQuery('');
-            setVisibleCountries(filteredCountries.slice(0, 20));
-        }
-    };
-
-    const togglePaymentDropdown = () => {
-        setShowPaymentDropdown(!showPaymentDropdown);
-    };
-
-    const handleCODOrder = async () => {
-        if (!validateShippingInfo()) {
-            return;
-        }
-        setIsCreatingOrder(true);      
-        try {
-            // Create COD order
-            const orderData = {
-                shippingInfo: {
-                    ...shippingInfo,
-                    country: selectedCountry.name,
-                    countryCode: selectedCountry.alpha2Code
-                },
-                items: cartItems.map(item => ({
-                    productId: item.id,
-                    quantity: item.quantity,
-                    price: item.price,
-                    color: item.color,
-                    size: item.size
-                })),
-                paymentMethod: 'cash-on-delivery',
-                totalAmount: orderTotal,
-                itemsTotal: itemsTotal,
-                shippingCost: shipping
-            };
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/orders/create-cod-order`,
-                orderData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
-            if (response.data.success) {
-                clearCart();
-                navigate('/payment-status/success', { 
-                    state: { 
-                        orderType: 'cod',
-                        orderId: response.data.orderId 
-                    } 
-                });
-            }
-        } catch (error) {
-            console.error('Error creating COD order:', error);
-            alert('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
-        } finally {
-            setIsCreatingOrder(false);
-        }
-    };
-
-    const selectPaymentMethod = (method) => {
-        setPaymentMethod(method);
-        setShowPaymentDropdown(false);
-    };
-
-    const isShippingInfoValid = useMemo(() => {
-        return (
-            shippingInfo.firstName.trim() !== '' &&
-            shippingInfo.lastName.trim() !== '' &&
-            shippingInfo.address.trim() !== '' &&
-            shippingInfo.city.trim() !== '' &&
-            shippingInfo.postalCode.trim() !== '' &&
-            selectedCountry !== null
-        );
-    }, [shippingInfo.firstName, shippingInfo.lastName, shippingInfo.address, 
-        shippingInfo.city, shippingInfo.postalCode, selectedCountry]);
-
-    const validateShippingInfo = () => {
-        const newErrors = {};
-        let isValid = true;           
-        // Validate shipping info
-        if (!shippingInfo.firstName.trim()) {
-            newErrors.firstName = 'Vui lòng nhập tên';
-            isValid = false;
-        }            
-        if (!shippingInfo.lastName.trim()) {
-            newErrors.lastName = 'Vui lòng nhập họ';
-            isValid = false;
-        }            
-        if (!shippingInfo.address.trim()) {
-            newErrors.address = 'Vui lòng nhập địa chỉ';
-            isValid = false;
-        }            
-        if (!shippingInfo.city.trim()) {
-            newErrors.city = 'Vui lòng nhập tên thành phố';
-            isValid = false;
-        }           
-        if (!shippingInfo.postalCode.trim()) {
-            newErrors.postalCode = 'Vui lòng nhập mã bưu điện';
-            isValid = false;
-        }           
-        if (!selectedCountry) {
-            newErrors.country = 'Vui lòng chọn quốc gia/khu vực';
-            isValid = false;
-        }            
-        setErrors(newErrors);
-        return isValid;
-    };
-
-    const handleCheckValidation = () => {
-        validateShippingInfo();
-    };
-
-    const handlePaymentSuccess = () => {
+      console.log('💳 Creating PayOS payment link with data:', paymentData);
+      const paymentResponse = await payosService.createPaymentLink(paymentData);
+      console.log('💳 PayOS payment response:', paymentResponse);
+      
+      if (paymentResponse?.data?.checkoutUrl) {
         clearCart();
-        // Navigate to successful payment page
-        navigate('/payment-status/success');
-    };
+        showSuccess("Chuyển hướng đến PayOS...");
+        window.location.href = paymentResponse.data.checkoutUrl;
+      } else if (paymentResponse?.checkoutUrl) {
+        // Alternative response format
+        clearCart();
+        showSuccess("Chuyển hướng đến PayOS...");
+        window.location.href = paymentResponse.checkoutUrl;
+      } else {
+        console.error('❌ PayOS response missing checkout URL:', paymentResponse);
+        throw new Error("Không thể tạo link thanh toán PayOS");
+      }
+    } catch (error) {
+      console.error("PayOS checkout error:", error);
+      
+      // 🔧 IMPROVED: Better error message handling
+      let errorMessage = "Không thể tạo thanh toán PayOS";
+      
+      // Don't show success messages as errors
+      if (error.message && !error.message.includes('thành công') && !error.message.includes('success')) {
+        errorMessage = error.message;
+      } else if (error.message?.includes('thành công')) {
+        // This is actually a success message being thrown as error - investigate
+        console.log('🔍 Success message thrown as error - investigating...');
+        errorMessage = "Có lỗi trong quá trình xử lý đơn hàng. Vui lòng thử lại.";
+      }
+      
+      // Check if this is actually a stock error (success=false from backend)
+      if (errorMessage.includes("sản phẩm trong kho")) {
+        showError(errorMessage);
+      } else {
+        showError(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handlePaymentError = (errorMessage) => {
-        // Can display errors or navigate to payment error page
-        navigate('/payment-status/failed');
-    };
+  const handleCODCheckout = async () => {
+    try {
+      setCodLoading(true);
+      
+      // Create COD order directly
+      const orderData = createOrderData();
+      
+      // Debug log for COD as well
+      console.log('COD Order data being sent:', orderData);
+      
+      const response = await payosService.createOrder(orderData);
+      
+      // 🔧 DEBUG: Log COD response structure 
+      console.log('📋 COD Full response:', JSON.stringify(response, null, 2));
+      console.log('📋 COD Response success:', response?.success);
+      console.log('📋 COD Response data _id:', response?.data?._id);
+      
+      // 🔧 IMPROVED: Better response validation logic (same as PayOS)
+      let orderId = null;
+      let responseValid = false;
+      
+      // Case 1: Standard success response format
+      if (response?.success === true && response?.data?._id) {
+        orderId = response.data._id;
+        responseValid = true;
+        console.log('✅ COD Standard success format detected');
+      }
+      // Case 2: Direct data response
+      else if (response?._id) {
+        orderId = response._id;
+        responseValid = true;
+        console.log('✅ COD Direct data format detected');
+      }
+      // Case 3: Alternative success field variations
+      else if (response?.success !== false && response?.data?._id) {
+        orderId = response.data._id;
+        responseValid = true;
+        console.log('✅ COD Alternative success format detected');
+      }
+      // Case 4: Check if response has success message but missing structure
+      else if (response?.message?.includes?.('thành công') || response?.message?.includes?.('success')) {
+        console.log('⚠️ COD Success message detected but missing expected structure');
+        
+        // Try different possible ID locations
+        const possibleId = response?.id || response?.orderId || response?._id;
+        if (possibleId) {
+          orderId = possibleId;
+          responseValid = true;
+          console.log('✅ COD Order ID found in alternative location:', orderId);
+        }
+      }
+      
+      // Final validation
+      if (responseValid && orderId) {
+        clearCart();
+        showSuccess("Đặt hàng COD thành công!");
+        navigate(`/payment/success?method=cod&orderId=${orderId}`);
+      } else {
+        const errorMsg = response?.message || "Không thể tạo đơn hàng COD - format response không hợp lệ";
+        console.error('❌ COD Order creation failed:', {
+          responseValid,
+          orderId,
+          fullResponse: response
+        });
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      console.error("COD checkout error:", error);
+      
+      // 🔧 IMPROVED: Better error message handling for COD
+      let errorMessage = "Không thể tạo đơn COD";
+      
+      // Don't show success messages as errors
+      if (error.message && !error.message.includes('thành công') && !error.message.includes('success')) {
+        errorMessage = error.message;
+      } else if (error.message?.includes('thành công')) {
+        console.log('🔍 COD Success message thrown as error - investigating...');
+        errorMessage = "Có lỗi trong quá trình xử lý đơn hàng COD. Vui lòng thử lại.";
+      }
+      
+      showError(errorMessage);
+    } finally {
+      setCodLoading(false);
+    }
+  };
 
-    // Format price in Vietnamese currency
-    const formatPrice = (price) => {
-        return price.toLocaleString('vi-VN') + ' đ';
-    };
-
+  if (selectedItems.length === 0) {
     return (
-        <>
-            <Header />
-            <div className="payment-container">
-                <h1 className="payment-title">Thanh toán</h1>               
-                <div className="payment-content">
-                    <div className="payment-form-container">
-                        <section className="shipping-section">
-                            <h2 className="section-title">Giao hàng</h2>                               
-                            <div className="country-dropdown-container" ref={dropdownRef}>
-                                <div className="country-dropdown-header" onClick={toggleCountryDropdown}>
-                                    {selectedCountry ? (
-                                        <div className="selected-country">
-                                            {selectedCountry.alpha2Code && (
-                                                <img 
-                                                    src={`../assets/images/flags/${selectedCountry.alpha2Code.toLowerCase()}.svg`} 
-                                                    alt={selectedCountry.name} 
-                                                    className="country-flag"
-                                                />
-                                            )}
-                                            <span>{selectedCountry.name}</span>
-                                        </div>
-                                    ) : (
-                                        <span className="placeholder">Country / Region</span>
-                                    )}
-                                    <span className={`dropdown-arrow ${showCountryDropdown ? 'open' : ''}`}></span>
-                                </div>                                   
-                                {errors.country && <div className="input-error-message">{errors.country}</div>}                                   
-                                {showCountryDropdown && (
-                                    <div className="country-dropdown-list-container">
-                                        <div className="country-search-container">
-                                            <input
-                                                type="text"
-                                                name="countrySearch"
-                                                placeholder="Tìm kiếm quốc gia..."
-                                                value={searchQuery}
-                                                onChange={handleInputChange}
-                                                className="country-search-input"
-                                            />
-                                        </div>
-                                        <div 
-                                            className="country-dropdown-list" 
-                                            ref={countryListRef}
-                                            onScroll={handleCountryListScroll}
-                                        >
-                                            {visibleCountries.length > 0 ? (
-                                                visibleCountries.map((country) => (
-                                                    <div
-                                                        key={country.alpha3Code}
-                                                        className="country-dropdown-item"
-                                                        onClick={() => selectCountry(country)}
-                                                    >
-                                                        {country.alpha2Code && (
-                                                            <img 
-                                                                src={`../assets/images/flags/${country.alpha2Code.toLowerCase()}.svg`} 
-                                                                alt={country.name} 
-                                                                className="country-flag"
-                                                                onError={(e) => { e.target.style.display = 'none'; }}
-                                                            />
-                                                        )}
-                                                        <span>{country.name}</span>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="no-results">Không tìm thấy quốc gia</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>                               
-                            <div className="name-row">
-                                <InputField
-                                    type="text"
-                                    name="firstName"
-                                    value={shippingInfo.firstName}
-                                    onChange={handleInputChange}
-                                    placeholder="First Name"
-                                    error={errors.firstName}
-                                />                                   
-                                <InputField
-                                    type="text"
-                                    name="lastName"
-                                    value={shippingInfo.lastName}
-                                    onChange={handleInputChange}
-                                    placeholder="Last Name"
-                                    error={errors.lastName}
-                                />
-                            </div>                               
-                            <InputField
-                                type="text"
-                                name="address"
-                                value={shippingInfo.address}
-                                onChange={handleInputChange}
-                                placeholder="Address"
-                                error={errors.address}
-                            />                               
-                            <div className="city-postal-row">
-                                <InputField
-                                    type="text"
-                                    name="city"
-                                    value={shippingInfo.city}
-                                    onChange={handleInputChange}
-                                    placeholder="City"
-                                    error={errors.city}
-                                />                                   
-                                <InputField
-                                    type="text"
-                                    name="postalCode"
-                                    value={shippingInfo.postalCode}
-                                    onChange={handleInputChange}
-                                    placeholder="Postal Code"
-                                    error={errors.postalCode}
-                                />
-                            </div>                                
-                            <div className="checkbox-container">
-                                <input
-                                    type="checkbox"
-                                    id="saveShippingInfo"
-                                    checked={saveShippingInfo}
-                                    onChange={() => setSaveShippingInfo(!saveShippingInfo)}
-                                />
-                                <label htmlFor="saveShippingInfo">Lưu Thông Tin Cho Đơn Hàng Sau</label>
-                            </div>
-                        </section>                            
-                        <section className="payment-section">
-                            <h2 className="section-title">Thanh toán</h2>                               
-                            <div className="payment-dropdown-container" ref={dropdownRef}>
-                                <div className="payment-dropdown-header" onClick={togglePaymentDropdown}>
-                                    <div className="selected-payment-method">
-                                        <img 
-                                            src={
-                                                paymentMethod === 'credit-card' ? creditCardIcon : 
-                                                paymentMethod === 'vietqr' ? vietqrIcon :
-                                                creditCardIcon
-                                            } 
-                                            alt={
-                                                paymentMethod === 'credit-card' ? "Credit Card" : 
-                                                paymentMethod === 'vietqr' ? "VietQR" : "Cash on Delivery"
-                                            } 
-                                            className="payment-method-icon" 
-                                        />
-                                        <span>
-                                            {paymentMethod === 'credit-card' ? 'Thẻ Tín Dụng/Ghi Nợ' : 
-                                             paymentMethod === 'vietqr' ? 'VietQR' : 
-                                             'Thanh toán khi nhận hàng'}
-                                        </span>
-                                    </div>
-                                    <span className={`dropdown-arrow ${showPaymentDropdown ? 'open' : ''}`}></span>
-                                </div>                               
-                                {showPaymentDropdown && (
-                                    <div className="payment-dropdown-list">
-                                        <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('credit-card')}>
-                                            <img src={creditCardIcon} alt="Credit Card" className="payment-method-icon" />
-                                            <span>Thẻ Tín Dụng/Ghi Nợ</span>
-                                        </div>
-                                        <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('vietqr')}>
-                                            <img src={vietqrIcon} alt="VietQR" className="payment-method-icon" />
-                                            <span>VietQR</span>
-                                        </div>
-                                        <div className="payment-dropdown-item" onClick={() => selectPaymentMethod('cash-on-delivery')}>
-                                            <img src={cashOnDeliveryIcon} alt="Cash on Delivery" className="payment-method-icon" />
-                                            <span>Thanh toán khi nhận hàng</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            {/* Payment Methods */}
-                            {isShippingInfoValid ? (
-                                paymentMethod === 'credit-card' ? (
-                                    <Elements stripe={stripePromise}>
-                                        <StripeCardForm 
-                                            orderTotal={orderTotal}
-                                            shippingInfo={shippingInfo}
-                                            selectedCountry={selectedCountry}
-                                            onPaymentSuccess={handlePaymentSuccess}
-                                            onPaymentError={handlePaymentError}
-                                        />
-                                    </Elements>
-                                ) : paymentMethod === 'vietqr' ? (
-                                    <div className="vietqr-container">
-                                        <p className="vietqr-text">Quét mã QR bên dưới để thanh toán</p>
-                                        <div className="qr-placeholder">
-                                            <p>Mã QR sẽ được hiển thị ở đây</p>
-                                            <button className="place-order-btn">Xác nhận đã thanh toán</button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="cod-container">
-                                        <div className="cod-info">
-                                            <h3>Thanh toán khi nhận hàng</h3>
-                                            <p>Bạn sẽ thanh toán trực tiếp cho người giao hàng khi nhận được sản phẩm.</p>
-                                            <ul className="cod-benefits">
-                                                <li>✓ Không cần thanh toán trước</li>
-                                                <li>✓ Kiểm tra hàng trước khi thanh toán</li>
-                                                <li>✓ An toàn và tiện lợi</li>
-                                            </ul>
-                                        </div>
-                                        <button 
-                                            onClick={handleCODOrder}
-                                            disabled={isCreatingOrder}
-                                            className="place-order-btn"
-                                        >
-                                            {isCreatingOrder ? 'Đang tạo đơn hàng...' : 'Đặt hàng'}
-                                        </button>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="shipping-validation-message">
-                                    Vui lòng điền đầy đủ thông tin giao hàng để tiếp tục thanh toán
-                                    <button 
-                                        onClick={handleCheckValidation} 
-                                        className="validate-shipping-btn"
-                                    >
-                                        Kiểm tra thông tin
-                                    </button>
-                                </div>
-                            )}
-                        </section>                            
-                    </div>                   
-                    <div className="order-summary-container">
-                        <div className="order-items">
-                            {cartItems.map((item) => (
-                                <div key={item.cartItemId} className="order-item">
-                                    <div className="order-item-image-container">
-                                        <img src={item.image} alt={item.name} className="order-item-image" />
-                                    </div>
-                                    <div className="order-item-details">
-                                        <h3 className="order-item-name">{item.name}</h3>
-                                        <p className="order-item-attributes">
-                                            Color: {item.color}
-                                            {item.size && <span> | Size: {item.size}</span>}
-                                            <span> | x{item.quantity}</span>
-                                        </p>
-                                    </div>
-                                    <div className="order-item-price">
-                                        {formatPrice(item.price)}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>                       
-                        <div className="order-summary-details">
-                            <div className="summary-row">
-                                <span>Thành tiền</span>
-                                <span>{formatPrice(itemsTotal)}</span>
-                            </div>
-                            <div className="summary-row">
-                                <span>Ship</span>
-                                <span>{formatPrice(shipping)}</span>
-                            </div>
-                            <div className="summary-row total">
-                                <span>Tổng</span>
-                                <span>{formatPrice(orderTotal)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <>
+        <Header />
+        <div className="payment-page-compact">
+          <div className="empty-cart-section">
+            <div className="container">
+              <div className="empty-cart-content">
+                <div className="empty-cart-icon">🛒</div>
+                <h2 className="empty-cart-title">Không có sản phẩm được chọn</h2>
+                <p className="empty-cart-description">
+                  Bạn chưa chọn sản phẩm nào để thanh toán. Hãy quay lại giỏ hàng và chọn sản phẩm!
+                </p>
+                <button 
+                  onClick={() => navigate('/cart')} 
+                  className="btn-primary btn-large"
+                >
+                  Quay lại giỏ hàng
+                </button>
+              </div>
             </div>
-            <Footer />
-        </>
+          </div>
+        </div>
+        <Footer />
+      </>
     );
+  }
+
+  return (
+    <>
+      <Header />
+      <div className="payment-page-compact">
+        <div className="payment-container-compact">
+          <div className="container">
+            <div className="payment-grid-compact">
+              
+              {/* Left: Order Summary */}
+              <div className="order-summary-compact">
+                <div className="summary-header">
+                  <h2>Đơn hàng của bạn</h2>
+                  <span className="item-count">{selectedItems.length} sản phẩm</span>
+                </div>
+                
+                <div className="order-items-compact">
+                  {selectedItems.map((item) => (
+                    <div key={item.id} className="order-item-compact">
+                      <div className="item-image-wrapper">
+                        <img 
+                          src={item.image || "/placeholder-product.jpg"} 
+                          alt={item.name}
+                          className="item-image"
+                        />
+                        <span className="item-quantity">{item.quantity}</span>
+                      </div>
+                      <div className="item-details">
+                        <h4 className="item-name">{item.name}</h4>
+                        <p className="item-price">{(item.price * item.quantity).toLocaleString()} đ</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="order-totals-compact">
+                  <div className="total-row">
+                    <span>Tạm tính:</span>
+                    <span>{selectedTotal.toLocaleString()} đ</span>
+                  </div>
+                  <div className="total-row">
+                    <span>Phí vận chuyển:</span>
+                    <span>{shippingFee.toLocaleString()} đ</span>
+                  </div>
+                  <div className="total-row final-total">
+                    <span>Tổng cộng:</span>
+                    <span>{(selectedTotal + shippingFee).toLocaleString()} đ</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Payment Methods */}
+              <div className="payment-methods-compact">
+                <h2>Chọn phương thức thanh toán</h2>
+                
+                <div className="payment-options">
+                  {/* PayOS Option */}
+                  <div 
+                    className={`payment-option ${selectedMethod === 'payos' ? 'active' : ''}`}
+                    onClick={() => setSelectedMethod('payos')}
+                  >
+                    <div className="option-header">
+                      <div className="option-info">
+                        <div className="option-icon">💳</div>
+                        <div>
+                          <h3>PayOS</h3>
+                          <p>Thanh toán trực tuyến</p>
+                        </div>
+                      </div>
+                      <div className={`radio-button ${selectedMethod === 'payos' ? 'checked' : ''}`}>
+                        <div className="radio-dot"></div>
+                      </div>
+                    </div>
+                    <div className="option-features">
+                      <span className="feature-tag">Bảo mật</span>
+                      <span className="feature-tag">Nhanh chóng</span>
+                      <span className="feature-tag">QR Code</span>
+                    </div>
+                  </div>
+
+                  {/* COD Option */}
+                  <div 
+                    className={`payment-option ${selectedMethod === 'cod' ? 'active' : ''}`}
+                    onClick={() => setSelectedMethod('cod')}
+                  >
+                    <div className="option-header">
+                      <div className="option-info">
+                        <div className="option-icon">💵</div>
+                        <div>
+                          <h3>Thanh toán khi nhận hàng</h3>
+                          <p>Trả tiền mặt khi giao hàng</p>
+                        </div>
+                      </div>
+                      <div className={`radio-button ${selectedMethod === 'cod' ? 'checked' : ''}`}>
+                        <div className="radio-dot"></div>
+                      </div>
+                    </div>
+                    <div className="option-features">
+                      <span className="feature-tag">Tiện lợi</span>
+                      <span className="feature-tag">An toàn</span>
+                      <span className="feature-tag">Kiểm tra hàng</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Checkout Button */}
+                <button
+                  onClick={selectedMethod === 'payos' ? handlePayOSCheckout : handleCODCheckout}
+                  disabled={loading || codLoading}
+                  className="checkout-btn-compact"
+                >
+                  {(loading || codLoading) ? (
+                    <div className="btn-loading">
+                      <div className="loading-spinner"></div>
+                      <span>Đang xử lý...</span>
+                    </div>
+                  ) : (
+                    <div className="btn-content">
+                      <span className="btn-icon">
+                        {selectedMethod === 'payos' ? '💳' : '💵'}
+                      </span>
+                      <span>
+                        {selectedMethod === 'payos' ? 'Thanh toán PayOS' : 'Đặt hàng COD'}
+                      </span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Security Info */}
+                <div className="security-info-compact">
+                  <div className="security-item">
+                    <span className="security-icon">🔒</span>
+                    <span>Thông tin được bảo mật SSL</span>
+                  </div>
+                  <div className="security-item">
+                    <span className="security-icon">✅</span>
+                    <span>Đảm bảo hoàn tiền 100%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
 };
+
 export default PaymentPage;

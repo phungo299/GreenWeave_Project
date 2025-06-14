@@ -253,43 +253,6 @@ const AboutUsPage = () => {
                     </section>
                 </AnimatedSection>
 
-                {/* Premium Design section */}
-                <AnimatedSection variants={fadeIn}>
-                    <section className="premium-design-section">
-                        <AnimatedSection variants={slideUp} delay={0.2} className="design-header">
-                            <h2 className="section-title gradient-text">Thiết kế hiện đại</h2>
-                            <p className="section-subtitle">
-                                Kết hợp thẩm mỹ đương đại với giá trị bền vững, tạo nên phong cách sống xanh
-                            </p>
-                        </AnimatedSection>
-                        
-                        <div className="design-showcase">
-                            <AnimatedSection variants={smoothZoomIn} delay={0.3} hoverEffect="float" className="design-item glassmorphism">
-                                <img src="https://picsum.photos/300/400?random=12" alt="Sustainable Design 1" />
-                                <div className="design-overlay">
-                                    <h3>Túi Tote Eco</h3>
-                                    <p>Thiết kế tối giản, tiện dụng</p>
-                                </div>
-                            </AnimatedSection>
-                            
-                            <AnimatedSection variants={smoothZoomIn} delay={0.4} hoverEffect="float" className="design-item glassmorphism">
-                                <img src="https://picsum.photos/300/400?random=13" alt="Sustainable Design 2" />
-                                <div className="design-overlay">
-                                    <h3>Nón Bucket Premium</h3>
-                                    <p>Phong cách streetwear hiện đại</p>
-                                </div>
-                            </AnimatedSection>
-                            
-                            <AnimatedSection variants={smoothZoomIn} delay={0.5} hoverEffect="float" className="design-item glassmorphism">
-                                <img src="https://picsum.photos/300/400?random=14" alt="Sustainable Design 3" />
-                                <div className="design-overlay">
-                                    <h3>Mũ Cap Classic</h3>
-                                    <p>Đa dạng màu sắc, cá tính</p>
-                                </div>
-                            </AnimatedSection>
-                        </div>
-                    </section>
-                </AnimatedSection>
 
                 {/* PREMIUM Team Section - Executive Level */}
                 <AnimatedSection variants={fadeIn}>

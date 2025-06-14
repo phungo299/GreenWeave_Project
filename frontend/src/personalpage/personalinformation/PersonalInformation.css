@@ -198,6 +198,62 @@
     animation: spin 1s linear infinite;
 }
 
+/* Edit Button Styling */
+.personal-information-edit-btn {
+    background-color: #f8f9fa;
+    color: #134d35;
+    border: 2px solid #134d35;
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    align-self: flex-end;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.personal-information-edit-btn:hover {
+    background-color: #134d35;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(19, 77, 53, 0.2);
+}
+
+.personal-information-edit-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(19, 77, 53, 0.2);
+}
+
+/* Button Container */
+.personal-information-button-container {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* Cancel Button (if needed) */
+.personal-information-cancel-btn {
+    background-color: transparent;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.personal-information-cancel-btn:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
 /* Override some of the default InputField styles to match the design */
 .personal-information-container .input-field-container {
     width: 100%;

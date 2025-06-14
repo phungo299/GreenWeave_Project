@@ -51,7 +51,7 @@ export const getMessageById = async (req: Request, res: Response) => {
 // Tạo tin nhắn liên hệ mới
 export const createMessage = async (req: Request, res: Response) => {
   try {
-    const { name, email, message } = req.body;
+    const { name, email, message, phone, subject } = req.body;
     
     if (!name || !email || !message) {
       return res.status(400).json({ 
@@ -69,7 +69,9 @@ export const createMessage = async (req: Request, res: Response) => {
     const newMessage = new Message({
       name,
       email,
-      message
+      message,
+      ...(phone && { phone }),
+      ...(subject && { subject })
     });
     
     const savedMessage = await newMessage.save();

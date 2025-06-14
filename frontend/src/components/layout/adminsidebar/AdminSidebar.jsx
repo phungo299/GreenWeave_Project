@@ -7,6 +7,7 @@ import CustomersIcon from '../../../assets/icons/user.png';
 import ReviewsIcon from '../../../assets/icons/customer-review.png';
 import SettingsIcon from '../../../assets/icons/setting.png';
 import ExitIcon from '../../../assets/icons/exit.png';
+import MessagesIcon from '../../../assets/icons/email.png';
 import './AdminSidebar.css';
 import Logo from '../../../assets/images/logo-no-background.png';
 
@@ -64,6 +65,12 @@ const AdminSidebar = () => {
                         <img src={SettingsIcon} alt="Settings" className="gw-admin-menu-icon" />
                     </div>
                     <span className="gw-admin-menu-text">Cài đặt</span>
+                </Link>
+                <Link to="/admin/messages" className={`gw-admin-menu-item ${isActive('/admin/messages') ? 'active' : ''}`}>
+                    <div className="gw-admin-menu-icon-wrapper">
+                        <img src={MessagesIcon} alt="Messages" className="gw-admin-menu-icon" />
+                    </div>
+                    <span className="gw-admin-menu-text">Tin nhắn</span>
                 </Link>
             </div>    
             <div className="gw-admin-menu-footer">

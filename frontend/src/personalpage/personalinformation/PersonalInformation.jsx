@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaUser, FaUpload } from 'react-icons/fa';
+import { FaUser, FaUpload, FaEdit, FaTimes } from 'react-icons/fa';
 import InputField from '../../components/ui/inputfield/InputField';
 import personalService from '../../services/personalService';
 import cloudinaryService from '../../services/cloudinaryService';
@@ -21,6 +21,7 @@ const PersonalInformation = () => {
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
+    const [isEditing, setIsEditing] = useState(false);
     
     // Lấy thông tin profile khi component mount
     useEffect(() => {
@@ -91,6 +92,9 @@ const PersonalInformation = () => {
     
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        
+        // Ngăn chỉnh sửa khi chưa bật chế độ chỉnh sửa
+        if (!isEditing) return;
         
         // Không cho phép thay đổi username và email
         if (name === 'username' || name === 'email') {
@@ -257,6 +261,7 @@ const PersonalInformation = () => {
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 
                 window.toast?.success('Thông tin cá nhân đã được cập nhật thành công!');
+                setIsEditing(false);
             }
         } catch (err) {
             console.error('Error updating profile:', err);
@@ -270,6 +275,18 @@ const PersonalInformation = () => {
                 setSaving(false);
             }
         }
+    };
+    
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        // Reset form data to original values
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        setFormData(prev => ({
+            ...prev,
+            fullName: userData.fullName || '',
+            phone: userData.phone || ''
+        }));
+        setErrors({});
     };
     
     // Render loading state
@@ -400,6 +417,7 @@ const PersonalInformation = () => {
                         className="personal-information-input"
                         error={errors.fullName}
                         required
+                        disabled={!isEditing}
                     />
                 </div>
                 
@@ -413,6 +431,7 @@ const PersonalInformation = () => {
                         placeholder="Nhập số điện thoại"
                         className="personal-information-input"
                         error={errors.phone}
+                        disabled={!isEditing}
                     />
                 </div>
                 
@@ -429,13 +448,37 @@ const PersonalInformation = () => {
                     </div>
                 </div>
                 
-                <button 
-                    type="submit" 
-                    className={`personal-information-save-btn ${saving ? 'loading' : ''}`}
-                    disabled={saving || uploadingAvatar}
-                >
-                    {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-                </button>
+                <div className="personal-information-button-container">
+                    {isEditing ? (
+                        <>
+                            <button
+                                type="button"
+                                className="personal-information-cancel-btn"
+                                onClick={handleCancelEdit}
+                                disabled={saving || uploadingAvatar}
+                            >
+                                <FaTimes />
+                                Hủy
+                            </button>
+                            <button 
+                                type="submit" 
+                                className={`personal-information-save-btn ${saving ? 'loading' : ''}`}
+                                disabled={saving || uploadingAvatar}
+                            >
+                                {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            className="personal-information-edit-btn"
+                            onClick={() => setIsEditing(true)}
+                        >
+                            <FaEdit />
+                            Chỉnh sửa
+                        </button>
+                    )}
+                </div>
             </form>
         </div>
     );

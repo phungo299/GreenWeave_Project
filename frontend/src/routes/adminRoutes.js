@@ -9,6 +9,7 @@ import UserDetails from '../adminpages/userdetailspage/UserDetails';
 import AdminReviewList from '../adminpages/reviewlistpage/AdminReviewList';
 import SystemSettingsPage from '../adminpages/systemsettinglistpage/SystemSettingList';
 import SystemSettingsDetails from '../adminpages/systemsettingdetails/SystemSettingDetails';
+import AdminMessageList from '../adminpages/messagelistpage/AdminMessageList';
 
 // Create a sample route structure for pages to be developed later
 const placeholderPage = () => (
@@ -80,6 +81,10 @@ const adminRoutes = [
             {
                 path: 'settings/edit/:id',
                 component: SystemSettingsDetails
+            },
+            {
+                path: 'messages',
+                component: AdminMessageList
             },
             {
                 path: 'add',

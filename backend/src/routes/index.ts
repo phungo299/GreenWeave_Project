@@ -9,11 +9,12 @@ import productRoutes from "./productRoutes";
 import promotionRoutes from "./promotionRoutes";
 import reviewRoutes from "./reviewRoutes";
 import settingRoutes from "./settingRoutes";
-import stripeRoutes from "./stripeRoutes";
+// import stripeRoutes from "./stripeRoutes";
 import uploadRoutes from "./uploadRoutes";
 import userRoutes from "./userRoutes";
 import visitorLogRoutes from "./visitorLogRoutes";
 import wishlistRoutes from "./wishlistRoutes";
+import payosRoutes from "./payosRoutes";
 
 export {
     authRoutes, 
@@ -27,7 +28,8 @@ export {
     promotionRoutes, 
     reviewRoutes, 
     settingRoutes,
-    stripeRoutes,
+    /*stripeRoutes,*/
+    payosRoutes,
     uploadRoutes, 
     userRoutes, 
     visitorLogRoutes,

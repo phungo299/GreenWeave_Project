@@ -1,19 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import cartIcon from '../../../assets/icons/cart.png';
 import exitIcon from '../../../assets/icons/exit.png';
 import userIcon from '../../../assets/icons/user.png';
 import Logo from '../../../assets/images/logo.jpg';
 import { useAuth } from '../../../context/AuthContext';
-import { useCart } from '../../../context/CartContext';
 import { useScrollToSection } from '../../hooks/useScrollToSection';
 import imageUtils from '../../../utils/imageUtils';
+import CartIcon from '../../cart/CartIcon';
 import './Header.css';
 
 const Header = () => {
     const { scrollToSection } = useScrollToSection();
     const location = useLocation();
-    const { getCartCount } = useCart();
     const { isAuthenticated, user, logout } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -111,12 +109,7 @@ const Header = () => {
                 <div className="auth-buttons">
                     {isAuthenticated ? (
                         <>
-                            <Link to="/cart" className="cart-icon-container">
-                                <img src={cartIcon} alt="Shopping Cart" className="cart-icon" />
-                                {getCartCount() > 0 && (
-                                    <span className="cart-count">{getCartCount()}</span>
-                                )}
-                            </Link>
+                            <CartIcon />
                             <div className="user-dropdown" ref={dropdownRef}>
                                 <button className="user-icon-button" onClick={toggleDropdown}>
                                     <img 

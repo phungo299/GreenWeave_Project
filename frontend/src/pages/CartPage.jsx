@@ -4,14 +4,23 @@ import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/common/Toast';
 import cartService from '../services/cartService';
 import '../assets/css/CartPage.css';
 
 const CartPage = () => {
     const navigate = useNavigate();
     // Get cart data and functions from context
-    const { cartItems, removeFromCart, updateQuantity, setCartItems } = useCart();
+    const { 
+        cartItems, 
+        removeFromCart, 
+        updateQuantity, 
+        setCartItems,
+        isAnyLoading,
+        getCurrentErrors,
+    } = useCart();
     const { user, isAuthenticated } = useAuth();
+    const { showSuccess, showError, showWarning } = useToast();
     
     // Local state for UI
     const [selectedItems, setSelectedItems] = useState({});
@@ -63,61 +72,53 @@ const CartPage = () => {
         fetchCartData();
     }, [isAuthenticated, user, setCartItems]);
 
-    // Initialize selectedItems when cartItems change
+    // Initialize selectedItems when cartItems change - START UNSELECTED
     useEffect(() => {
         const initialSelectedItems = {};
         cartItems.forEach(item => {
-            initialSelectedItems[item.cartItemId] = true;
+            initialSelectedItems[item.cartItemId] = false; // Fix: Start with unselected items
         });
         setSelectedItems(initialSelectedItems);
-        setSelectAll(cartItems.length > 0);
+        setSelectAll(false); // Fix: Start with select all unchecked
     }, [cartItems]);
 
-    // Handle quantity change
+    // Handle quantity change with optimistic updates
     const handleQuantityChange = async (cartItemId, action) => {
         const item = cartItems.find(item => item.cartItemId === cartItemId);
         if (!item) return;        
+        
         let newQuantity = item.quantity;       
         if (action === 'increment') {
-            //console.log('Item check:', item);
-            if (!item.productId) {
-                console.error('Product ID is undefined', item);
-                return;
-            }
-            // Check if the new quantity exceeds the stock quantity
-            const stockQuantity = typeof item.productId === 'object' ? 
-                (item.productId.quantity || 0) : 0;
-            //console.log('Stock quantity:', stockQuantity, 'Item:', item.productId);
-            if (item.quantity >= stockQuantity) {
-                alert(`Không thể thêm. Số lượng tối đa có thể đặt là ${stockQuantity}`);
-                return;
+            // Check stock availability
+            if (item.productId && typeof item.productId === 'object') {
+                const stockQuantity = item.productId.quantity || 0;
+                if (item.quantity >= stockQuantity) {
+                    showWarning(`Không thể thêm. Số lượng tối đa có thể đặt là ${stockQuantity}`);
+                    return;
+                }
             }
             newQuantity += 1;
         } else if (action === 'decrement' && item.quantity > 1) {
             newQuantity -= 1;
+        } else {
+            return; // No change needed
         }      
-        // Update quantity in local state first for fast UI response
-        updateQuantity(cartItemId, newQuantity);       
-        // If logged in, call API to update quantity on server
-        if (isAuthenticated && user?.id && item._id) {
-            try {
-                await cartService.updateQuantity(user.id, item._id, newQuantity);
-            } catch (error) {
-                console.error('Error updating quantity on server:', error);               
-                // If the error is due to exceeding the inventory quantity
-                if (error.response && error.response.status === 400) {
-                    const availableQuantity = error.response.data.availableQuantity;                  
-                    // Display a message to the user
-                    alert(`Số lượng vượt quá số lượng tồn kho. Số lượng tối đa có thể đặt là ${availableQuantity}`);                   
-                    // Undo local changes and update to correct available quantity
-                    updateQuantity(cartItemId, Math.min(newQuantity, availableQuantity));
-                } else {
-                    // Other errors, display general message
-                    alert('Không thể cập nhật số lượng. Vui lòng thử lại sau.');                  
-                    // Undo local changes
-                    updateQuantity(cartItemId, item.quantity);
+        
+        // Use optimistic update from CartContext
+        try {
+            const result = await updateQuantity(cartItemId, newQuantity);
+            
+            if (result.success) {
+                // Optional success feedback for significant changes
+                if (Math.abs(newQuantity - item.quantity) > 1) {
+                    showSuccess(`Đã cập nhật số lượng thành ${newQuantity}`);
                 }
+            } else {
+                showError(result.error || 'Không thể cập nhật số lượng');
             }
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            showError('Có lỗi xảy ra khi cập nhật số lượng');
         }
     };
 
@@ -171,21 +172,38 @@ const CartPage = () => {
         return `${price.toLocaleString('vi-VN')} đ`;
     };
 
-    // Handle item removal with API call if user is authenticated
+    // Handle item removal with optimistic updates
     const handleRemoveItem = async (cartItemId) => {
+        const item = cartItems.find(item => item.cartItemId === cartItemId);
+        if (!item) return;
+
         try {
-            setIsDeleting(prev => ({ ...prev, [cartItemId]: true }));           
-            // Get the item to find its database ID if available
-            const item = cartItems.find(item => item.cartItemId === cartItemId);          
-            // If authenticated and item has a database ID, delete from server
-            if (isAuthenticated && user?.id && item && item._id) {
-                await cartService.removeItem(user.id, item._id);
-            }       
-            // Always remove from local storage
-            removeFromCart(cartItemId);            
+            setIsDeleting(prev => ({ ...prev, [cartItemId]: true }));
+            
+            // Use optimistic remove from CartContext
+            const result = await removeFromCart(cartItemId);
+            
+            if (result.success) {
+                showSuccess(`Đã xóa "${item.name}" khỏi giỏ hàng`);
+                
+                // Update selectedItems state to remove the deleted item
+                setSelectedItems(prev => {
+                    const updated = { ...prev };
+                    delete updated[cartItemId];
+                    return updated;
+                });
+                
+                // Check if we need to update selectAll state
+                const remainingItems = cartItems.filter(i => i.cartItemId !== cartItemId);
+                if (remainingItems.length === 0) {
+                    setSelectAll(false);
+                }
+            } else {
+                showError(result.error || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+            }
         } catch (error) {
             console.error('Failed to remove item:', error);
-            alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
+            showError('Có lỗi xảy ra khi xóa sản phẩm');
         } finally {
             setIsDeleting(prev => ({ ...prev, [cartItemId]: false }));
         }
@@ -219,10 +237,27 @@ const CartPage = () => {
         return buttons;
     };
     
-    // Handle checkout
+    // Handle checkout - only selected items
     const handleCheckout = () => {
-        navigate('/payment');
+        const selectedCartItems = cartItems.filter(item => selectedItems[item.cartItemId]);
+        
+        if (selectedCartItems.length === 0) {
+            showWarning('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+            return;
+        }
+        
+        // Pass selected items to payment page via state
+        navigate('/payment', { 
+            state: { 
+                selectedItems: selectedCartItems,
+                totalAmount: calculateTotal()
+            } 
+        });
     };
+
+    // Check for global cart loading states
+    const globalLoading = isAnyLoading();
+    const globalErrors = getCurrentErrors();
 
     if (loading) {
         return (
@@ -232,6 +267,7 @@ const CartPage = () => {
                     <h1 className="cart-title">Giỏ hàng</h1>
                     <div className="cart-loading">
                         <p>Đang tải giỏ hàng...</p>
+                        {globalLoading && <p className="cart-sub-loading">Đang đồng bộ dữ liệu...</p>}
                     </div>
                 </div>
                 <Footer />
@@ -269,6 +305,7 @@ const CartPage = () => {
                     </div>
                 ) : (
                     <>
+                        {/* Desktop Table Layout */}
                         <table className="cart-table">
                             <thead>
                                 <tr>
@@ -315,16 +352,18 @@ const CartPage = () => {
                                                 <button 
                                                     className="cart-quantity-btn minus"
                                                     onClick={() => handleQuantityChange(item.cartItemId, 'decrement')}
-                                                    disabled={item.quantity <= 1}
+                                                    disabled={item.quantity <= 1 || item.isOptimistic}
                                                 >
                                                     -
                                                 </button>
-                                                <span className="cart-quantity-value">
+                                                <span className={`cart-quantity-value ${item.isOptimistic ? 'optimistic' : ''}`}>
                                                     {item.quantity}
+                                                    {item.isOptimistic && <span className="loading-dot">⋯</span>}
                                                 </span>
                                                 <button 
                                                     className="cart-quantity-btn plus"
                                                     onClick={() => handleQuantityChange(item.cartItemId, 'increment')}
+                                                    disabled={item.isOptimistic}
                                                 >
                                                     +
                                                 </button>
@@ -333,17 +372,101 @@ const CartPage = () => {
                                         <td className="cart-price">{formatPrice(item.price * item.quantity)}</td>
                                         <td>
                                             <button 
-                                                className="cart-delete-btn"
+                                                className={`cart-delete-btn ${item.isOptimistic ? 'optimistic' : ''}`}
                                                 onClick={() => handleRemoveItem(item.cartItemId)}
-                                                disabled={isDeleting[item.cartItemId]}
+                                                disabled={isDeleting[item.cartItemId] || item.isOptimistic}
                                             >
-                                                {isDeleting[item.cartItemId] ? 'Đang xóa...' : 'Xóa'}
+                                                {isDeleting[item.cartItemId] ? 'Đang xóa...' : 
+                                                 item.isOptimistic ? 'Đang cập nhật...' : 'Xóa'}
                                             </button>
+                                            {globalErrors.some(e => e.cartItemId === item.cartItemId) && (
+                                                <span className="cart-item-error">!</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>                        
+
+                        {/* Mobile Card Layout */}
+                        <div className="cart-mobile-layout">
+                            <div className="cart-mobile-header">
+                                <label className="cart-select-all">
+                                    <input 
+                                        type="checkbox"
+                                        className="cart-checkbox"
+                                        checked={selectAll}
+                                        onChange={handleSelectAll}
+                                    />
+                                    <span>Chọn tất cả</span>
+                                </label>
+                                <span className="cart-items-count">
+                                    {cartItems.length} sản phẩm
+                                </span>
+                            </div>
+
+                            {currentItems.map(item => (
+                                <div key={item.cartItemId} className="cart-mobile-item">
+                                    <div className="cart-mobile-item-header">
+                                        <input 
+                                            type="checkbox"
+                                            className="cart-checkbox"
+                                            checked={selectedItems[item.cartItemId] || false}
+                                            onChange={() => handleSelectItem(item.cartItemId)}
+                                        />
+                                        <button 
+                                            className="cart-remove-btn"
+                                            onClick={() => handleRemoveItem(item.cartItemId)}
+                                            disabled={isDeleting[item.cartItemId] || item.isOptimistic}
+                                        >
+                                            {isDeleting[item.cartItemId] ? 'Đang xóa...' : 
+                                             item.isOptimistic ? 'Đang cập nhật...' : 'Xóa'}
+                                        </button>
+                                    </div>
+
+                                    <div className="cart-mobile-item-content">
+                                        <img src={item.image} alt={item.name} className="cart-product-image" />
+                                        <div className="cart-product-details">
+                                            <div className="cart-product-name">{item.name}</div>
+                                            {item.title && <div className="cart-product-title">{item.title}</div>}
+                                            <div className="cart-product-color">Màu: {item.color}</div>
+                                            {item.size && <div className="cart-product-size">Size: {item.size}</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="cart-mobile-item-footer">
+                                        <div className="cart-price">{formatPrice(item.price)}</div>
+                                        <div className="cart-quantity-control">
+                                            <button 
+                                                className="cart-quantity-btn minus"
+                                                onClick={() => handleQuantityChange(item.cartItemId, 'decrement')}
+                                                disabled={item.quantity <= 1 || item.isOptimistic}
+                                            >
+                                                -
+                                            </button>
+                                            <span className={`cart-quantity-value ${item.isOptimistic ? 'optimistic' : ''}`}>
+                                                {item.quantity}
+                                                {item.isOptimistic && <span className="loading-dot">⋯</span>}
+                                            </span>
+                                            <button 
+                                                className="cart-quantity-btn plus"
+                                                onClick={() => handleQuantityChange(item.cartItemId, 'increment')}
+                                                disabled={item.isOptimistic}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        <div className="cart-price">{formatPrice(item.price * item.quantity)}</div>
+                                    </div>
+
+                                    {globalErrors.some(e => e.cartItemId === item.cartItemId) && (
+                                        <div className="cart-item-error-message">
+                                            Có lỗi xảy ra với sản phẩm này
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>                        
                         {totalPages > 1 && (
                             <div className="cart-pagination">
                                 <button 
@@ -364,6 +487,7 @@ const CartPage = () => {
                             </div>
                         )}                       
                         <div className="cart-summary">
+                            <div className="cart-summary-content">
                             <div className="cart-summary-text">
                                 Tổng cộng ({countSelectedItems()} sản phẩm)
                             </div>
@@ -371,9 +495,14 @@ const CartPage = () => {
                                 {formatPrice(calculateTotal())}
                             </div>
                         </div>                       
-                        <button className="cart-checkout-btn" onClick={handleCheckout}>
+                            <button 
+                                className="cart-checkout-btn" 
+                                onClick={handleCheckout}
+                                disabled={countSelectedItems() === 0}
+                            >
                             Mua hàng
                         </button>
+                        </div>
                     </>
                 )}
             </div>

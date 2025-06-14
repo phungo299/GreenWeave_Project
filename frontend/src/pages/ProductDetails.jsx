@@ -4,6 +4,8 @@ import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
 import ProductReview from '../components/layout/productreview/ProductReview';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/common/Toast';
 import AnimatedSection from '../components/common/AnimatedSection';
 import productService from '../services/productService';
 import '../assets/css/ProductDetails.css';
@@ -17,6 +19,8 @@ const ProductDetails = () => {
     const { id } = useParams(); // Get product id from URL
     const navigate = useNavigate();
     const { addToCart } = useCart();    
+    const { isAuthenticated } = useAuth();
+    const { showSuccess, showError, showWarning } = useToast();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -156,17 +160,34 @@ const ProductDetails = () => {
                 setQuantity(quantity + 1);
             } else {
                 // Notify user that limit has been reached
-                alert(`Số lượng tối đa có thể đặt là ${product.quantity}`);
+                showWarning(`Số lượng tối đa có thể đặt là ${product.quantity}`);
             }
         } else if (action === 'decrement' && quantity > 1) {
             setQuantity(quantity - 1);
         }
     };
   
-    // Handler for adding to cart
-    const handleAddToCart = () => {
+    // Handler for adding to cart with optimistic updates
+    const handleAddToCart = async () => {
         if (!product) return;      
-        if (quantity > 0) {
+        
+        // Validate selections
+        if (!selectedColor || !selectedSize) {
+            showWarning('Vui lòng chọn màu sắc và kích thước!');
+            return;
+        }
+        
+        if (quantity <= 0) {
+            showWarning('Vui lòng chọn số lượng hợp lệ!');
+            return;
+        }
+
+        // Check stock availability
+        if (product.quantity && quantity > product.quantity) {
+            showWarning(`Chỉ còn ${product.quantity} sản phẩm trong kho!`);
+            return;
+        }
+
             const productToAdd = {
                 id: product.id,
                 name: product.name,
@@ -175,19 +196,76 @@ const ProductDetails = () => {
                 size: selectedSize,
                 price: parseInt(product.price.replace(/\D/g, '')),
                 quantity: quantity,
-                image: product.image
+            image: product.image,
+            variantId: product.variantId || ''
             };          
-            // Call addToCart function from context - updated to call API if logged in
-            addToCart(productToAdd);            
-            // Show a confirmation message
-            alert('Sản phẩm đã được thêm vào giỏ hàng!');
+
+        try {
+            // Call addToCart function from context with improved error handling
+            const result = await addToCart(productToAdd);
+            
+            if (result.success) {
+                // Show success message with better UX
+                showSuccess(result.message || 'Sản phẩm đã được thêm vào giỏ hàng!');
+            } else {
+                // Show error message
+                showError(result.error || 'Không thể thêm vào giỏ hàng. Vui lòng thử lại!');
+            }
+        } catch (error) {
+            console.error('Add to cart error:', error);
+            showError('Có lỗi xảy ra. Vui lòng thử lại!');
         }
     };
     
-    // Handler for direct buying
-    const handleBuyNow = () => {
-        handleAddToCart();
-        navigate('/cart');
+    // Enhanced Buy Now handler with proper auth check
+    const handleBuyNow = async () => {
+        if (!isAuthenticated) {
+            // Redirect to login if not authenticated
+            navigate('/login', { 
+                state: { 
+                    returnTo: `/products/${product.id}`,
+                    message: 'Vui lòng đăng nhập để mua hàng'
+                }
+            });
+            return;
+        }
+
+        // Validate selections before proceeding
+        if (!selectedColor || !selectedSize) {
+            showWarning('Vui lòng chọn màu sắc và kích thước trước khi mua!');
+            return;
+        }
+
+        if (quantity <= 0) {
+            showWarning('Vui lòng chọn số lượng hợp lệ!');
+            return;
+        }
+
+        // Check stock availability
+        if (product.quantity && quantity > product.quantity) {
+            showWarning(`Chỉ còn ${product.quantity} sản phẩm trong kho!`);
+            return;
+        }
+
+        try {
+            // Add to cart first
+            const result = await handleAddToCart();
+            
+            // Navigate to cart if successful
+            if (result !== false) { // handleAddToCart doesn't return false on success
+                navigate('/cart', {
+                    state: {
+                        justAdded: {
+                            productName: product.name,
+                            quantity: quantity
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Buy now error:', error);
+            showError('Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!');
+        }
     };
 
     // Handler for recommendation dots

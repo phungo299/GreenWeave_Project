@@ -7,9 +7,9 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './components/common/Toast';
 import Personal from './pages/Personal';
 import NotificationContainer from './components/ui/notification/NotificationContainer';
-import ToastManager from './components/ui/toast/ToastManager';
 import ScrollToTop from './components/ui/ScrollToTop';
 import ScrollToTopOnNavigate from './components/common/ScrollToTopOnNavigate';
 import overrideAlert from './utils/overrideAlert';
@@ -45,7 +45,8 @@ function App() {
     return (
         <AuthProvider>
             <CartProvider>
-                <Router>
+                <ToastProvider>
+                    <Router>
                     <PageTracker />
                     <div className="app">
                         <Routes>
@@ -101,9 +102,9 @@ function App() {
                         <ScrollToTopOnNavigate />
                         <ScrollToTop />
                         <NotificationContainer />
-                        <ToastManager />
                     </div>
                 </Router>
+                </ToastProvider>
             </CartProvider>
         </AuthProvider>
     );

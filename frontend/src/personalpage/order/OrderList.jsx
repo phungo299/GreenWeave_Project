@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import personalService from '../../services/personalService';
 import imageUtils from '../../utils/imageUtils';
+import SafeImage from '../../components/common/SafeImage';
 import './OrderList.css';
 
 // Sample product image import
@@ -33,13 +34,18 @@ const OrderList = () => {
     // Lấy danh sách đơn hàng
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!currentUser?._id) return;
+            const userId = currentUser?._id || currentUser?.id;
+            if (!userId) {
+                setLoading(false);
+                setError('Vui lòng đăng nhập để xem đơn hàng');
+                return;
+            }
 
             try {
                 setLoading(true);
                 setError(null);
                 
-                const response = await personalService.getUserOrders(currentUser._id);
+                const response = await personalService.getUserOrders(userId);
                 
                 // Xử lý response format mới
                 if (response && response.success && response.data) {
@@ -157,73 +163,84 @@ const OrderList = () => {
             <div className="personal-orders-list">
                 {orders.map(order => (
                     <div key={order._id} className="personal-order-item">
-                        <div className="personal-order-header">
-                            <span className="personal-order-id">Đơn hàng #{order._id.slice(-8)}</span>
-                            <span className="personal-order-date">
-                                {new Date(order.createdAt).toLocaleDateString('vi-VN')}
-                            </span>
-                        </div>
-                        
-                        <div className="personal-order-content">
-                            {/* Hiển thị sản phẩm đầu tiên trong đơn hàng */}
-                            {order.items && order.items.length > 0 && (
-                                <div className="personal-order-main-item">
-                                    <img 
-                                        src={
-                                            // Ưu tiên imageUrl từ product
-                                            order.items[0].productId?.imageUrl || 
-                                            // Fallback sang variant image
-                                            order.items[0].productId?.variants?.[0]?.imageUrl ||
-                                            // Sử dụng imageUtils với variant
-                                            imageUtils.getProductImageUrl(
-                                                order.items[0].productId?.variants?.[0]?.imageUrl,
-                                                'thumbnail'
-                                            ) || 
-                                            // Placeholder cuối cùng
-                                            imageUtils.getPlaceholder('product', { width: 80, height: 80 })
-                                        } 
-                                        alt={order.items[0].productId?.name || 'Sản phẩm'} 
-                                        className="personal-order-image"
-                                        onError={(e) => {
-                                            // Fallback khi image load lỗi
-                                            e.target.src = imageUtils.getPlaceholder('product', { width: 80, height: 80 });
-                                        }}
-                                    />          
-                                    <div className="personal-order-details">
-                                        <h3 className="personal-order-title">
-                                            {order.items[0].productId?.name || 'Sản phẩm'}
-                                        </h3>
-                                        {order.items[0].color && (
-                                            <p className="personal-order-color">Màu: {order.items[0].color}</p>
-                                        )}
-                                        <p className="personal-order-quantity">x{order.items[0].quantity}</p>
-                                        {order.items.length > 1 && (
-                                            <p className="personal-order-more">
-                                                +{order.items.length - 1} sản phẩm khác
-                                            </p>
-                                        )}
-                                    </div>
+                        {/* Container bên trái: header + content */}
+                        <div className="personal-order-left-content">
+                            <div className="personal-order-header">
+                                <div className="personal-order-id-section">
+                                    <span className="personal-order-id">Đơn hàng #{order._id.slice(-8)}</span>
+                                    <span className="personal-order-date">
+                                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                                    </span>
                                 </div>
-                            )}
+                            </div>
                             
-                            <div className="personal-order-summary">
-                                <p className="personal-order-total">
-                                    Tổng: {formatPrice(order.totalAmount)}
-                                </p>
-                                <div className={`personal-order-status ${getStatusClass(order.status)}`}>
-                                    {getStatusText(order.status)}
-                                </div>
+                            <div className="personal-order-content">
+                                {/* Hiển thị sản phẩm đầu tiên trong đơn hàng */}
+                                {order.items && order.items.length > 0 && (
+                                    <div className="personal-order-main-item">
+                                        <SafeImage 
+                                            src={
+                                                // Ưu tiên imageUrl từ product
+                                                order.items[0].productId?.imageUrl || 
+                                                // Fallback sang variant image
+                                                order.items[0].productId?.variants?.[0]?.imageUrl ||
+                                                // Sử dụng imageUtils với variant
+                                                imageUtils.getProductImageUrl(
+                                                    order.items[0].productId?.variants?.[0]?.imageUrl,
+                                                    'thumbnail'
+                                                )
+                                            } 
+                                            alt={order.items[0].productId?.name || 'Sản phẩm'} 
+                                            className="personal-order-image"
+                                            width={80}
+                                            height={80}
+                                            placeholderType="product"
+                                        />          
+                                        <div className="personal-order-details">
+                                            <h3 className="personal-order-title">
+                                                {order.items[0].productId?.name || 'Sản phẩm'}
+                                            </h3>
+                                            <div className="personal-order-item-info">
+                                                {order.items[0].color && (
+                                                    <span className="personal-order-color">Màu: {order.items[0].color}</span>
+                                                )}
+                                                <span className="personal-order-quantity">Số lượng: {order.items[0].quantity}</span>
+                                            </div>
+                                            {order.items.length > 1 && (
+                                                <p className="personal-order-more">
+                                                    +{order.items.length - 1} sản phẩm khác
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         
-                        <div className="personal-order-buttons">
-                            <button
-                                className="personal-order-button detail"
-                                onClick={() => navigate(`/personal/orders/${order._id}`)}
-                            >
-                                Chi tiết
-                            </button>
+                        {/* Container bên phải: footer */}
+                        <div className="personal-order-right-content">
+                            <div className="personal-order-footer">
+                                <div className="personal-order-summary">
+                                    <div className="personal-order-total-section">
+                                        <span className="personal-order-total-label">Tổng tiền:</span>
+                                        <span className="personal-order-total-amount">{formatPrice(order.totalAmount)}</span>
+                                    </div>
+                                    <div className={`personal-order-status ${getStatusClass(order.status)}`}>
+                                        {getStatusText(order.status)}
+                                    </div>
+                                </div>
+                                
+                                <div className="personal-order-actions">
+                                    <button
+                                        className="personal-order-button detail"
+                                        onClick={() => navigate(`/personal/orders/${order._id}`)}
+                                    >
+                                        Xem chi tiết
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
                 ))}
             </div>

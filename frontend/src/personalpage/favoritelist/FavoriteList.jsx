@@ -31,13 +31,18 @@ export default function FavoriteList() {
     // Lấy danh sách yêu thích
     useEffect(() => {
         const fetchWishlist = async () => {
-            if (!currentUser?._id) return;
+            const userId = currentUser?._id || currentUser?.id;
+            if (!userId) {
+                setLoading(false);
+                setError('Vui lòng đăng nhập để xem danh sách yêu thích');
+                return;
+            }
 
             try {
                 setLoading(true);
                 setError(null);
                 
-                const response = await personalService.getWishlist(currentUser._id);
+                const response = await personalService.getWishlist(userId);
                 
                 if (response && response.data) {
                     setFavoriteProducts(response.data);
@@ -65,10 +70,11 @@ export default function FavoriteList() {
 
     // Xóa sản phẩm khỏi danh sách yêu thích
     const handleRemoveFromWishlist = async (itemId) => {
-        if (!currentUser?._id) return;
+        const userId = currentUser?._id || currentUser?.id;
+        if (!userId) return;
 
         try {
-            await personalService.removeFromWishlist(currentUser._id, itemId);
+            await personalService.removeFromWishlist(userId, itemId);
             
             // Cập nhật state local
             setFavoriteProducts(prev => prev.filter(item => item._id !== itemId));
@@ -83,7 +89,8 @@ export default function FavoriteList() {
 
     // Thêm vào giỏ hàng
     const handleAddToCart = async (item) => {
-        if (!currentUser?._id) {
+        const userId = currentUser?._id || currentUser?.id;
+        if (!userId) {
             alert('Vui lòng đăng nhập để thêm vào giỏ hàng');
             return;
         }
@@ -98,7 +105,7 @@ export default function FavoriteList() {
                 quantity: 1
             };
 
-            await personalService.addToCart(currentUser._id, cartData);
+            await personalService.addToCart(userId, cartData);
             
             alert('Đã thêm sản phẩm vào giỏ hàng');
         } catch (err) {

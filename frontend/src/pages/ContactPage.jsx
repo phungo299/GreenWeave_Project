@@ -4,6 +4,7 @@ import Footer from '../components/layout/footer/Footer';
 import AnimatedSection from '../components/common/AnimatedSection';
 import '../assets/css/ModernAnimations.css';
 import '../assets/css/ContactPage.css';
+import messageService from '../services/messageService';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({
@@ -27,12 +28,9 @@ const ContactPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
-        // Simulate form submission
-        setTimeout(() => {
-            console.log('Contact form submitted:', formData);
-            
-            // Reset the form
+        try {
+            await messageService.create(formData);
+            setSubmitSuccess(true);
             setFormData({
                 name: '',
                 email: '',
@@ -40,39 +38,38 @@ const ContactPage = () => {
                 subject: '',
                 message: ''
             });
+        } catch (error) {
+            alert(error.message || 'Đã xảy ra lỗi, vui lòng thử lại');
+        } finally {
             setIsSubmitting(false);
-            setSubmitSuccess(true);
-            
-            // Hide success message after 5 seconds
-            setTimeout(() => {
-                setSubmitSuccess(false);
-            }, 5000);
-        }, 1500);
+            // Ẩn thông báo sau 5s
+            setTimeout(() => setSubmitSuccess(false), 5000);
+        }
     };
 
     const contactInfo = [
         {
             icon: "📍",
             title: "Địa chỉ",
-            content: "Khu Đô Thị Mới An Phú Thịnh, Nhơn Bình, Quy Nhơn",
+            content: "Quy Nhơn, Bình Định",
             color: "#059669"
         },
         {
             icon: "📞",
             title: "Điện thoại",
-            content: "+84 123 456 789",
+            content: "097 610 6769",
             color: "#0891b2"
         },
         {
             icon: "✉️",
             title: "Email",
-            content: "contact@greenweave.com",
+            content: "info.greenweave@gmail.com",
             color: "#7c3aed"
         },
         {
-            icon: "⏰",
+            icon: "🕒",
             title: "Giờ làm việc",
-            content: "Thứ 2 - Thứ 6: 8:00 - 17:00",
+            content: "Thứ 2 đến thứ 7 8:00am - 18:00pm",
             color: "#dc2626"
         }
     ];
