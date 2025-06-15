@@ -49,7 +49,8 @@ const allowedOrigins = process.env.CORS_ORIGIN
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
       'https://green-weave-project.vercel.app',
-      'https://greenweave.vn'
+      'https://greenweave.vn',
+      'https://www.greenweave.vn'
     ];
 
 console.log("CORS: Allowed origins:", allowedOrigins);
