@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import path from "path";
+import fs from "fs";
 import swaggerUi from "swagger-ui-express";
 import * as YAML from "yamljs";
 import { startOrderExpiryJob } from "./jobs/orderExpiryJob";
@@ -31,7 +32,13 @@ const app = express();
 
 // Đọc file swagger.yaml đã được sinh tự động bởi script generate-swagger
 const swaggerPath = path.resolve(__dirname, "./swagger.yaml");
-const swaggerSpec = YAML.load(swaggerPath);
+let swaggerSpec: any | null = null;
+if (fs.existsSync(swaggerPath)) {
+  swaggerSpec = YAML.load(swaggerPath);
+  console.log(`✅ Loaded Swagger documentation from ${swaggerPath}`);
+} else {
+  console.warn(`⚠️ Swagger file not found at ${swaggerPath}. API docs will be disabled.`);
+}
 
 // CORS Configuration - Environment Based
 const allowedOrigins = process.env.CORS_ORIGIN 
@@ -76,10 +83,13 @@ app.get("/", (_req, res) => {
   res.send("Welcome to the GreenWeave API");
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "GreenWeave API Documentation"
-}));
+// When swaggerSpec is available, mount Swagger UI
+if (swaggerSpec) {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "GreenWeave API Documentation"
+  }));
+}
 
 // Cấu hình routes
 app.use("/api/auth", authRoutes);
