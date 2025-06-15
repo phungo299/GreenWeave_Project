@@ -4,7 +4,6 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "prestart": "npm run build",
     "build": "tsc",
     "dev": "nodemon --exec ts-node src/index.ts",
     "test": "jest --detectOpenHandles",
@@ -76,5 +75,8 @@
     "setupFilesAfterEnv": [
       "./jest.setup.js"
     ]
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
