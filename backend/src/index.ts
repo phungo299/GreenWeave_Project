@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import "./loadEnv";
 import cors from "cors";
 import express from "express";
@@ -115,7 +118,7 @@ export { app };
 
 // Only start the server if this file is run directly (not imported as a module)
 if (require.main === module) {
-  const port: number = parseInt(process.env.PORT ?? '5000', 10);
+  const PORT = process.env.PORT || 5000;
 
   console.log('Connecting to MongoDB...');
   console.log('MongoDB URI:', process.env.MONGO_URI?.split('@')[1]); // Log URI an toàn (không hiện credentials)
@@ -124,10 +127,10 @@ if (require.main === module) {
     .connect(process.env.MONGO_URI as string)
     .then(() => {
       console.log("Connected to MongoDB successfully");
-      app.listen(port, '0.0.0.0', () => {
+      app.listen(PORT, () => {
         console.log(`Server started at ${new Date().toISOString()}`);
-        console.log(`Server is running on port ${port}`);
-        console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${port}`}/api-docs`);
+        console.log(`Server is running on port ${PORT}`);
+        console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${PORT}`}/api-docs`);
 
         // Start background jobs
         startOrderExpiryJob();
@@ -144,4 +147,3 @@ if (require.main === module) {
       process.exit(1); // Thoát process nếu không kết nối được database
     });
 }
-
