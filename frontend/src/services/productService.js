@@ -38,7 +38,7 @@ const productService = {
 
     // Get products by category
     getByCategory: (category) => {
-        return axiosClient.get(`/products/category/${category}`);
+        return axiosClient.get(`/categories/${category}/products`);
     },
 
     // Search products

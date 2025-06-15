@@ -13,12 +13,13 @@ export interface IOrder {
   items: IOrderItem[];
   totalAmount: number;
   shippingCost?: number;
-  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled" | "expired";
   shippingAddress?: string;
   paymentMethod?: string;
   paymentId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  expiresAt?: Date;
 }
 
 const orderItemSchema = new Schema<IOrderItem>({
@@ -45,7 +46,7 @@ const orderSchema = new Schema<IOrder>(
     shippingCost: { type: Number, default: 0 },
     status: { 
       type: String, 
-      enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"], 
+      enum: ["pending", "confirmed", "shipped", "delivered", "cancelled", "expired"], 
       default: "pending"
     },
     shippingAddress: { type: String },
@@ -54,6 +55,7 @@ const orderSchema = new Schema<IOrder>(
       type: Schema.Types.ObjectId, 
       ref: "Payment" 
     },
+    expiresAt: { type: Date },
   },
   { timestamps: true }
 );

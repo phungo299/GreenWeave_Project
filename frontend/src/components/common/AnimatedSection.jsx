@@ -235,12 +235,19 @@ const AnimatedSection = ({
   variants,
   once = true,
   threshold = 0.15,
+  hoverEffect,
+  animation,
+  delay,
+  duration,
   ...props
 }) => {
   const [ref, inView] = useInView({
     triggerOnce: once,
     threshold,
   });
+
+  // Filter out custom props that shouldn't be passed to DOM
+  const { hoverEffect: _, animation: __, delay: ___, duration: ____, ...domProps } = props;
 
   return (
     <motion.div
@@ -249,7 +256,7 @@ const AnimatedSection = ({
       animate={inView ? 'visible' : 'hidden'}
       variants={variants}
       className={className}
-      {...props}
+      {...domProps}
     >
       {children}
     </motion.div>

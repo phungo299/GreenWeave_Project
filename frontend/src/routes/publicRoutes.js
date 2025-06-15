@@ -7,9 +7,7 @@ import ProductOverviewPage from '../pages/ProductOverviewPage';
 import ProductDetails from '../pages/ProductDetails';
 import AboutUsPage from '../pages/AboutUsPage';
 import ContactPage from '../pages/ContactPage';
-import PaymentPage from '../pages/PaymentPage';
 import PaymentSuccess from '../pages/PaymentSuccess';
-import PaymentCancel from '../pages/PaymentCancel';
 import PaymentTest from '../pages/PaymentTest';
 
 const publicRoutes = [
@@ -50,16 +48,8 @@ const publicRoutes = [
         component: ContactPage
     },
     {
-        path: '/payment',
-        component: PaymentPage
-    },
-    {
         path: '/payment/success',
         component: PaymentSuccess
-    },
-    {
-        path: '/payment/cancel',
-        component: PaymentCancel
     },
     {
         path: '/payment-test',

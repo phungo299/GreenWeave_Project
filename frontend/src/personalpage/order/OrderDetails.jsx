@@ -6,7 +6,7 @@ import "./OrderDetail.css";
 
 const steps = [
     { label: "Đơn hàng đã được đặt", status: "pending" },
-    { label: "Chuẩn bị hàng", status: "processing" },
+    { label: "Chuẩn bị hàng", status: "confirmed" },
     { label: "Đang vận chuyển", status: "shipped" },
     { label: "Đã giao", status: "delivered" },
 ];
@@ -81,7 +81,7 @@ export default function OrderDetails() {
     const getStatusStepIndex = (status) => {
         const statusMap = {
             'pending': 0,
-            'processing': 1,
+            'confirmed': 1,
             'shipped': 2,
             'delivered': 3,
             'cancelled': -1
@@ -96,7 +96,8 @@ export default function OrderDetails() {
             'debit_card': 'Thẻ ghi nợ',
             'paypal': 'PayPal',
             'bank_transfer': 'Chuyển khoản',
-            'cash_on_delivery': 'Thanh toán khi nhận hàng'
+            'cash_on_delivery': 'Thanh toán khi nhận hàng',
+            'COD': 'Thanh toán khi nhận hàng'
         };
         return methodMap[method] || method;
     };
@@ -152,8 +153,8 @@ export default function OrderDetails() {
                         {order.estimatedDelivery ? (
                             <>Dự kiến giao hàng: <b>{formatDate(order.estimatedDelivery)}</b></>
                         ) : (
-                            <>Trạng thái: <b>{order.status === 'pending' ? 'Đang xử lý' : 
-                                order.status === 'processing' ? 'Chuẩn bị hàng' :
+                            <>Trạng thái: <b>{order.status === 'pending' ? 'Đang chờ xác nhận' : 
+                                order.status === 'confirmed' ? 'Chuẩn bị hàng' :
                                 order.status === 'shipped' ? 'Đang giao hàng' :
                                 order.status === 'delivered' ? 'Đã giao hàng' : 'Đã hủy'}</b></>
                         )}
@@ -178,16 +179,10 @@ export default function OrderDetails() {
                     <div className="personal-order-details-product" key={idx}>
                         <img 
                             src={
-                                // Ưu tiên imageUrl từ product
-                                item.productId?.imageUrl || 
-                                // Fallback sang variant image
+                                item.image ||
+                                item.productId?.imageUrl ||
+                                imageUtils.getProductImageUrl(item.productId?.images?.[0], 'thumbnail') ||
                                 item.productId?.variants?.[0]?.imageUrl ||
-                                // Sử dụng imageUtils với variant
-                                imageUtils.getProductImageUrl(
-                                    item.productId?.variants?.[0]?.imageUrl,
-                                    'thumbnail'
-                                ) || 
-                                // Placeholder cuối cùng
                                 imageUtils.getPlaceholder('product', { width: 80, height: 80 })
                             } 
                             alt={item.productId?.name || 'Sản phẩm'} 
@@ -225,25 +220,35 @@ export default function OrderDetails() {
                     </div>
                 </div>
             </div>
-            <div className="personal-order-details-summary">
-                <div className="personal-order-details-summary-title">Tóm tắt đơn hàng</div>
-                <div className="personal-order-details-summary-row">
-                    <span>Giá trị</span>
-                    <span>{formatPrice(order.subtotal || 0)}</span>
-                </div>
-                <div className="personal-order-details-summary-row">
-                    <span>Giảm giá</span>
-                    <span>{formatPrice(order.discount || 0)}</span>
-                </div>
-                <div className="personal-order-details-summary-row">
-                    <span>Phí Ship</span>
-                    <span>{formatPrice(order.shippingFee || 0)}</span>
-                </div>
-                <div className="personal-order-details-summary-row total">
-                    <span>Tổng đơn</span>
-                    <span>{formatPrice(order.totalAmount)}</span>
-                </div>
-            </div>
+            {/* Tính toán giá trị hiển thị */}
+            {(() => {
+                const shippingFee = order.shippingCost ?? order.shippingFee ?? 0;
+                const subtotalCalc = order.subtotal ?? order.items.reduce((sum, it) => sum + (it.unitPrice || it.price) * it.quantity, 0);
+                const discount = order.discount ?? 0;
+                const grandTotal = order.totalAmount ?? subtotalCalc + shippingFee - discount;
+
+                return (
+                    <div className="personal-order-details-summary">
+                        <div className="personal-order-details-summary-title">Tóm tắt đơn hàng</div>
+                        <div className="personal-order-details-summary-row">
+                            <span>Giá trị</span>
+                            <span>{formatPrice(subtotalCalc)}</span>
+                        </div>
+                        <div className="personal-order-details-summary-row">
+                            <span>Giảm giá</span>
+                            <span>{formatPrice(discount)}</span>
+                        </div>
+                        <div className="personal-order-details-summary-row">
+                            <span>Phí Ship</span>
+                            <span>{formatPrice(shippingFee)}</span>
+                        </div>
+                        <div className="personal-order-details-summary-row total">
+                            <span>Tổng đơn</span>
+                            <span>{formatPrice(grandTotal)}</span>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

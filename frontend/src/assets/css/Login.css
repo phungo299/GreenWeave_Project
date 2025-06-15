@@ -656,7 +656,7 @@
     transition: filter 0.3s ease;
 }
 
-svg {
-    width: 15px!important;
-    height: 25px!important;
+.login-page svg {
+    height: 20px !important;
+    width: 20px !important;
 }

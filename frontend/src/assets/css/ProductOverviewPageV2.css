@@ -639,6 +639,16 @@
         font-size: 1rem;
     }
     
+    /* Shorten hero height and hide stats on very small screens */
+    .products-hero {
+        height: 45vh;
+        min-height: 320px;
+    }
+    
+    .hero-stats {
+        display: none;
+    }
+    
     .search-input {
         padding: 12px 40px 12px 16px;
     }
@@ -655,6 +665,19 @@
     .product-item-v2 {
         margin: 0 auto;
         max-width: 350px;
+    }
+    
+    .filters-section {
+        top: 60px;
+        padding: 24px 0;
+    }
+    .hero-content {
+        transform: none !important;
+        animation: none !important;
+    }
+    .hero-description {
+        max-width: 90%;
+        margin-bottom: 24px;
     }
 }
 

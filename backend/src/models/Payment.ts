@@ -4,8 +4,9 @@ export interface IPayment {
   orderId: mongoose.Types.ObjectId;
   amount: number;
   paymentMethod: "CREDIT_CARD" | "PAYPAL" | "BANK_TRANSFER" | "COD" | "PAYOS";
-  status: "pending" | "completed" | "failed";
+  status: "pending" | "completed" | "failed" | "cancelled";
   transactionId?: string;
+  payosOrderCode?: string; // For PayOS payment link cancellation
   createdAt: Date;
 }
 
@@ -24,10 +25,11 @@ const paymentSchema = new Schema<IPayment>(
     },
     status: { 
       type: String, 
-      enum: ["pending", "completed", "failed"], 
+      enum: ["pending", "completed", "failed", "cancelled"], 
       default: "pending"
     },
     transactionId: { type: String },
+    payosOrderCode: { type: String }, // For PayOS payment link cancellation
   },
   { timestamps: true }
 );

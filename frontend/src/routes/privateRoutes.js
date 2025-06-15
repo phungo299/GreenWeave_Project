@@ -1,5 +1,6 @@
 import CartPage from '../pages/CartPage';
 import PaymentPage from '../pages/PaymentPage';
+import PaymentCancel from '../pages/PaymentCancel';
 import PaymentStatus from '../statuspages/paymentstatus/PaymentStatus';
 import Personal from '../pages/Personal';
 import OrderList from '../personalpage/order/OrderList';
@@ -61,6 +62,10 @@ const privateRoutes = [
     {
         path: '/payment',
         component: PaymentPage
+    },
+    {
+        path: '/payment/cancel',
+        component: PaymentCancel
     },
     {
         path: '/payment-status',

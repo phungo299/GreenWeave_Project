@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../assets/css/Login.css';
@@ -22,6 +22,13 @@ const Login = () => {
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [userEmail, setUserEmail] = useState('');
     const [checkingAccount, setCheckingAccount] = useState(false);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
     
     // Get the redirect path after successful login
     const from = location.state?.from?.pathname || '/';
@@ -78,22 +85,28 @@ const Login = () => {
                 // If account is available (not exists), show error
                 if (response.available) {
                     const isEmail = VALIDATION_REGEX.EMAIL.test(loginValue);
-                    setErrors(prev => ({
-                        ...prev,
-                        username: isEmail ? ERROR_MESSAGES.EMAIL_NOT_REGISTERED : ERROR_MESSAGES.USERNAME_NOT_REGISTERED
-                    }));
+                    if (isMountedRef.current) {
+                        setErrors(prev => ({
+                            ...prev,
+                            username: isEmail ? ERROR_MESSAGES.EMAIL_NOT_REGISTERED : ERROR_MESSAGES.USERNAME_NOT_REGISTERED
+                        }));
+                    }
                 } else {
                     // Account exists, clear error if it was about non-existence
-                    setErrors(prev => ({
-                        ...prev,
-                        username: (prev.username === ERROR_MESSAGES.EMAIL_NOT_REGISTERED || 
-                                 prev.username === ERROR_MESSAGES.USERNAME_NOT_REGISTERED) ? '' : prev.username
-                    }));
+                    if (isMountedRef.current) {
+                        setErrors(prev => ({
+                            ...prev,
+                            username: (prev.username === ERROR_MESSAGES.EMAIL_NOT_REGISTERED || 
+                                     prev.username === ERROR_MESSAGES.USERNAME_NOT_REGISTERED) ? '' : prev.username
+                        }));
+                    }
                 }
             } catch (error) {
                 console.error('Account check error:', error);
             } finally {
-                setCheckingAccount(false);
+                if (isMountedRef.current) {
+                    setCheckingAccount(false);
+                }
             }
         }
     }, 800);
@@ -147,8 +160,10 @@ const Login = () => {
             return;
         }
 
-        setLoading(true);
-        setLoginError('');
+        if (isMountedRef.current) {
+            setLoading(true);
+            setLoginError('');
+        }
 
         try {
             const result = await login(credentials.username, credentials.password);
@@ -161,20 +176,30 @@ const Login = () => {
                 if (result.error && result.error.message) {
                     if (result.error.message.includes('chưa được xác thực')) {
                         // Account not verified
-                        setUserEmail(credentials.username);
-                        setShowVerifyModal(true);
+                        if (isMountedRef.current) {
+                            setUserEmail(credentials.username);
+                            setShowVerifyModal(true);
+                        }
                     } else {
-                        setLoginError(result.error.message);
+                        if (isMountedRef.current) {
+                            setLoginError(result.error.message);
+                        }
                     }
                 } else {
-                    setLoginError(ERROR_MESSAGES.UNKNOWN_ERROR);
+                    if (isMountedRef.current) {
+                        setLoginError(ERROR_MESSAGES.UNKNOWN_ERROR);
+                    }
                 }
             }
         } catch (error) {
             console.error('Login error:', error);
-            setLoginError(error.message || ERROR_MESSAGES.CONNECTION_ERROR);
+            if (isMountedRef.current) {
+                setLoginError(error.message || ERROR_MESSAGES.CONNECTION_ERROR);
+            }
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) {
+                setLoading(false);
+            }
         }
     };
 

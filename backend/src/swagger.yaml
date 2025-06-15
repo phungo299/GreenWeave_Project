@@ -435,6 +435,8 @@ tags:
     description: Visitor log tracking endpoints
   - name: Upload
     description: File upload endpoints
+  - name: PayOS
+    description: PayOS payment endpoints
 
 paths:
   /api/auth/register:
@@ -6077,3 +6079,92 @@ paths:
           description: Unauthorized
         '500':
           description: Server error
+
+  /api/payos/create-payment-link:
+    post:
+      tags:
+        - PayOS
+      summary: Tạo link thanh toán PayOS
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: string
+                  description: ID đơn hàng cần tạo link
+                returnUrl:
+                  type: string
+                  description: URL chuyển hướng sau thanh toán
+      responses:
+        '200':
+          description: Link thanh toán được tạo thành công
+        '400':
+          description: Dữ liệu yêu cầu không hợp lệ
+        '401':
+          description: Chưa xác thực
+        '500':
+          description: Lỗi máy chủ
+
+  /api/payos/payment-info/{id}:
+    get:
+      tags:
+        - PayOS
+      summary: Lấy thông tin thanh toán PayOS
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trả về thông tin thanh toán
+        '404':
+          description: Không tìm thấy giao dịch
+        '500':
+          description: Lỗi máy chủ
+
+  /api/payos/cancel-payment/{id}:
+    post:
+      tags:
+        - PayOS
+      summary: Hủy link thanh toán PayOS
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Hủy thành công
+        '400':
+          description: Yêu cầu không hợp lệ
+        '401':
+          description: Chưa xác thực
+        '500':
+          description: Lỗi máy chủ
+
+  /api/payos/webhook:
+    post:
+      tags:
+        - PayOS
+      summary: Webhook PayOS (không cần auth)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook received
+        '500':
+          description: Lỗi máy chủ

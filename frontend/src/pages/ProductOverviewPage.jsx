@@ -244,7 +244,7 @@ const ProductOverviewPage = () => {
                 <div className="hero-content">
                     <div className="container">
                         <AnimatedSection variants={slideUp}>
-                        <h1 className="hero-title">Bộ Sưu Tập</h1>
+                        <h1 className="hero-title" id="bosutap">Bộ Sưu Tập</h1>
                         </AnimatedSection>
                         <AnimatedSection variants={fadeIn} delay={0.1}>
                         <h2 className="hero-subtitle">Thời Trang Bền Vững</h2>

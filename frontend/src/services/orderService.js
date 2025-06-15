@@ -458,6 +458,10 @@ const orderService = {
         }
 
         return errors;
+    },
+
+    retryPayment: async (orderId) => {
+        return axiosClient.post(`/orders/${orderId}/retry-payment`);
     }
 };
 

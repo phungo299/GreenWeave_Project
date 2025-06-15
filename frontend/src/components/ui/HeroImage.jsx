@@ -58,12 +58,14 @@ const HeroImage = ({ src, alt, className, fallbackSrc, ...props }) => {
                 }}
                 {...props}
             />
-            <style jsx>{`
+            <style>
+                {`
                 @keyframes shimmer {
                     0% { background-position: -20px 0; }
                     100% { background-position: 20px 0; }
                 }
-            `}</style>
+                `}
+            </style>
         </div>
     );
 };

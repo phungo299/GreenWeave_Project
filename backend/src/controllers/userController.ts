@@ -734,6 +734,17 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Helper to ensure user.address is always an array and persist conversion
+const ensureAddressArray = async (user: any) => {
+  if (!user.address) {
+    user.address = [];
+    await user.save();
+  } else if (!Array.isArray(user.address)) {
+    user.address = [user.address];
+    await user.save();
+  }
+};
+
 export const getUserAddresses = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?._id;
@@ -750,25 +761,9 @@ export const getUserAddresses = async (req: AuthRequest, res: Response) => {
         .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
-    // Nếu address là object, chuyển thành array
-    let addresses = [];
-    if (user.address) {
-      if (Array.isArray(user.address)) {
-        addresses = user.address;
-      } else {
-        // Nếu address là object, chuyển thành array với 1 phần tử
-        addresses = [{
-          id: "default",
-          street: user.address.street || "",
-          city: user.address.city || "",
-          state: user.address.state || "",
-          zipCode: user.address.zipCode || "",
-          country: user.address.country || "",
-          isDefault: true
-        }];
-      }
-    }
-    
+    await ensureAddressArray(user);
+    const addresses = Array.isArray(user.address) ? user.address : [];
+
     return res.status(200).json({ 
       success: true,
       data: addresses 
@@ -816,6 +811,8 @@ export const addUserAddress = async (req: AuthRequest, res: Response) => {
         .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
+    await ensureAddressArray(user);
+
     // Tạo địa chỉ mới với cấu trúc linh hoạt
     const newAddress: any = {
       _id: new Date().getTime().toString(),
@@ -841,11 +838,6 @@ export const addUserAddress = async (req: AuthRequest, res: Response) => {
       newAddress.state = state || "";
       newAddress.zipCode = zipCode || "";
       newAddress.country = country || "Vietnam";
-    }
-
-    // Khởi tạo addresses array nếu chưa có
-    if (!user.address || !Array.isArray(user.address)) {
-      user.address = [];
     }
 
     // Nếu địa chỉ mới là default, bỏ default của các địa chỉ khác
@@ -913,11 +905,17 @@ export const updateUserAddress = async (req: AuthRequest, res: Response) => {
         .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
+    await ensureAddressArray(user);
+
     if (!user.address || !Array.isArray(user.address)) {
       return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
     }
 
-    const addressIndex = user.address.findIndex((addr: any) => addr._id === addressId || addr.id === addressId);
+    const addressIndex = user.address.findIndex((addr: any) => {
+      const aid = addr._id ? addr._id.toString() : null;
+      const plainId = addr.id ? addr.id.toString() : null;
+      return aid === addressId.toString() || plainId === addressId.toString();
+    });
     
     if (addressIndex === -1) {
       return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
@@ -996,11 +994,17 @@ export const deleteUserAddress = async (req: AuthRequest, res: Response) => {
         .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
+    await ensureAddressArray(user);
+
     if (!user.address || !Array.isArray(user.address)) {
       return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
     }
 
-    const addressIndex = user.address.findIndex((addr: any) => addr._id === addressId || addr.id === addressId);
+    const addressIndex = user.address.findIndex((addr: any) => {
+      const aid = addr._id ? addr._id.toString() : null;
+      const plainId = addr.id ? addr.id.toString() : null;
+      return aid === addressId.toString() || plainId === addressId.toString();
+    });
     
     if (addressIndex === -1) {
       return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
@@ -1039,11 +1043,17 @@ export const setDefaultAddress = async (req: AuthRequest, res: Response) => {
         .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
+    await ensureAddressArray(user);
+
     if (!user.address || !Array.isArray(user.address)) {
       return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
     }
 
-    const addressIndex = user.address.findIndex((addr: any) => addr._id === addressId || addr.id === addressId);
+    const addressIndex = user.address.findIndex((addr: any) => {
+      const aid = addr._id ? addr._id.toString() : null;
+      const plainId = addr.id ? addr.id.toString() : null;
+      return aid === addressId.toString() || plainId === addressId.toString();
+    });
     
     if (addressIndex === -1) {
       return res.status(404).json({ message: "Không tìm thấy địa chỉ" });

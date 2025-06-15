@@ -183,7 +183,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
       if (targetOrder.paymentId) {
         const payment = await Payment.findById(targetOrder.paymentId);
         if (payment) {
-          payment.status = "failed";
+          payment.status = "cancelled"; // ✅ FIXED: Use "cancelled" instead of "failed"
           await payment.save();
         }
       }

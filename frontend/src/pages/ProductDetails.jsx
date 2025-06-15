@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/layout/header/Header';
 import Footer from '../components/layout/footer/Footer';
@@ -8,6 +8,12 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/common/Toast';
 import AnimatedSection from '../components/common/AnimatedSection';
 import productService from '../services/productService';
+import { 
+    isProductAvailable, 
+    getStockStatus, 
+    canIncreaseQuantity,
+    getStockWarningMessage 
+} from '../utils/stockUtils';
 import '../assets/css/ProductDetails.css';
 
 import starIcon from '../assets/icons/star.png';
@@ -29,6 +35,10 @@ const ProductDetails = () => {
     const [quantity, setQuantity] = useState(1);
     const [activeRecommendationDot, setActiveRecommendationDot] = useState(0);
     const [recommendedProducts, setRecommendedProducts] = useState([]);
+    
+    // Stock-related state
+    const [stockStatus, setStockStatus] = useState(null);
+    const [isOutOfStock, setIsOutOfStock] = useState(false);
 
     // Size options
     const sizeOptions = useMemo(() => ['S', 'M', 'L', 'XL', 'XXL'], []);
@@ -53,7 +63,7 @@ const ProductDetails = () => {
                 if (response && response.data) {
                     const productData = response.data;
                     // Set product data
-                    setProduct({
+                    const productObj = {
                         id: productData._id,
                         name: productData.name || productData.title,
                         description: productData.description || 'Sản phẩm bền vững',
@@ -68,7 +78,14 @@ const ProductDetails = () => {
                         selectedSize: productData.selectedSize,
                         rating: productData.rating || 5,
                         reviewCount: productData.reviewCount || 0
-                    });  
+                    };
+                    
+                    setProduct(productObj);
+                    
+                    // Update stock status
+                    const stockInfo = getStockStatus(productObj);
+                    setStockStatus(stockInfo);
+                    setIsOutOfStock(!stockInfo.isAvailable);  
                     // Set initial selected values if available
                     if (productData.selectedSize) {
                         setSelectedSize(productData.selectedSize);
@@ -152,24 +169,34 @@ const ProductDetails = () => {
         setSelectedColor(color);
     };
   
-    // Handler for quantity increment/decrement
+    // Handler for quantity increment/decrement with stock validation
     const handleQuantityChange = (action) => {
+        if (!product) return;
+        
         if (action === 'increment') {
-            // Check if current quantity has reached stock limit
-            if (product.quantity && quantity < product.quantity) {
+            // Use stockUtils to check if can increase quantity
+            if (canIncreaseQuantity(product, quantity)) {
                 setQuantity(quantity + 1);
             } else {
-                // Notify user that limit has been reached
-                showWarning(`Số lượng tối đa có thể đặt là ${product.quantity}`);
+                // Show warning with stock-aware message
+                const warningMsg = getStockWarningMessage(product, quantity + 1);
+                showWarning(warningMsg || `Số lượng tối đa có thể đặt là ${product.quantity}`);
             }
         } else if (action === 'decrement' && quantity > 1) {
             setQuantity(quantity - 1);
         }
     };
   
-    // Handler for adding to cart with optimistic updates
+    // Handler for adding to cart with comprehensive stock validation
     const handleAddToCart = async () => {
         if (!product) return;      
+        
+        // Check if product is available for purchase
+        if (!isProductAvailable(product)) {
+            const stockInfo = getStockStatus(product);
+            showWarning(`Không thể thêm vào giỏ hàng. Sản phẩm ${stockInfo.message.toLowerCase()}.`);
+            return;
+        }
         
         // Validate selections
         if (!selectedColor || !selectedSize) {
@@ -182,9 +209,10 @@ const ProductDetails = () => {
             return;
         }
 
-        // Check stock availability
-        if (product.quantity && quantity > product.quantity) {
-            showWarning(`Chỉ còn ${product.quantity} sản phẩm trong kho!`);
+        // Check stock availability with enhanced validation
+        const warningMsg = getStockWarningMessage(product, quantity);
+        if (warningMsg) {
+            showWarning(warningMsg);
             return;
         }
 
@@ -217,7 +245,7 @@ const ProductDetails = () => {
         }
     };
     
-    // Enhanced Buy Now handler with proper auth check
+    // Enhanced Buy Now handler with comprehensive stock validation
     const handleBuyNow = async () => {
         if (!isAuthenticated) {
             // Redirect to login if not authenticated
@@ -227,6 +255,13 @@ const ProductDetails = () => {
                     message: 'Vui lòng đăng nhập để mua hàng'
                 }
             });
+            return;
+        }
+        
+        // Check if product is available for purchase
+        if (!isProductAvailable(product)) {
+            const stockInfo = getStockStatus(product);
+            showWarning(`Không thể mua hàng. Sản phẩm ${stockInfo.message.toLowerCase()}.`);
             return;
         }
 
@@ -241,9 +276,10 @@ const ProductDetails = () => {
             return;
         }
 
-        // Check stock availability
-        if (product.quantity && quantity > product.quantity) {
-            showWarning(`Chỉ còn ${product.quantity} sản phẩm trong kho!`);
+        // Check stock availability with enhanced validation
+        const warningMsg = getStockWarningMessage(product, quantity);
+        if (warningMsg) {
+            showWarning(warningMsg);
             return;
         }
 
@@ -414,28 +450,28 @@ const ProductDetails = () => {
                             <AnimatedSection animation="slideUp" delay={1.4}>
                                 <div className="product-details-quantity">
                                     <div className="product-details-quantity-title">
-                                        Số lượng: <span className="product-details-quantity-available">
-                                            {product.quantity ? `(Còn ${product.quantity} sản phẩm)` : ''}
+                                        Số lượng: <span className={`product-details-quantity-available ${isOutOfStock ? 'out-of-stock' : ''}`}>
+                                            {stockStatus ? `(${stockStatus.message})` : ''}
                                         </span>
                                     </div>
                                     <div className="product-details-quantity-control">
                                         <button 
                                             className="product-details-quantity-btn" 
                                             onClick={() => handleQuantityChange('decrement')}
-                                            disabled={quantity <= 1}
+                                            disabled={quantity <= 1 || isOutOfStock}
                                         >
                                             -
                                         </button>
                                         <input 
                                             type="text" 
-                                            className="product-details-quantity-value" 
+                                            className={`product-details-quantity-value ${isOutOfStock ? 'disabled' : ''}`} 
                                             value={quantity.toString().padStart(2, '0')} 
                                             readOnly 
                                         />
                                         <button 
                                             className="product-details-quantity-btn" 
                                             onClick={() => handleQuantityChange('increment')}
-                                            disabled={product.quantity && quantity >= product.quantity}
+                                            disabled={isOutOfStock || !canIncreaseQuantity(product, quantity)}
                                         >
                                             +
                                         </button>
@@ -445,14 +481,22 @@ const ProductDetails = () => {
                             <AnimatedSection animation="slideUp" delay={1.5}>
                                 <div className="product-details-actions">
                                     <AnimatedSection animation="zoomIn" delay={1.6} hoverEffect="zoom">
-                                        <button className="product-details-add-to-cart-btn" onClick={handleAddToCart}>
+                                        <button 
+                                            className={`product-details-add-to-cart-btn ${isOutOfStock ? 'disabled' : ''}`} 
+                                            onClick={handleAddToCart}
+                                            disabled={isOutOfStock}
+                                        >
                                             <img src={cartIcon} alt="cart" style={{ width: '20px', marginRight: '10px', filter: 'brightness(0) saturate(100%) invert(22%) sepia(27%) saturate(606%) hue-rotate(111deg) brightness(93%) contrast(87%)' }} />
-                                            Thêm vào giỏ hàng
+                                            {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
                                         </button>
                                     </AnimatedSection>
                                     <AnimatedSection animation="zoomIn" delay={1.7} hoverEffect="zoom">
-                                        <button className="product-details-buy-btn" onClick={handleBuyNow}>
-                                            Mua hàng
+                                        <button 
+                                            className={`product-details-buy-btn ${isOutOfStock ? 'disabled' : ''}`} 
+                                            onClick={handleBuyNow}
+                                            disabled={isOutOfStock}
+                                        >
+                                            {isOutOfStock ? 'Không thể mua' : 'Mua hàng'}
                                         </button>
                                     </AnimatedSection>
                                     <AnimatedSection animation="zoomIn" delay={1.8} hoverEffect="zoom">

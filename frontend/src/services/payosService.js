@@ -49,12 +49,11 @@ const createOrder = async (orderData) => {
     // Format 4: Check for error responses that might be misinterpreted
     if (res && res.success === false) {
       console.log('📦 Explicit error response detected');
-      throw {
-        success: false,
-        message: res.message || "Không thể tạo đơn hàng",
-        status: res.status || 400,
-        data: res.data || null
-      };
+      const error = new Error(res.message || "Không thể tạo đơn hàng");
+      error.success = false;
+      error.status = res.status || 400;
+      error.data = res.data || null;
+      throw error;
     }
     
     // Format 5: Unexpected response format
@@ -69,12 +68,11 @@ const createOrder = async (orderData) => {
     }
     
     // Completely invalid response
-    throw {
-      success: false,
-      message: "Response không hợp lệ từ server",
-      status: 500,
-      data: null
-    };
+    const error = new Error("Response không hợp lệ từ server");
+    error.success = false;
+    error.status = 500;
+    error.data = null;
+    throw error;
     
   } catch (error) {
     console.error('❌ Order service error:', error);
@@ -99,22 +97,20 @@ const createOrder = async (orderData) => {
       }
       
       // Fallback: re-throw with clearer message
-      throw {
-        success: false,
-        message: "Lỗi server: thông báo thành công nhưng không có dữ liệu hợp lệ",
-        status: 500,
-        data: null
-      };
+      const error = new Error("Lỗi server: thông báo thành công nhưng không có dữ liệu hợp lệ");
+      error.success = false;
+      error.status = 500;
+      error.data = null;
+      throw error;
     }
     
     // Handle real errors
     // Re-throw with proper structure for frontend
-    throw {
-      success: false,
-      message: error.message || error?.response?.data?.message || "Không thể tạo đơn hàng",
-      status: error.status || error?.response?.status || 500,
-      data: error.data || error?.response?.data || null
-    };
+    const finalError = new Error(error.message || error?.response?.data?.message || "Không thể tạo đơn hàng");
+    finalError.success = false;
+    finalError.status = error.status || error?.response?.status || 500;
+    finalError.data = error.data || error?.response?.data || null;
+    throw finalError;
   }
 };
 

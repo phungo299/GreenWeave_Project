@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { Cart, Order, Payment, Product } from "../models";
+import payosService from "../services/payosService";
 
 // Lấy tất cả đơn hàng của người dùng
 export const getUserOrders = async (req: Request, res: Response) => {
@@ -20,7 +21,7 @@ export const getUserOrders = async (req: Request, res: Response) => {
       .populate("paymentId")
       .populate({
         path: "items.productId",
-        select: "name price description imageUrl variants slug"
+        select: "name price description imageUrl images variants slug"
       });
     
     return res.status(200).json({
@@ -55,7 +56,7 @@ export const getOrderById = async (req: Request, res: Response) => {
       .populate("paymentId")
       .populate({
         path: "items.productId",
-        select: "name price description imageUrl variants slug"
+        select: "name price description imageUrl images variants slug"
       });
     
     if (!order) {
@@ -102,6 +103,17 @@ export const createOrder = async (req: Request, res: Response) => {
       return res.status(400).json({ 
         success: false,
         message: "ID người dùng không hợp lệ",
+        data: null
+      });
+    }
+    
+    // 🚨 CRITICAL FIX: Validate shipping address for ALL order creation flows
+    if (!shippingAddress || shippingAddress.trim() === '') {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: "Địa chỉ giao hàng là bắt buộc và không được để trống",
         data: null
       });
     }
@@ -155,13 +167,6 @@ export const createOrder = async (req: Request, res: Response) => {
       }
     } else {
       // Legacy flow: get items from cart
-      if (!shippingAddress) {
-        return res.status(400).json({ 
-          success: false,
-          message: "Địa chỉ giao hàng là bắt buộc",
-          data: null
-        });
-      }
       
       const cart = await Cart.findOne({ userId }).session(session);
       if (!cart || cart.items.length === 0) {
@@ -231,7 +236,8 @@ export const createOrder = async (req: Request, res: Response) => {
       shippingCost: shippingCost || 0,
       status,
       shippingAddress,
-      paymentMethod: paymentMethod?.toUpperCase() || "COD"
+      paymentMethod: paymentMethod?.toUpperCase() || "COD",
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000) // +10 phút
     });
     
     const savedOrder = await newOrder.save({ session });
@@ -258,7 +264,7 @@ export const createOrder = async (req: Request, res: Response) => {
       .populate("paymentId")
       .populate({
         path: "items.productId",
-        select: "name price description imageUrl"
+        select: "name price description imageUrl images"
       });
     
     return res.status(201).json({
@@ -281,7 +287,144 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-// Cập nhật trạng thái đơn hàng
+// 🚀 NEW: Hủy đơn hàng với atomic transaction + PayOS cancellation
+export const cancelOrder = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    const { orderId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: "ID đơn hàng không hợp lệ",
+        data: null
+      });
+    }
+    
+    // Tìm đơn hàng và populate payment
+    const order = await Order.findById(orderId).populate("paymentId").session(session);
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ 
+        success: false,
+        message: "Không tìm thấy đơn hàng",
+        data: null
+      });
+    }
+    
+    // Kiểm tra đơn hàng đã hoàn thành hay đã hủy chưa
+    if (order.status === "delivered" || order.status === "cancelled") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: `Không thể hủy đơn hàng đã ${order.status === "delivered" ? "hoàn thành" : "hủy"}`,
+        data: null
+      });
+    }
+    
+    console.log(`🔄 Cancelling order ${orderId} with payment method: ${order.paymentMethod}`);
+    
+    // 1. Hoàn lại số lượng tồn kho
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { quantity: item.quantity } },
+        { session }
+      );
+      console.log(`✅ Restored ${item.quantity} units for product ${item.productId}`);
+    }
+    
+    // 2. Cập nhật trạng thái đơn hàng
+    order.status = "cancelled";
+    await order.save({ session });
+    console.log(`✅ Order ${orderId} status updated to cancelled`);
+    
+    // 3. Xử lý payment cancellation
+    if (order.paymentId) {
+      const payment = order.paymentId as any; // Type assertion for populated field
+      
+      if (payment && payment.status === "pending") {
+        // Update payment status
+        payment.status = "cancelled";
+        await payment.save({ session });
+        console.log(`✅ Payment ${payment._id} status updated to cancelled`);
+        
+        // 4. Cancel PayOS payment link if applicable
+        if (order.paymentMethod === "PAYOS" && payment.payosOrderCode) {
+          try {
+            console.log(`🔗 Attempting to cancel PayOS payment link: ${payment.payosOrderCode}`);
+            const cancelResult = await payosService.cancelPaymentLink(payment.payosOrderCode);
+            
+            if (cancelResult.success) {
+              console.log(`✅ PayOS payment link cancelled successfully`);
+            } else {
+              console.warn(`⚠️ PayOS cancellation failed: ${cancelResult.error}`);
+              // Don't fail the entire transaction for PayOS errors
+            }
+          } catch (payosError: any) {
+            console.warn(`⚠️ PayOS cancellation error: ${payosError.message}`);
+            // Don't fail the entire transaction for PayOS errors
+          }
+        } else if (order.paymentMethod === "PAYOS") {
+          // Try to cancel using order ID if payosOrderCode not available  
+          try {
+            const orderCodeFromId = parseInt(order._id.toString().slice(-8), 16);
+            console.log(`🔗 Attempting to cancel PayOS payment using generated orderCode: ${orderCodeFromId}`);
+            const cancelResult = await payosService.cancelPaymentLink(orderCodeFromId.toString());
+            
+            if (cancelResult.success) {
+              console.log(`✅ PayOS payment link cancelled using generated orderCode`);
+            } else {
+              console.warn(`⚠️ PayOS cancellation with generated orderCode failed: ${cancelResult.error}`);
+            }
+          } catch (payosError: any) {
+            console.warn(`⚠️ PayOS cancellation with generated orderCode error: ${payosError.message}`);
+          }
+        }
+      } else {
+        console.log(`ℹ️ Payment ${payment._id} status is ${payment.status}, no cancellation needed`);
+      }
+    } else {
+      console.log(`ℹ️ No payment record found for order ${orderId}`);
+    }
+    
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+    
+    console.log(`🎉 Order ${orderId} successfully cancelled with all related operations completed`);
+    
+    // Return updated order
+    const updatedOrder = await Order.findById(orderId).populate("paymentId").populate({
+      path: "items.productId",
+      select: "name price description imageUrl images variants slug"
+    });
+    
+    return res.status(200).json({
+      success: true,
+      message: "Đơn hàng đã được hủy thành công",
+      data: updatedOrder
+    });
+    
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('❌ Error in cancelOrder:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi hủy đơn hàng",
+      data: null
+    });
+  }
+};
+
+// Cập nhật trạng thái đơn hàng 
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const orderId = req.params.id;
@@ -760,5 +903,52 @@ export const createTestOrder = async (req: Request, res: Response) => {
       message: error.message || "Lỗi server khi tạo đơn hàng test",
       data: null
     });
+  }
+};
+
+export const retryPayment = async (req: Request, res: Response) => {
+  try {
+    const orderId = req.params.id;
+    const userId = (req as any).user?._id;
+
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ success: false, message: "Order ID không hợp lệ", data: null });
+    }
+
+    const order = await Order.findById(orderId).populate("paymentId");
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng", data: null });
+    }
+
+    if (order.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: "Không có quyền truy cập", data: null });
+    }
+
+    if (!["pending", "expired"].includes(order.status)) {
+      return res.status(400).json({ success: false, message: "Đơn hàng không thể thanh toán lại", data: null });
+    }
+
+    const amount = order.totalAmount;
+    const newLink = await payosService.createPaymentLink({
+      orderId: order._id.toString(),
+      amount,
+      description: `Thanh toán đơn hàng ${order._id}`,
+      returnUrl: `${process.env.FRONTEND_URL}/payment/success`,
+      cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel`
+    });
+
+    if (newLink.success) {
+      order.status = "pending";
+      order.expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await order.save();
+
+      return res.status(200).json({ success: true, checkoutUrl: newLink.data.checkoutUrl });
+    }
+
+    return res.status(500).json({ success: false, message: newLink.error || "Không tạo được link thanh toán" });
+  } catch (error: any) {
+    console.error("Retry payment error", error);
+    return res.status(500).json({ success: false, message: error.message || "Lỗi server" });
   }
 };

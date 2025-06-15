@@ -1,12 +1,11 @@
+import "./loadEnv";
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
-import YAML from "yamljs";
-// @ts-ignore
-dotenv.config();
+import * as YAML from "yamljs";
+import { startOrderExpiryJob } from "./jobs/orderExpiryJob";
 
 // Routes
 import {
@@ -30,12 +29,9 @@ import {
 
 const app = express();
 
-// Load swagger document
-const swaggerPath = path.resolve(__dirname, "swagger.yaml");
-const swaggerDocument = YAML.load(swaggerPath);
-
-// Update swagger server URL from env
-swaggerDocument.servers[0].url = process.env.API_URL || "http://localhost:5000";
+// Đọc file swagger.yaml đã được sinh tự động bởi script generate-swagger
+const swaggerPath = path.resolve(__dirname, "./swagger.yaml");
+const swaggerSpec = YAML.load(swaggerPath);
 
 // CORS Configuration - Environment Based
 const allowedOrigins = process.env.CORS_ORIGIN 
@@ -80,7 +76,7 @@ app.get("/", (_req, res) => {
   res.send("Welcome to the GreenWeave API");
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "GreenWeave API Documentation"
 }));
@@ -121,6 +117,9 @@ if (require.main === module) {
         console.log(`Server started at ${new Date().toISOString()}`);
         console.log(`Server is running on port ${port}`);
         console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${port}`}/api-docs`);
+
+        // Start background jobs
+        startOrderExpiryJob();
       });
     })
     .catch((error) => {
@@ -134,3 +133,4 @@ if (require.main === module) {
       process.exit(1); // Thoát process nếu không kết nối được database
     });
 }
+

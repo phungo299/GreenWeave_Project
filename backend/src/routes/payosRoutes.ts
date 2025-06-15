@@ -4,15 +4,19 @@ import { createPaymentLink, getPaymentInfo, cancelPaymentLink, handleWebhook } f
 
 const router = Router();
 
-// PayOS routes (with auth)
+// POST /api/payos/create-payment-link - Tạo link thanh toán PayOS
 router.post("/create-payment-link", verifyToken, createPaymentLink);
-router.get("/payment-info/:id", verifyToken, getPaymentInfo);
+
+// GET /api/payos/payment-info/:id - Lấy thông tin thanh toán PayOS
+router.get("/payment-info/:id", getPaymentInfo);
+
+// POST /api/payos/cancel-payment/:id - Hủy link thanh toán PayOS
 router.post("/cancel-payment/:id", verifyToken, cancelPaymentLink);
 
 // Test routes (no auth for testing)
 router.post("/test/create-payment-link", createPaymentLink);
 
-// Webhook (no auth)
+// POST /api/payos/webhook - Webhook PayOS
 router.post("/webhook", handleWebhook);
 
 export default router; 

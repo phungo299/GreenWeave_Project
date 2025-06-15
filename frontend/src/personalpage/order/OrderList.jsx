@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import personalService from '../../services/personalService';
+import orderService from '../../services/orderService';
 import imageUtils from '../../utils/imageUtils';
 import SafeImage from '../../components/common/SafeImage';
 import './OrderList.css';
@@ -45,7 +45,7 @@ const OrderList = () => {
                 setLoading(true);
                 setError(null);
                 
-                const response = await personalService.getUserOrders(userId);
+                const response = await orderService.getUserOrders(userId);
                 
                 // Xử lý response format mới
                 if (response && response.success && response.data) {
@@ -86,26 +86,47 @@ const OrderList = () => {
         }).format(price);
     };
 
-    // Format trạng thái đơn hàng
-    const getStatusText = (status) => {
-        const statusMap = {
-            'pending': 'Đang xử lý',
-            'shipped': 'Đang giao hàng',
-            'delivered': 'Đã giao hàng',
-            'cancelled': 'Đã hủy'
-        };
-        return statusMap[status] || status;
+    // Format trạng thái đơn hàng (xét thêm paymentMethod)
+    const getStatusText = (status, paymentMethod) => {
+        if (status === 'pending') {
+            return paymentMethod === 'COD' ? 'Chờ xác nhận' : 'Chưa thanh toán';
+        }
+        if (status === 'confirmed') return 'Chuẩn bị hàng';
+        if (status === 'expired') return 'Đã hết hạn';
+        if (status === 'shipped') return 'Đang giao hàng';
+        if (status === 'delivered') return 'Đã giao hàng';
+        if (status === 'cancelled') return 'Đã hủy';
+        return status;
     };
 
     // Lấy class CSS cho trạng thái
     const getStatusClass = (status) => {
         const classMap = {
             'pending': 'pending',
+            'confirmed': 'processing',
+            'expired': 'expired',
             'shipped': 'shipping',
             'delivered': 'delivered',
             'cancelled': 'cancelled'
         };
         return classMap[status] || 'pending';
+    };
+
+    // Xử lý thanh toán lại
+    const handleRetryPayment = async (orderId) => {
+        try {
+            const response = await orderService.retryPayment(orderId);
+            if (response && response.data && response.data.checkoutUrl) {
+                window.location.href = response.data.checkoutUrl;
+            } else if (response && response.checkoutUrl) {
+                window.location.href = response.checkoutUrl;
+            } else {
+                alert('Không thể tạo link thanh toán mới, vui lòng thử lại sau.');
+            }
+        } catch (err) {
+            console.error('Retry payment error:', err);
+            alert(err.message || 'Không thể thanh toán lại đơn hàng.');
+        }
     };
 
     // Render loading state
@@ -180,11 +201,10 @@ const OrderList = () => {
                                     <div className="personal-order-main-item">
                                         <SafeImage 
                                             src={
-                                                // Ưu tiên imageUrl từ product
-                                                order.items[0].productId?.imageUrl || 
-                                                // Fallback sang variant image
+                                                order.items[0].image ||
+                                                order.items[0].productId?.imageUrl ||
+                                                imageUtils.getProductImageUrl(order.items[0].productId?.images?.[0], 'thumbnail') ||
                                                 order.items[0].productId?.variants?.[0]?.imageUrl ||
-                                                // Sử dụng imageUtils với variant
                                                 imageUtils.getProductImageUrl(
                                                     order.items[0].productId?.variants?.[0]?.imageUrl,
                                                     'thumbnail'
@@ -226,7 +246,7 @@ const OrderList = () => {
                                         <span className="personal-order-total-amount">{formatPrice(order.totalAmount)}</span>
                                     </div>
                                     <div className={`personal-order-status ${getStatusClass(order.status)}`}>
-                                        {getStatusText(order.status)}
+                                        {getStatusText(order.status, order.paymentMethod)}
                                     </div>
                                 </div>
                                 
@@ -237,6 +257,14 @@ const OrderList = () => {
                                     >
                                         Xem chi tiết
                                     </button>
+                                    {['expired', 'pending'].includes(order.status) && order.paymentMethod !== 'COD' && (
+                                        <button
+                                            className="personal-order-button retry"
+                                            onClick={() => handleRetryPayment(order._id)}
+                                        >
+                                            Thanh toán lại
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

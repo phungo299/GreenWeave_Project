@@ -5,6 +5,7 @@ import Footer from "../components/layout/footer/Footer";
 import payosService from "../services/payosService";
 import { useToast } from "../components/common/Toast";
 import "../assets/css/PaymentPage.css";
+import { useCart } from "../context/CartContext";
 
 const PaymentSuccess = () => {
   const [params] = useSearchParams();
@@ -13,6 +14,7 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [paymentData, setPaymentData] = useState(null);
   const toastShown = useRef(false); // Track if toast has been shown
+  const { cartItems, clearCart } = useCart();
 
   useEffect(() => {
     const fetchPaymentInfo = async () => {
@@ -78,11 +80,24 @@ const PaymentSuccess = () => {
         }
       } catch (error) {
         console.error("Error fetching payment info:", error);
-        setPaymentData({
-          method: "Error",
-          status: "error",
-          message: "Có lỗi xảy ra khi kiểm tra thông tin thanh toán"
-        });
+
+        // 🔄 Fallback: nếu query string báo status=PAID thì hiển thị thành công dù API lỗi
+        const qsStatus = params.get("status");
+        const qsOrderCode = params.get("orderCode");
+        if (qsStatus === "PAID" && qsOrderCode) {
+          setPaymentData({
+            method: "PayOS",
+            orderCode: qsOrderCode,
+            status: "PAID",
+            message: "Thanh toán PayOS thành công! (fallback)"
+          });
+        } else {
+          setPaymentData({
+            method: "Error",
+            status: "error",
+            message: "Có lỗi xảy ra khi kiểm tra thông tin thanh toán"
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -96,6 +111,11 @@ const PaymentSuccess = () => {
     if (paymentData && !loading && !toastShown.current) {
       toastShown.current = true; // Mark toast as shown
       
+      // Clear cart once if payment success
+      if (["PAID", "confirmed", "success"].includes(paymentData.status) && cartItems.length > 0) {
+        clearCart();
+      }
+
       if (paymentData.method === "COD" && paymentData.status === "confirmed") {
         showSuccess("Đặt hàng COD thành công!");
       } else if (paymentData.method === "PayOS (Test)" && paymentData.status === "PAID") {
@@ -108,7 +128,7 @@ const PaymentSuccess = () => {
         showError("Lỗi kiểm tra thanh toán");
       }
     }
-  }, [paymentData, loading, showSuccess, showError]);
+  }, [paymentData, loading, showSuccess, showError, cartItems, clearCart]);
 
   if (loading) {
     return (
@@ -146,12 +166,12 @@ const PaymentSuccess = () => {
                 <div className={`status-icon ${isSuccess ? 'success-icon' : 'warning-icon'}`}>
                   <div className="icon-circle">
                     {isSuccess ? (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <path d="M9 12l2 2 4-4" />
                         <circle cx="12" cy="12" r="10" />
                       </svg>
                     ) : (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -224,7 +244,7 @@ const PaymentSuccess = () => {
                   Tiếp tục mua sắm
                 </button>
                 <button 
-                  onClick={() => navigate('/orders')} 
+                  onClick={() => navigate('/personal/orders')} 
                   className="btn-secondary btn-large"
                 >
                   Xem đơn hàng

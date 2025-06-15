@@ -7,6 +7,7 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AddressProvider } from './context/AddressContext';
 import { ToastProvider } from './components/common/Toast';
 import Personal from './pages/Personal';
 import NotificationContainer from './components/ui/notification/NotificationContainer';
@@ -44,6 +45,7 @@ function App() {
 
     return (
         <AuthProvider>
+            <AddressProvider>
             <CartProvider>
                 <ToastProvider>
                     <Router>
@@ -106,6 +108,7 @@ function App() {
                 </Router>
                 </ToastProvider>
             </CartProvider>
+            </AddressProvider>
         </AuthProvider>
     );
 }

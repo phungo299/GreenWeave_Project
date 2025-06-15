@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import InputField from '../../components/ui/inputfield/InputField';
 import personalService from '../../services/personalService';
 import vietnamLocationService from '../../services/vietnamLocationService';
+import { useAddresses } from '../../context/AddressContext';
 import './PersonalAddress.css';
 
 const PersonalAddress = () => {
@@ -41,8 +42,7 @@ const PersonalAddress = () => {
         zipCode: '',
     });
 
-    const [addresses, setAddresses] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { addresses, loading, fetchAddresses, deleteAddress: ctxDeleteAddress, addAddress: ctxAddAddress, updateAddress: ctxUpdateAddress, setDefaultAddress: ctxSetDefault } = useAddresses();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [editingAddress, setEditingAddress] = useState(null);
@@ -51,7 +51,6 @@ const PersonalAddress = () => {
     // Load provinces and addresses on mount
     useEffect(() => {
         loadProvinces();
-        fetchAddresses();
     }, []);
 
     // Load provinces from API
@@ -91,27 +90,6 @@ const PersonalAddress = () => {
             setSelectedWard(null);
         } catch (error) {
             console.error('Error loading wards:', error);
-        }
-    };
-
-    // Fetch user addresses
-    const fetchAddresses = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            const response = await personalService.getAddresses();
-            
-            if (response && response.data) {
-                setAddresses(response.data);
-            } else {
-                setAddresses([]);
-            }
-        } catch (err) {
-            console.error('Error fetching addresses:', err);
-            setError(err.message || 'Không thể tải danh sách địa chỉ');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -282,11 +260,11 @@ const PersonalAddress = () => {
             
             if (editingAddress) {
                 // Update existing address
-                await personalService.updateAddress(editingAddress._id || editingAddress.id, addressData);
+                await ctxUpdateAddress(editingAddress._id || editingAddress.id, addressData);
                 window.toast?.success('Địa chỉ đã được cập nhật thành công!');
             } else {
                 // Add new address
-                await personalService.addAddress(addressData);
+                await ctxAddAddress(addressData);
                 window.toast?.success('Địa chỉ đã được thêm thành công!');
             }
             
@@ -302,9 +280,6 @@ const PersonalAddress = () => {
             setWards([]);
             setEditingAddress(null);
             setShowAddForm(false);
-            
-            // Refresh addresses list
-            await fetchAddresses();
             
         } catch (err) {
             console.error('Error saving address:', err);
@@ -391,9 +366,8 @@ const PersonalAddress = () => {
         }
         
         try {
-            await personalService.deleteAddress(addressId);
+            await ctxDeleteAddress(addressId);
             window.toast?.success('Địa chỉ đã được xóa thành công!');
-            await fetchAddresses();
         } catch (err) {
             console.error('Error deleting address:', err);
             window.toast?.error('Không thể xóa địa chỉ');
@@ -403,9 +377,8 @@ const PersonalAddress = () => {
     // Handle set default address
     const handleSetDefaultAddress = async (addressId) => {
         try {
-            await personalService.setDefaultAddress(addressId);
+            await ctxSetDefault(addressId);
             window.toast?.success('Đã đặt làm địa chỉ mặc định!');
-            await fetchAddresses();
         } catch (err) {
             console.error('Error setting default address:', err);
             window.toast?.error('Không thể đặt làm địa chỉ mặc định');

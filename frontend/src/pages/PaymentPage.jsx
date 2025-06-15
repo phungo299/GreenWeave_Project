@@ -6,7 +6,10 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import payosService from "../services/payosService";
 import { useToast } from "../components/common/Toast";
+import { filterValidCartItems } from '../utils/stockUtils';
 import "../assets/css/PaymentPage.css";
+import { useAddresses } from "../context/AddressContext";
+import AddressFormModal from "../components/address/AddressFormModal";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -17,11 +20,45 @@ const PaymentPage = () => {
   const [loading, setLoading] = useState(false);
   const [codLoading, setCodLoading] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState("payos");
-  const shippingFee = 40000; // hardcoded temporary
+  const shippingFee = 5000; // hardcode
+  
+  // 🚀 NEW: Shipping address management
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [showAddressModal, setShowAddressModal] = useState(false);
   
   // Get selected items from navigation state or fallback to all cart items
   const selectedItems = location.state?.selectedItems || cartItems;
   const selectedTotal = location.state?.totalAmount || getCartTotal();
+
+  const { addresses } = useAddresses();
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+
+  // Auto-select default address or first whenever addresses change
+  useEffect(() => {
+    if (addresses && addresses.length > 0) {
+      const defaultAddr = addresses.find((a) => a.isDefault);
+      const firstAddr = addresses[0];
+      const chosen = addresses.find((a) => (a._id || a.id) === selectedAddressId) || defaultAddr || firstAddr;
+      if (chosen) {
+        setSelectedAddressId(chosen._id || chosen.id);
+        setShippingAddress(formatAddress(chosen));
+      }
+    }
+  }, [addresses]);
+
+  // Helper to format address object to string
+  const formatAddress = (addr) => {
+    if (!addr) return "";
+    return [
+      addr.streetAddress || addr.street || "",
+      addr.ward || "",
+      addr.district || "",
+      addr.province || addr.state || "",
+      addr.country || ""
+    ]
+      .filter(Boolean)
+      .join(", ");
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -31,8 +68,12 @@ const PaymentPage = () => {
     if (selectedItems.length === 0) {
       showInfo("Không có sản phẩm nào được chọn, chuyển hướng về giỏ hàng");
       navigate("/cart");
+      return;
     }
   }, [isAuthenticated, selectedItems.length, navigate, showInfo]);
+
+  // REMOVED: Stock validation useEffect that was causing spam
+  // Stock validation is now only done when user clicks payment buttons
 
   const createOrderData = () => ({
     userId: user?.id,
@@ -47,7 +88,9 @@ const PaymentPage = () => {
     totalAmount: selectedTotal + shippingFee,
     shippingCost: shippingFee,
     paymentMethod: selectedMethod.toUpperCase(),
-    status: "pending"
+    status: "pending",
+    // ✅ FIXED: Use real shipping address from state
+    shippingAddress: shippingAddress.trim()
   });
 
   const handlePayOSCheckout = async () => {
@@ -58,6 +101,22 @@ const PaymentPage = () => {
       if (!user?.id) {
         showError("Vui lòng đăng nhập để tiếp tục thanh toán");
         navigate("/login", { state: { returnTo: "/payment" } });
+        return;
+      }
+      
+      // 🚨 CRITICAL: Validate shipping address before proceeding
+      if (!shippingAddress || shippingAddress.trim() === '') {
+        showError("Vui lòng nhập địa chỉ giao hàng trước khi thanh toán");
+        setShowAddressModal(true);
+        return;
+      }
+      
+      // Real-time stock validation before payment
+      const { invalidItems: stockInvalidItems } = filterValidCartItems(selectedItems);
+      
+      if (stockInvalidItems.length > 0) {
+        showError(`Không thể thanh toán. Có ${stockInvalidItems.length} sản phẩm hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.`);
+        navigate("/cart");
         return;
       }
       
@@ -81,31 +140,41 @@ const PaymentPage = () => {
       let orderId = null;
       let responseValid = false;
       
-      // Case 1: Standard success response format
-      if (orderResponse?.success === true && orderResponse?.data?._id) {
+      // Case 1: Standard success response format with orderId (new structure)
+      if (orderResponse?.success === true && orderResponse?.data?.orderId) {
+        orderId = orderResponse.data.orderId;
+        responseValid = true;
+        console.log('✅ Standard success format with orderId detected');
+      }
+      // Case 2: Standard success response format with _id (old structure)
+      else if (orderResponse?.success === true && orderResponse?.data?._id) {
         orderId = orderResponse.data._id;
         responseValid = true;
-        console.log('✅ Standard success format detected');
+        console.log('✅ Standard success format with _id detected');
       }
-      // Case 2: Direct data response (when axiosClient returns data directly)
+      // Case 3: Direct data response (when axiosClient returns data directly)
       else if (orderResponse?._id) {
         orderId = orderResponse._id;
         responseValid = true;
         console.log('✅ Direct data format detected');
       }
-      // Case 3: Alternative success field variations
-      else if (orderResponse?.success !== false && orderResponse?.data?._id) {
-        orderId = orderResponse.data._id;
+      // Case 4: Alternative success field variations
+      else if (orderResponse?.success !== false && (orderResponse?.data?.orderId || orderResponse?.data?._id)) {
+        orderId = orderResponse.data.orderId || orderResponse.data._id;
         responseValid = true;
         console.log('✅ Alternative success format detected');
       }
-      // Case 4: Check if response has success message but missing structure
+      // Case 5: Check if response has success message but missing structure
       else if (orderResponse?.message?.includes?.('thành công') || orderResponse?.message?.includes?.('success')) {
         console.log('⚠️ Success message detected but missing expected structure');
         console.log('⚠️ Attempting to extract order ID from response...');
         
-        // Try different possible ID locations
-        const possibleId = orderResponse?.id || orderResponse?.orderId || orderResponse?._id;
+        // Try different possible ID locations in order of preference
+        const possibleId = orderResponse?.data?.orderId || 
+                          orderResponse?.data?._id || 
+                          orderResponse?.orderId || 
+                          orderResponse?.id || 
+                          orderResponse?._id;
         if (possibleId) {
           orderId = possibleId;
           responseValid = true;
@@ -139,18 +208,56 @@ const PaymentPage = () => {
       const paymentResponse = await payosService.createPaymentLink(paymentData);
       console.log('💳 PayOS payment response:', paymentResponse);
       
-      if (paymentResponse?.data?.checkoutUrl) {
-        clearCart();
+      // 🔧 IMPROVED: Better PayOS response handling with multiple fallbacks
+      let checkoutUrl = null;
+      
+      // Case 1: Full success response with data.checkoutUrl
+      if (paymentResponse?.success === true && paymentResponse?.data?.checkoutUrl) {
+        checkoutUrl = paymentResponse.data.checkoutUrl;
+        console.log('✅ PayOS checkoutUrl found in data.checkoutUrl');
+      }
+      // Case 2: Direct checkoutUrl in response
+      else if (paymentResponse?.checkoutUrl) {
+        checkoutUrl = paymentResponse.checkoutUrl;
+        console.log('✅ PayOS checkoutUrl found in direct response');
+      }
+      // Case 3: PayOS response has orderCode but no checkoutUrl (DANGEROUS - likely API failure)
+      else if (paymentResponse?.data?.orderCode || paymentResponse?.orderCode) {
+        const orderCode = paymentResponse?.data?.orderCode || paymentResponse?.orderCode;
+        console.warn('❌ PayOS returned orderCode without checkoutUrl - likely API failure!');
+        console.warn('❌ This means the payment link was NOT created on PayOS servers');
+        console.warn('❌ Generated URL will show "order not found" error');
+        
+        // Don't generate fake URL - this leads to "order not found" error
+        // Instead, treat as error
+        throw new Error(`PayOS API failed: orderCode ${orderCode} returned without valid checkoutUrl`);
+      }
+      // Case 4: Check if response indicates success but format is unexpected
+      else if (paymentResponse?.success !== false && (
+        paymentResponse?.message?.includes?.('success') || 
+        paymentResponse?.message?.includes?.('thành công')
+      )) {
+        console.warn('⚠️ PayOS success message but missing checkout data');
+        // Try to extract any code/id for manual URL generation
+        const possibleCode = paymentResponse?.id || paymentResponse?.code || Date.now();
+        checkoutUrl = `https://pay.payos.vn/web/${possibleCode}`;
+        console.log('⚠️ PayOS fallback URL generated:', checkoutUrl);
+      }
+      
+      // Final handling
+      if (checkoutUrl) {
         showSuccess("Chuyển hướng đến PayOS...");
-        window.location.href = paymentResponse.data.checkoutUrl;
-      } else if (paymentResponse?.checkoutUrl) {
-        // Alternative response format
-        clearCart();
-        showSuccess("Chuyển hướng đến PayOS...");
-        window.location.href = paymentResponse.checkoutUrl;
+        console.log('🚀 Redirecting to PayOS:', checkoutUrl);
+        window.location.href = checkoutUrl;
       } else {
-        console.error('❌ PayOS response missing checkout URL:', paymentResponse);
-        throw new Error("Không thể tạo link thanh toán PayOS");
+        console.error('❌ PayOS response missing checkout URL completely:', paymentResponse);
+        console.error('❌ Debug PayOS response structure:', {
+          success: paymentResponse?.success,
+          data: paymentResponse?.data,
+          keys: Object.keys(paymentResponse || {}),
+          dataKeys: paymentResponse?.data ? Object.keys(paymentResponse.data) : null
+        });
+        throw new Error("Không thể tạo link thanh toán PayOS - thiếu checkout URL");
       }
     } catch (error) {
       console.error("PayOS checkout error:", error);
@@ -182,6 +289,22 @@ const PaymentPage = () => {
     try {
       setCodLoading(true);
       
+      // 🚨 CRITICAL: Validate shipping address before proceeding
+      if (!shippingAddress || shippingAddress.trim() === '') {
+        showError("Vui lòng nhập địa chỉ giao hàng trước khi đặt hàng COD");
+        setShowAddressModal(true);
+        return;
+      }
+      
+      // Real-time stock validation before COD payment
+      const { invalidItems: stockInvalidItems } = filterValidCartItems(selectedItems);
+      
+      if (stockInvalidItems.length > 0) {
+        showError(`Không thể thanh toán COD. Có ${stockInvalidItems.length} sản phẩm hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.`);
+        navigate("/cart");
+        return;
+      }
+      
       // Create COD order directly
       const orderData = createOrderData();
       
@@ -199,30 +322,40 @@ const PaymentPage = () => {
       let orderId = null;
       let responseValid = false;
       
-      // Case 1: Standard success response format
-      if (response?.success === true && response?.data?._id) {
+      // Case 1: Standard success response format with orderId (new structure)
+      if (response?.success === true && response?.data?.orderId) {
+        orderId = response.data.orderId;
+        responseValid = true;
+        console.log('✅ COD Standard success format with orderId detected');
+      }
+      // Case 2: Standard success response format with _id (old structure)
+      else if (response?.success === true && response?.data?._id) {
         orderId = response.data._id;
         responseValid = true;
-        console.log('✅ COD Standard success format detected');
+        console.log('✅ COD Standard success format with _id detected');
       }
-      // Case 2: Direct data response
+      // Case 3: Direct data response
       else if (response?._id) {
         orderId = response._id;
         responseValid = true;
         console.log('✅ COD Direct data format detected');
       }
-      // Case 3: Alternative success field variations
-      else if (response?.success !== false && response?.data?._id) {
-        orderId = response.data._id;
+      // Case 4: Alternative success field variations
+      else if (response?.success !== false && (response?.data?.orderId || response?.data?._id)) {
+        orderId = response.data.orderId || response.data._id;
         responseValid = true;
         console.log('✅ COD Alternative success format detected');
       }
-      // Case 4: Check if response has success message but missing structure
+      // Case 5: Check if response has success message but missing structure
       else if (response?.message?.includes?.('thành công') || response?.message?.includes?.('success')) {
         console.log('⚠️ COD Success message detected but missing expected structure');
         
-        // Try different possible ID locations
-        const possibleId = response?.id || response?.orderId || response?._id;
+        // Try different possible ID locations in order of preference
+        const possibleId = response?.data?.orderId || 
+                          response?.data?._id || 
+                          response?.orderId || 
+                          response?.id || 
+                          response?._id;
         if (possibleId) {
           orderId = possibleId;
           responseValid = true;
@@ -232,8 +365,7 @@ const PaymentPage = () => {
       
       // Final validation
       if (responseValid && orderId) {
-        clearCart();
-        showSuccess("Đặt hàng COD thành công!");
+        showSuccess("Đặt hàng COD thành công! Đơn đang chờ xác nhận");
         navigate(`/payment/success?method=cod&orderId=${orderId}`);
       } else {
         const errorMsg = response?.message || "Không thể tạo đơn hàng COD - format response không hợp lệ";
@@ -342,8 +474,65 @@ const PaymentPage = () => {
                 </div>
               </div>
 
-              {/* Right: Payment Methods */}
+              {/* Right: Shipping & Payment */}
               <div className="payment-methods-compact">
+                
+                {/* 🚀 NEW: Shipping Address Section */}
+                <div className="shipping-address-section">
+                  <h2>Địa chỉ giao hàng</h2>
+                  
+                  {/* Address list or placeholder */}
+                  {addresses.length > 0 ? (
+                    <div className="address-list">
+                      {addresses.map((addr) => (
+                        <label key={addr._id || addr.id} className={`address-item ${selectedAddressId === (addr._id||addr.id) ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="address"
+                            value={addr._id||addr.id}
+                            checked={selectedAddressId === (addr._id||addr.id)}
+                            onChange={() => {
+                              setSelectedAddressId(addr._id||addr.id);
+                              setShippingAddress(formatAddress(addr));
+                            }}
+                          />
+                          <span>{formatAddress(addr)}{addr.isDefault ? ' (Mặc định)' : ''}</span>
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setShowAddressModal(true)}
+                      >
+                        Thêm địa chỉ mới
+                      </button>
+                    </div>
+                  ) : addresses.length === 0 ? (
+                    <div className="address-placeholder">
+                      <p className="address-prompt">Bạn chưa có địa chỉ giao hàng</p>
+                      <button 
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setShowAddressModal(true)}
+                      >
+                        Thêm địa chỉ giao hàng
+                      </button>
+                    </div>
+                  ) : null}
+                  
+                  {showAddressModal && (
+                    <AddressFormModal
+                      onClose={(saved, newAddr) => {
+                        setShowAddressModal(false);
+                        if (saved && newAddr) {
+                          setSelectedAddressId(newAddr._id || newAddr.id);
+                          setShippingAddress(formatAddress(newAddr));
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+                
                 <h2>Chọn phương thức thanh toán</h2>
                 
                 <div className="payment-options">

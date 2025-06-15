@@ -123,6 +123,7 @@
     gap: 1rem;
 }
 
+
 /* Container cho component bên phải */
 .personal-order-right-content {
     display: flex;
@@ -282,6 +283,17 @@
     border: 1px solid #f1aeb5;
 }
 
+.personal-order-status.expired {
+    background-color: #b04c00; /* Brownish orange */
+    color: #fff;
+}
+
+.personal-order-status.processing {
+    background-color: #ffe8cc;
+    color: #8a4b00;
+    border: 1px solid #ffdab5;
+}
+
 /* Actions in the new footer */
 .personal-order-actions {
     display: flex;
@@ -319,12 +331,34 @@
     box-shadow: 0 2px 8px rgba(44, 85, 48, 0.3);
 }
 
+.personal-order-button.retry {
+    background-color: #ff8c00;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+    transition: background-color 0.3s ease;
+}
+
+.personal-order-button.retry:hover {
+    background-color: #ff6500;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .personal-order-item {
         flex-direction: column;
         padding: 1rem;
         margin-bottom: 1rem;
+    }
+    .personal-order-left-content {
+        width: 100%;
+    }
+    .personal-order-right-content {
+        width: 100%;
     }
     
     .personal-order-left-content {
@@ -380,6 +414,8 @@
     }
     
     .personal-order-status {
+        width: 100%;
+        text-align: center;
         order: 1;
         align-self: flex-start;
         margin-bottom: 0.75rem;

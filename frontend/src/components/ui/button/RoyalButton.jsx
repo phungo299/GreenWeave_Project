@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './RoyalButton.css';
 
 const RoyalButton = ({
@@ -18,6 +18,13 @@ const RoyalButton = ({
     const [isPressed, setIsPressed] = useState(false);
     const [ripples, setRipples] = useState([]);
     const buttonRef = useRef(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const handleMouseDown = (e) => {
         if (disabled || loading) return;
@@ -40,7 +47,9 @@ const RoyalButton = ({
         
         // Remove ripple after animation
         setTimeout(() => {
-            setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
+            if (isMountedRef.current) {
+                setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
+            }
         }, 600);
     };
 

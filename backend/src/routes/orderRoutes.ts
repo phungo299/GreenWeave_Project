@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+    cancelOrder,
     createOrder,
     createTestOrder,
     getAllOrders,
@@ -7,8 +8,10 @@ import {
     getOrderStats,
     getUserOrders,
     searchOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    retryPayment
 } from "../controllers/orderController";
+import { verifyToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -38,5 +41,11 @@ router.post("/create-test", createTestOrder);
 
 // PUT /api/orders/:id/status - Cập nhật trạng thái đơn hàng
 router.put("/:id/status", updateOrderStatus);
+
+// 🚀 NEW: PUT /api/orders/:orderId/cancel - Hủy đơn hàng với atomic transaction
+router.put("/:orderId/cancel", cancelOrder);
+
+// POST /api/orders/:id/retry-payment - Tạo link thanh toán lại cho đơn hết hạn
+router.post("/:id/retry-payment", verifyToken, retryPayment);
 
 export default router; 
