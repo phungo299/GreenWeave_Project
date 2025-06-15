@@ -115,7 +115,7 @@ export { app };
 
 // Only start the server if this file is run directly (not imported as a module)
 if (require.main === module) {
-  const port = process.env.PORT || 5000;
+  const port: number = parseInt(process.env.PORT ?? '5000', 10);
 
   console.log('Connecting to MongoDB...');
   console.log('MongoDB URI:', process.env.MONGO_URI?.split('@')[1]); // Log URI an toàn (không hiện credentials)
