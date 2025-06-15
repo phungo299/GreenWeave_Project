@@ -124,7 +124,7 @@ if (require.main === module) {
     .connect(process.env.MONGO_URI as string)
     .then(() => {
       console.log("Connected to MongoDB successfully");
-      app.listen(port, () => {
+      app.listen(port, '0.0.0.0', () => {
         console.log(`Server started at ${new Date().toISOString()}`);
         console.log(`Server is running on port ${port}`);
         console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${port}`}/api-docs`);
