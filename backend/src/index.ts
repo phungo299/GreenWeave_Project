@@ -1,8 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import "./loadEnv";
 import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import path from "path";
+import fs from "fs";
 import swaggerUi from "swagger-ui-express";
 import * as YAML from "yamljs";
 import { startOrderExpiryJob } from "./jobs/orderExpiryJob";
@@ -31,7 +35,13 @@ const app = express();
 
 // Đọc file swagger.yaml đã được sinh tự động bởi script generate-swagger
 const swaggerPath = path.resolve(__dirname, "./swagger.yaml");
-const swaggerSpec = YAML.load(swaggerPath);
+let swaggerSpec: any | null = null;
+if (fs.existsSync(swaggerPath)) {
+  swaggerSpec = YAML.load(swaggerPath);
+  console.log(`✅ Loaded Swagger documentation from ${swaggerPath}`);
+} else {
+  console.warn(`⚠️ Swagger file not found at ${swaggerPath}. API docs will be disabled.`);
+}
 
 // CORS Configuration - Environment Based
 const allowedOrigins = process.env.CORS_ORIGIN 
@@ -42,7 +52,8 @@ const allowedOrigins = process.env.CORS_ORIGIN
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
       'https://green-weave-project.vercel.app',
-      'https://greenweave.vn'
+      'https://greenweave.vn',
+      'https://www.greenweave.vn'
     ];
 
 console.log("CORS: Allowed origins:", allowedOrigins);
@@ -76,10 +87,13 @@ app.get("/", (_req, res) => {
   res.send("Welcome to the GreenWeave API");
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "GreenWeave API Documentation"
-}));
+// When swaggerSpec is available, mount Swagger UI
+if (swaggerSpec) {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "GreenWeave API Documentation"
+  }));
+}
 
 // Cấu hình routes
 app.use("/api/auth", authRoutes);
@@ -104,7 +118,7 @@ export { app };
 
 // Only start the server if this file is run directly (not imported as a module)
 if (require.main === module) {
-  const port = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5000;
 
   console.log('Connecting to MongoDB...');
   console.log('MongoDB URI:', process.env.MONGO_URI?.split('@')[1]); // Log URI an toàn (không hiện credentials)
@@ -113,10 +127,10 @@ if (require.main === module) {
     .connect(process.env.MONGO_URI as string)
     .then(() => {
       console.log("Connected to MongoDB successfully");
-      app.listen(port, () => {
+      app.listen(PORT, () => {
         console.log(`Server started at ${new Date().toISOString()}`);
-        console.log(`Server is running on port ${port}`);
-        console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${port}`}/api-docs`);
+        console.log(`Server is running on port ${PORT}`);
+        console.log(`API Documentation available at ${process.env.API_URL || `http://localhost:${PORT}`}/api-docs`);
 
         // Start background jobs
         startOrderExpiryJob();
@@ -133,4 +147,3 @@ if (require.main === module) {
       process.exit(1); // Thoát process nếu không kết nối được database
     });
 }
-
