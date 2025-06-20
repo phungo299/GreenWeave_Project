@@ -148,6 +148,25 @@ const Login = () => {
         return !Object.values(newErrors).some(error => error);
     };
 
+    useEffect(() => {
+        if (showVerifyModal) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+        
+        // Cleanup when component unmount
+        return () => {
+            document.body.classList.remove('modal-open');
+        };
+    }, [showVerifyModal]);
+
+    // Handle manual verification modal open
+    const handleOpenVerifyModal = () => {
+        setUserEmail('');
+        setShowVerifyModal(true);
+    };
+
     // Handle when closing authentication modal
     const handleCloseVerifyModal = () => {
         setShowVerifyModal(false);
@@ -319,6 +338,16 @@ const Login = () => {
                         <div className="register-prompt">
                             <span>Bạn chưa có tài khoản? </span>
                             <Link to="/register" className="register-link">Đăng Ký</Link>
+                        </div>
+                        <div className="verify-prompt">
+                            <span>Chưa xác thực email? </span>
+                            <button 
+                                className="verify-link"
+                                onClick={handleOpenVerifyModal}
+                                disabled={loading}
+                            >
+                                Xác thực ngay
+                            </button>
                         </div>
                     </div>
                     

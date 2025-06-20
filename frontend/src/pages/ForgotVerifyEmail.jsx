@@ -26,9 +26,14 @@ const ForgotVerifyEmail = ({ initialEmail = '', onVerificationSuccess, isModal =
     // Add a new useEffect to automatically send OTP
     useEffect(() => {
         // Automatically send OTP if there is an initial email and OTP has not been sent
-        if (initialEmail && !otpSent && !loading) {
+        if (initialEmail && initialEmail.trim() !== '' && !otpSent && !loading) {
             const autoSendOtp = async () => {
-                if (!email) return;
+                if (!email || email.trim() === '') return;
+                // Validate email format before sending
+                if (!/\S+@\S+\.\S+/.test(email.trim())) {
+                    setError('Email không hợp lệ');
+                    return;
+                }
                 setLoading(true);
                 try {
                     const result = await checkVerificationStatus(email);
@@ -66,10 +71,11 @@ const ForgotVerifyEmail = ({ initialEmail = '', onVerificationSuccess, isModal =
     };
     
     const validateEmail = () => {
-        if (!email) {
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
             setError('Vui lòng nhập email');
             return false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
+        } else if (!/\S+@\S+\.\S+/.test(trimmedEmail)) {
             setError('Email không hợp lệ');
             return false;
         }
@@ -92,7 +98,7 @@ const ForgotVerifyEmail = ({ initialEmail = '', onVerificationSuccess, isModal =
         if (validateEmail()) {
             setLoading(true);
             try {
-                const result = await checkVerificationStatus(email);
+                const result = await checkVerificationStatus(email.trim());
                 
                 if (result.isVerified) {
                     // If email is already verified

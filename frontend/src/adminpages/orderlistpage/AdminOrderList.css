@@ -151,6 +151,77 @@
     color: #fff;
 }
 
+.order-action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+    min-width: 120px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    height: 32px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.view-btn {
+    background: #e3f0e7;
+    color: #1a3c1a;
+    border: 1px solid #d0e4d3;
+}
+
+.view-btn:hover {
+    background: #1a3c1a;
+    color: #fff;
+    border-color: #1a3c1a;
+}
+
+.confirm-btn {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.confirm-btn:hover:not(:disabled) {
+    background: #2e7d32;
+    color: #fff;
+    border-color: #2e7d32;
+}
+
+.confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.confirm-btn.confirming {
+    background: #2e7d32;
+    color: #fff;
+    border-color: #2e7d32;
+}
+
 /* Styles cho OrderItemsList component */
 .order-items-list {
     display: flex;
@@ -214,6 +285,29 @@
     border-radius: 4px;
 }
 
+/* Animation cho loading spinner */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+/* Cập nhật styles cho status mới */
+.admin-order-list-status-paid {
+    color: #2196F3;
+}
+
+.admin-order-list-status-confirmed {
+    color: #9C27B0;
+}
+
+.admin-order-list-status-expired {
+    color: #757575;
+}
+
 /* Responsive for tablet */
 @media (max-width: 1024px) {
     .admin-order-list-content {
@@ -227,6 +321,16 @@
     .admin-order-list-table td {
         padding: 12px 4px;
         font-size: 15px;
+    }
+    .action-btn {
+        min-width: 65px;
+        height: 30px;
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+    .order-action-buttons {
+        gap: 6px;
+        min-width: 110px;
     }
     
     /* OrderItemsList responsive cho tablet */
@@ -278,6 +382,16 @@
     .admin-order-list-table td {
         padding: 10px 4px;
         font-size: 14px;
+    }
+    .order-action-buttons {
+        gap: 4px;
+        min-width: 100px;
+    }
+    .action-btn {
+        min-width: 60px;
+        height: 28px;
+        font-size: 11px;
+        padding: 4px 8px;
     }
     
     /* OrderItemsList responsive cho mobile */
@@ -347,5 +461,15 @@
     .admin-order-list-detail-btn {
         padding: 2px 6px;
         font-size: 11px;
+    }
+    .action-btn {
+        min-width: 50px;
+        height: 26px;
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    .order-action-buttons {
+        gap: 3px;
+        min-width: 90px;
     }
 }

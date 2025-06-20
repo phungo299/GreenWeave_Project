@@ -234,7 +234,7 @@ export const createOrder = async (req: Request, res: Response) => {
       items: orderItems,
       totalAmount: finalTotal,
       shippingCost: shippingCost || 0,
-      status,
+      status: "pending",
       shippingAddress,
       paymentMethod: paymentMethod?.toUpperCase() || "COD",
       expiresAt: new Date(Date.now() + 10 * 60 * 1000) // +10 phút
@@ -434,9 +434,9 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "ID đơn hàng không hợp lệ" });
     }
     
-    if (!status || !["pending", "shipped", "delivered", "cancelled"].includes(status)) {
+    if (!status || !["pending", "paid", "confirmed", "shipped", "delivered", "cancelled", "expired"].includes(status)) {
       return res.status(400).json({ 
-        message: "Trạng thái đơn hàng không hợp lệ. Phải là một trong các giá trị: pending, shipped, delivered, cancelled" 
+        message: "Trạng thái đơn hàng không hợp lệ. Phải là một trong các giá trị: pending, paid, confirmed, shipped, delivered, cancelled, expired" 
       });
     }
     
@@ -473,6 +473,129 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
   }
 };
 
+//  Linh hoạt để cập nhật trạng thái đơn hàng với validation logic
+export const updateOrderStatusFlexible = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    const orderId = req.params.id;
+    const { status, reason } = req.body;
+    
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: "ID đơn hàng không hợp lệ",
+        data: null
+      });
+    }
+    
+    const validStatuses = ["pending", "paid", "confirmed", "shipped", "delivered", "cancelled", "expired"];
+    if (!status || !validStatuses.includes(status)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: `Trạng thái đơn hàng không hợp lệ. Phải là một trong các giá trị: ${validStatuses.join(', ')}`,
+        data: null
+      });
+    }
+    
+    // Tìm đơn hàng cần cập nhật
+    const order = await Order.findById(orderId).populate("paymentId").session(session);
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ 
+        success: false,
+        message: "Không tìm thấy đơn hàng",
+        data: null
+      });
+    }
+    
+    // Kiểm tra logic chuyển đổi trạng thái hợp lệ
+    const statusTransitions: Record<string, string[]> = {
+      'pending': ['paid', 'cancelled', 'expired'],
+      'paid': ['confirmed', 'cancelled'],
+      'confirmed': ['shipped', 'cancelled'],
+      'shipped': ['delivered'],
+      'delivered': [],
+      'cancelled': [],
+      'expired': ['paid', 'cancelled']
+    };
+    
+    const allowedTransitions = statusTransitions[order.status] || [];
+    
+    if (!allowedTransitions.includes(status)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: `Không thể chuyển từ trạng thái "${order.status}" sang "${status}". Các trạng thái hợp lệ: ${allowedTransitions.join(', ') || 'Không có'}`,
+        data: null
+      });
+    }
+    
+    // Xử lý logic đặc biệt cho từng trạng thái
+    if (status === "cancelled" && order.status !== "cancelled") {
+      // Hoàn lại số lượng tồn kho khi hủy đơn
+      for (const item of order.items) {
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { quantity: item.quantity } },
+          { session }
+        );
+      }
+      
+      // Cập nhật payment status nếu có
+      if (order.paymentId) {
+        const payment = order.paymentId as any;
+        if (payment && payment.status === "pending") {
+          payment.status = "cancelled";
+          await payment.save({ session });
+        }
+      }
+    }
+    
+    // Cập nhật trạng thái đơn hàng
+    const oldStatus = order.status;
+    order.status = status;
+    await order.save({ session });
+    
+    await session.commitTransaction();
+    session.endSession();
+    
+    // Lấy đơn hàng đã cập nhật với đầy đủ thông tin
+    const updatedOrder = await Order.findById(orderId)
+      .populate("paymentId")
+      .populate("userId", "username email")
+      .populate({
+        path: "items.productId",
+        select: "name price description imageUrl images variants slug"
+      });
+    
+    console.log(`✅ Order ${orderId} status updated from "${oldStatus}" to "${status}"${reason ? ` (Reason: ${reason})` : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      message: `Cập nhật trạng thái đơn hàng thành công từ "${oldStatus}" sang "${status}"`,
+      data: updatedOrder
+    });
+    
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('❌ Error in updateOrderStatusFlexible:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi cập nhật trạng thái đơn hàng",
+      data: null
+    });
+  }
+};
+
 // Lấy tất cả đơn hàng (dành cho admin)
 export const getAllOrders = async (req: Request, res: Response) => {
   try {
@@ -486,7 +609,7 @@ export const getAllOrders = async (req: Request, res: Response) => {
     let query: any = {};
     
     // Lọc theo trạng thái
-    if (status && ["pending", "shipped", "delivered", "cancelled"].includes(status)) {
+    if (status && ["pending", "paid", "confirmed", "shipped", "delivered", "cancelled", "expired"].includes(status)) {
       query.status = status;
     }
     
@@ -552,7 +675,7 @@ export const searchOrders = async (req: Request, res: Response) => {
     }
     
     // Tìm theo trạng thái
-    if (status && ["pending", "shipped", "delivered", "cancelled"].includes(status)) {
+    if (status && ["pending", "paid", "confirmed", "shipped", "delivered", "cancelled", "expired"].includes(status)) {
       baseQuery.status = status;
     }
     
@@ -720,6 +843,17 @@ export const getOrderStats = async (req: Request, res: Response) => {
         }
       }
     ]);
+
+    // Tạo object với tất cả trạng thái có thể có
+    const allStatuses = ["pending", "paid", "confirmed", "shipped", "delivered", "cancelled", "expired"];
+    const statusBreakdown = allStatuses.map(status => {
+      const stat = currentMonthStats.find(s => s._id === status);
+      return {
+        status,
+        count: stat?.count || 0,
+        totalAmount: stat?.totalAmount || 0
+      };
+    });
     
     // Tổng số đơn hàng tháng hiện tại
     const totalOrdersThisMonth = await Order.countDocuments({
@@ -797,7 +931,7 @@ export const getOrderStats = async (req: Request, res: Response) => {
           totalOrders: totalOrdersThisMonth,
           revenue: thisMonthRevenue,
           deliveredOrders: thisMonthDeliveredOrders,
-          statusBreakdown: currentMonthStats
+          statusBreakdown: statusBreakdown
         },
         yearlyRevenue: {
           total: totalRevenueThisYear,
@@ -950,5 +1084,85 @@ export const retryPayment = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Retry payment error", error);
     return res.status(500).json({ success: false, message: error.message || "Lỗi server" });
+  }
+};
+
+// Webhook để cập nhật trạng thái đơn hàng khi thanh toán thành công
+export const handlePaymentSuccess = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    const { orderId, paymentId, transactionId } = req.body;
+    
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: "ID đơn hàng không hợp lệ",
+        data: null
+      });
+    }
+    
+    // Tìm đơn hàng
+    const order = await Order.findById(orderId).populate("paymentId").session(session);
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ 
+        success: false,
+        message: "Không tìm thấy đơn hàng",
+        data: null
+      });
+    }
+    
+    // Chỉ cập nhật nếu đơn hàng đang ở trạng thái pending
+    if (order.status !== "pending") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        success: false,
+        message: `Đơn hàng đã ở trạng thái "${order.status}", không thể cập nhật`,
+        data: null
+      });
+    }
+    
+    // Cập nhật trạng thái đơn hàng thành "paid"
+    order.status = "paid";
+    await order.save({ session });
+    
+    // Cập nhật payment status nếu có
+    if (order.paymentId) {
+      const payment = order.paymentId as any;
+      if (payment) {
+        payment.status = "completed";
+        if (transactionId) {
+          payment.transactionId = transactionId;
+        }
+        await payment.save({ session });
+      }
+    }
+    
+    await session.commitTransaction();
+    session.endSession();
+    
+    console.log(`✅ Order ${orderId} payment completed, status updated to "paid"`);
+    
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật trạng thái thanh toán thành công",
+      data: { orderId, status: "paid" }
+    });
+    
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('❌ Error in handlePaymentSuccess:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: error.message || "Lỗi server khi xử lý thanh toán",
+      data: null
+    });
   }
 };

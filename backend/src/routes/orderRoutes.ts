@@ -9,6 +9,8 @@ import {
     getUserOrders,
     searchOrders,
     updateOrderStatus,
+    updateOrderStatusFlexible,
+    handlePaymentSuccess,
     retryPayment
 } from "../controllers/orderController";
 import { verifyToken } from "../middleware/auth";
@@ -41,6 +43,10 @@ router.post("/create-test", createTestOrder);
 
 // PUT /api/orders/:id/status - Cập nhật trạng thái đơn hàng
 router.put("/:id/status", updateOrderStatus);
+router.put("/:id/status-flexible", updateOrderStatusFlexible);
+
+// POST /api/orders/payment-success - Webhook xử lý thanh toán thành công
+router.post("/payment-success", handlePaymentSuccess);
 
 // 🚀 NEW: PUT /api/orders/:orderId/cancel - Hủy đơn hàng với atomic transaction
 router.put("/:orderId/cancel", cancelOrder);

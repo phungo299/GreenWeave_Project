@@ -296,6 +296,59 @@ const orderService = {
     },
 
     /**
+     * Cập nhật trạng thái đơn hàng linh hoạt với validation
+     * @param {string} orderId - ID của đơn hàng
+     * @param {string} status - Trạng thái mới
+     * @param {string} reason - Lý do thay đổi (optional)
+     */
+    updateOrderStatusFlexible: async (orderId, status, reason = null) => {
+        try {
+            const response = await axiosClient.put(`/orders/${orderId}/status-flexible`, { 
+                status,
+                ...(reason && { reason })
+            });
+            
+            if (response && response.success && response.data) {
+                return {
+                    success: true,
+                    data: response.data,
+                    message: response.message || 'Cập nhật trạng thái đơn hàng thành công'
+                };
+            }
+            
+            throw new Error('Không thể cập nhật trạng thái đơn hàng');
+        } catch (error) {
+            console.error('Error in updateOrderStatusFlexible:', error);
+            
+            let errorMessage = 'Không thể cập nhật trạng thái đơn hàng';
+            
+            if (error.status === 400) {
+                errorMessage = error.message || 'Trạng thái không hợp lệ';
+            } else if (error.status === 404) {
+                errorMessage = 'Không tìm thấy đơn hàng';
+            } else if (error.status === 401) {
+                errorMessage = 'Không có quyền cập nhật đơn hàng này';
+            } else if (error.status === 0) {
+                errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+    },
+
+    /**
+     * Xác nhận đơn hàng (chuyển từ paid sang confirmed)
+     * @param {string} orderId - ID của đơn hàng
+     */
+    confirmOrder: async (orderId) => {
+        try {
+            return await orderService.updateOrderStatusFlexible(orderId, 'confirmed', 'Admin confirmed order');
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
      * Hủy đơn hàng (chỉ được phép hủy khi đơn hàng ở trạng thái pending)
      * @param {string} orderId - ID của đơn hàng
      */
@@ -315,11 +368,13 @@ const orderService = {
      */
     getStatusText: (status) => {
         const statusMap = {
-            'pending': 'Đang xử lý',
-            'processing': 'Chuẩn bị hàng',
+            'pending': 'Đang chờ xử lý',
+            'paid': 'Đã thanh toán',
+            'confirmed': 'Đã xác nhận',
             'shipped': 'Đang giao hàng',
             'delivered': 'Đã giao hàng',
-            'cancelled': 'Đã hủy'
+            'cancelled': 'Đã hủy',
+            'expired': 'Đã hết hạn'
         };
         return statusMap[status] || status;
     },
@@ -331,10 +386,12 @@ const orderService = {
     getStatusColor: (status) => {
         const colorMap = {
             'pending': '#FFA500',      // Orange
-            'processing': '#2196F3',   // Blue  
-            'shipped': '#9C27B0',      // Purple
+            'paid': '#2196F3',         // Blue
+            'confirmed': '#9C27B0',    // Purple
+            'shipped': '#FF9800',      // Amber
             'delivered': '#4CAF50',    // Green
-            'cancelled': '#F44336'     // Red
+            'cancelled': '#F44336',    // Red
+            'expired': '#757575'       // Gray
         };
         return colorMap[status] || '#757575';
     },
@@ -346,12 +403,23 @@ const orderService = {
     getStatusClass: (status) => {
         const classMap = {
             'pending': 'pending',
-            'processing': 'processing',
+            'paid': 'paid',
+            'confirmed': 'confirmed',
             'shipped': 'shipping',
             'delivered': 'delivered',
-            'cancelled': 'cancelled'
+            'cancelled': 'cancelled',
+            'expired': 'expired'
         };
         return classMap[status] || 'pending';
+    },
+
+    /**
+     * Kiểm tra xem đơn hàng có thể xác nhận được không
+     * @param {Object} order - Đối tượng đơn hàng
+     */
+    canConfirmOrder: (order) => {
+        if (!order) return false;
+        return order.status === 'paid';
     },
 
     /**

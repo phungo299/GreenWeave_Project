@@ -7,13 +7,14 @@ import SortableHeader from '../../components/ui/sortableheader/SortableHeader';
 import AdminCustomerDesignForm from './AdminCustomerDesignForm';
 import Pagination from '../../components/ui/pagination/Pagination';
 import orderService from '../../services/orderService';
+import { FaEye, FaCheck, FaSpinner } from 'react-icons/fa';
 
 const PAGE_SIZE = 10;
 
 // Default placeholder as data URL to avoid infinite loop
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f4f8f4'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='12' fill='%23999'%3ENo Image%3C/text%3E%3C/svg%3E";
 
-// Component hiển thị chi tiết từng sản phẩm trong đơn hàng
+// Component displays details of each product in the order
 const OrderItemsList = ({ items }) => {
     if (!items || items.length === 0) {
         return <span style={{ color: '#999', fontStyle: 'italic' }}>Không có sản phẩm</span>;
@@ -51,12 +52,54 @@ const OrderItemsList = ({ items }) => {
     );
 };
 
+const OrderActionButtons = ({ order, onViewDetail, onConfirm, onRefresh }) => {
+    const [isConfirming, setIsConfirming] = useState(false);
+    
+    const handleConfirm = async () => {
+        if (isConfirming) return;        
+        try {
+            setIsConfirming(true);
+            await orderService.confirmOrder(order._id);
+            onRefresh();
+        } catch (error) {
+            console.error('Error confirming order:', error);
+            alert('Có lỗi xảy ra khi xác nhận đơn hàng: ' + error.message);
+        } finally {
+            setIsConfirming(false);
+        }
+    };
+    
+    return (
+        <div className="order-action-buttons">
+            {/* View details button - always visible */}
+            <button
+                className="action-btn view-btn"
+                onClick={() => onViewDetail(order)}
+                title="Xem chi tiết đơn hàng"
+            >
+                Chi tiết
+            </button>                       
+            {/* Confirm button - only displayed for paid orders */}
+            {orderService.canConfirmOrder(order) && (
+                <button
+                    className={`action-btn confirm-btn ${isConfirming ? 'confirming' : ''}`}
+                    onClick={handleConfirm}
+                    disabled={isConfirming}
+                    title="Xác nhận đơn hàng"
+                >
+                    {isConfirming ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
+            )}
+        </div>
+    );
+};
+
 const AdminOrderList = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState(''); // Separate debounced search
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filterValues, setFilterValues] = useState({
         status: '',
     });
@@ -74,7 +117,7 @@ const AdminOrderList = () => {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             setDebouncedSearch(search);
-            setPage(1); // Reset page when search changes
+            setPage(1);
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -95,7 +138,6 @@ const AdminOrderList = () => {
                 ...(debouncedSearch && { q: debouncedSearch })
             };
 
-            // Use searchOrders if there is a filter or search, getAllOrders if not
             const response = debouncedSearch || (filterValues.status && filterValues.status !== 'all') 
                 ? await orderService.searchOrders(params)
                 : await orderService.getAllOrders(params);
@@ -112,17 +154,16 @@ const AdminOrderList = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, sortField, sortOrder, filterValues.status, debouncedSearch]); // Use debouncedSearch instead of search
+    }, [page, sortField, sortOrder, filterValues.status, debouncedSearch]);
 
     // Load orders when stable dependencies change
     useEffect(() => {
         fetchOrders();
     }, [fetchOrders]);
 
-    // Handle search change - only update search state, don't reset page here
+    // Handle search change
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
-        // Don't call setPage(1) here - let debounce effect handle it
     };
 
     const filterConfig = [
@@ -131,10 +172,13 @@ const AdminOrderList = () => {
             field: 'status',
             options: [
                 { label: 'Tất cả', value: 'all' },
-                { label: 'Đang xử lý', value: 'pending' },
+                { label: 'Đang chờ xử lý', value: 'pending' },
+                { label: 'Đã thanh toán', value: 'paid' },
+                { label: 'Đã xác nhận', value: 'confirmed' },
                 { label: 'Đang giao hàng', value: 'shipped' },
                 { label: 'Đã giao', value: 'delivered' },
                 { label: 'Đã hủy', value: 'cancelled' },
+                { label: 'Đã hết hạn', value: 'expired' },
             ],
         },
     ];
@@ -163,7 +207,6 @@ const AdminOrderList = () => {
     // Handle image error with fallback to prevent infinite loop
     const handleImageError = (e) => {
         const img = e.target;
-        // Prevent infinite loop by checking if already set to placeholder
         if (img.src !== DEFAULT_PLACEHOLDER) {
             img.src = DEFAULT_PLACEHOLDER;
         }
@@ -177,13 +220,13 @@ const AdminOrderList = () => {
         return {
             id: order._id,
             name: productData?.name || 'Sản phẩm không xác định',
-            code: order._id.slice(-8).toUpperCase(), // Use last 8 chars of ID as order code
+            code: order._id.slice(-8).toUpperCase(),
             total: order.totalAmount || 0,
             status: orderService.getStatusText(order.status),
             statusType: order.status,
             image: productData?.images?.[0] || productData?.imageUrl || DEFAULT_PLACEHOLDER,
-            originalOrder: order, // Keep original order data for detail view
-            customDesign: false, // This should come from order data if available
+            originalOrder: order,
+            customDesign: false,
             createdAt: order.createdAt,
             items: order.items || []
         };
@@ -195,29 +238,48 @@ const AdminOrderList = () => {
     }, [orders, mapOrderForDisplay]);
 
     const handleShowDesign = (displayOrder) => {
-        const originalOrder = displayOrder.originalOrder;
-        const firstItem = originalOrder.items?.[0];
-        const productData = firstItem?.productId;
+        try {
+            // Check if displayOrder exists
+            if (!displayOrder) {
+                console.error('displayOrder is undefined');
+                alert('Không thể hiển thị chi tiết đơn hàng: Dữ liệu không hợp lệ');
+                return;
+            }
 
-        // Create design data from real order data
-        setSelectedDesign({
-            productImage: productData?.images?.[0] || productData?.imageUrl || DEFAULT_PLACEHOLDER,
-            productName: productData?.name || 'Sản phẩm không xác định',
-            color: firstItem?.color || 'Không xác định',
-            quantity: firstItem?.quantity || 1,
-            orderCode: displayOrder.code,
-            price: originalOrder.totalAmount || 0,
-            orderId: originalOrder._id,
-            shippingAddress: originalOrder.shippingAddress,
-            status: originalOrder.status,
-            createdAt: originalOrder.createdAt,
-            items: originalOrder.items,
-            // Design specific data (should come from order if available)
-            colorImage: productData?.images?.[0] || DEFAULT_PLACEHOLDER,
-            text: 'Thiết kế khách hàng', // This should come from order customization data
-            patternImage: DEFAULT_PLACEHOLDER, // This should come from order customization data
-        });
-        setOpenDesignForm(true);
+            const originalOrder = displayOrder.originalOrder || displayOrder;
+            
+            // Check if originalOrder has items
+            if (!originalOrder || !originalOrder.items) {
+                console.error('originalOrder or items is undefined', originalOrder);
+                return;
+            }
+
+            const firstItem = originalOrder.items[0];
+            const productData = firstItem?.productId;
+
+            // Create design data from real order data với safe navigation
+            setSelectedDesign({
+                productImage: productData?.images?.[0] || productData?.imageUrl || DEFAULT_PLACEHOLDER,
+                productName: productData?.name || 'Sản phẩm không xác định',
+                color: firstItem?.color || 'Không xác định',
+                quantity: firstItem?.quantity || 1,
+                orderCode: displayOrder.code || originalOrder._id?.slice(-8).toUpperCase() || 'N/A',
+                price: originalOrder.totalAmount || 0,
+                orderId: originalOrder._id,
+                shippingAddress: originalOrder.shippingAddress || 'Không có địa chỉ',
+                status: originalOrder.status || 'pending',
+                createdAt: originalOrder.createdAt,
+                items: originalOrder.items || [],
+                // Design specific data
+                colorImage: productData?.images?.[0] || DEFAULT_PLACEHOLDER,
+                text: 'Thiết kế khách hàng',
+                patternImage: DEFAULT_PLACEHOLDER,
+            });
+            setOpenDesignForm(true);
+        } catch (error) {
+            console.error('Error in handleShowDesign:', error);
+            alert('Có lỗi xảy ra khi hiển thị chi tiết đơn hàng');
+        }
     };
 
     if (loading) {
@@ -322,7 +384,7 @@ const AdminOrderList = () => {
                                         onSort={() => handleSort('createdAt')}
                                     />
                                 </th>
-                                <th>Chi tiết</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -376,14 +438,12 @@ const AdminOrderList = () => {
                                             </span>
                                         </td>
                                         <td>
-                                            <div className="admin-order-list-detail-btn-wrapper">
-                                                <button
-                                                    className="admin-order-list-detail-btn"
-                                                    onClick={() => handleShowDesign(order)}
-                                                >
-                                                    Xem chi tiết
-                                                </button>
-                                            </div>
+                                            <OrderActionButtons
+                                                order={order.originalOrder}
+                                                onViewDetail={() => handleShowDesign(order)}
+                                                onConfirm={() => {}}
+                                                onRefresh={fetchOrders}
+                                            />
                                         </td>
                                     </tr>
                                 ))
